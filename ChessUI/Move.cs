@@ -41,6 +41,16 @@ namespace ChessUI
             this.moveType = moveType;
         }
 
+        public bool IsPromotion()
+        {
+            if(this.moveType == MoveType.move || this.moveType == MoveType.enPesant ||  
+                this.moveType == MoveType.doublePawnMove || this.moveType == MoveType.capture || this.moveType == MoveType.castle)
+            {
+                return false;
+            }
+            return true;
+        }
+
         public override string ToString()
         {
             int x = this.sourceSquare % 8;

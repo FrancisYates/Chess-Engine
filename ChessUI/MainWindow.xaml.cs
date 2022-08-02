@@ -24,6 +24,7 @@ namespace ChessUI
         readonly List<Button> buttons;
         int selectedPosition = -1;
         bool pieceSelected = false;
+        public Move.MoveType promotionSelection;
 
         public MainWindow()
         {
@@ -39,6 +40,7 @@ namespace ChessUI
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
         }
+        public void SetPromotion(Move.MoveType selection) { promotionSelection = selection; }
 
         private void HandelClick(short y, short x)
         {
@@ -54,12 +56,17 @@ namespace ChessUI
                 pieceSelected = true;
                 Render.HighlightSquare(buttons, selectedPosition);
             }
-
             if (!validSelection && pieceSelected)
             {
                 Move move = new Move(selectedPosition, thisPosition);
                 if (Player.IsMoveValid(ref move))
                 {
+                    if (move.IsPromotion())
+                    {
+                        PromotionSelection selectionWin = new PromotionSelection(this);
+                        selectionWin.ShowDialog();
+                        move.moveType = promotionSelection;
+                    }
                     (_, _) = BoardManager.MakeTempMove(move);
                     AIPlayer.UpdateBookPosition(move);
                     Render.UpdateBoard(buttons, BoardManager.GetBoard());
@@ -68,7 +75,7 @@ namespace ChessUI
                     selectedPosition = -1;
                     pieceSelected = false;
 
-                    BoardManager.UpdateSideToMove();
+                    //BoardManager.UpdateSideToMove();
                     BoardManager.UpdateMoveCount();
                     BoardManager.UpdateAttackedPositions(BoardManager.whiteToMove);
                     OpponentMove();
@@ -80,6 +87,7 @@ namespace ChessUI
         {
             if (BoardManager.fullMoves <= 5)
             {
+                BoardManager.UpdateSideToMove();
                 bool success = MakeBookMove();
                 if (success) { return; }
                 MakeSearchMove();
@@ -106,7 +114,7 @@ namespace ChessUI
 
         private void MakeSearchMove()
         {
-            int maxDepth = 4;
+            int maxDepth = 5;
             Move? move = AIPlayer.MakeBestEvaluatedMove(maxDepth);
             Move move_ = move ?? new Move(0, 0);
             (_, _) = BoardManager.MakeTempMove(move_);
