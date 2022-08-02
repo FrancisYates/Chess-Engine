@@ -31,7 +31,7 @@ namespace ChessUI
             InitializeComponent();
             buttons = CreateButtonList();
 
-            AIPlayer.CreateBookTree();
+            //AIPlayer.CreateBookTree();
             MoveGeneration.CalculateDirections();
             string initialBoardPath = Directory.GetCurrentDirectory() + "\\start.txt";
             BoardManager.LoadBoard(initialBoardPath);
@@ -114,7 +114,7 @@ namespace ChessUI
 
         private void MakeSearchMove()
         {
-            int maxDepth = 5;
+            int maxDepth = 7;
             Move? move = AIPlayer.MakeBestEvaluatedMove(maxDepth);
             Move move_ = move ?? new Move(0, 0);
             (_, _) = BoardManager.MakeTempMove(move_);

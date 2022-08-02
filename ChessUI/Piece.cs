@@ -78,6 +78,36 @@ namespace ChessUI
             return IsPieceColour(pieceInSquare, opponentColour);
         }
 
+        public static int GetPieceValue(int piece)
+        {
+
+            if (Piece.IsType(piece, Piece.PieceType.Pawn))
+            {
+                return 100;
+            }
+            else if (Piece.IsType(piece, Piece.PieceType.Rook))
+            {
+                return 500;
+            }
+            else if (Piece.IsType(piece, Piece.PieceType.Bishop))
+            {
+                return 300;
+            }
+            else if (Piece.IsType(piece, Piece.PieceType.Knight))
+            {
+                return 300;
+            }
+            else if (Piece.IsType(piece, Piece.PieceType.King))
+            {
+                return 100000;
+            }
+            else if (Piece.IsType(piece, Piece.PieceType.Queen))
+            {
+                return 900;
+            }
+            return 0;
+        }
+
         public enum PieceType
         {
             Pawn = 0b_0000_0001,

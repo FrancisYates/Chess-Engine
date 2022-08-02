@@ -29,11 +29,15 @@ namespace ChessUI
         {
             //MoveGeneration.GenerateStricLegalMoves(BoardManager.whiteToMove);
             Node root = new Node();
-            GenerateMoveTree(1, maxDepth, root);
-            (_, int searched) = Minimax(root, 1, maxDepth, BoardManager.whiteToMove, -10000000, 10000000);
+            int negativeIninity = -1000000;
+            int positiveInfinity = 1000000;
+            //GenerateMoveTree(1, maxDepth, root);
+            GenerateMoveTree(0, maxDepth, root, negativeIninity, positiveInfinity, BoardManager.whiteToMove);
+            //(_, int searched) = Minimax(root, 1, maxDepth, BoardManager.whiteToMove, -10000000, 10000000);
+
             int totalPositions = CountPositions(root);
             Console.WriteLine("Total positions: " + totalPositions.ToString());
-            Console.WriteLine("positions evaluated: " + searched.ToString());
+            //Console.WriteLine("positions evaluated: " + searched.ToString());
             return GetBestMove(root, BoardManager.whiteToMove);
         }
 
@@ -51,6 +55,7 @@ namespace ChessUI
 
             return count;
         }
+
         private static Move? GetBestMove(Node root, bool isWhite)
         {
             Move? move = null;
@@ -206,46 +211,64 @@ namespace ChessUI
             }
         }
 
-        private static void GenerateMoveTree(int currentSearchDepth, int maxSearchDepth, Node parentNode)
+        private static void GenerateMoveTree(int currentSearchDepth, int maxSearchDepth, Node node, int alpha, int beta, bool maximising)
         {            
-            Move[] possibleMoves = MoveGeneration.GenerateStricLegalMoves(BoardManager.whiteToMove);
-
+            
             if (currentSearchDepth == maxSearchDepth)
             {
+                node.evaluation = MoveEvaluation.EvaluateBoard(BoardManager.GetBoard());
+                return;
+            }
+            Move[] possibleMoves = MoveGeneration.GenerateStricLegalMoves(maximising);
+            possibleMoves = MoveEvaluation.MoveOrdering(possibleMoves);
+
+            if (maximising)
+            {
+                node.evaluation = -10000000;
                 foreach (Move move in possibleMoves)
                 {
-                    Node newNode = new Node(move, parentNode);
-                    parentNode.AddChild(newNode);
+                    Node child = new Node(move, node);
+                    (int target, int castle) = BoardManager.MakeTempMove(move);
+                    GenerateMoveTree(currentSearchDepth + 1, maxSearchDepth, child, alpha, beta, !maximising);
+                    BoardManager.UndoMove(child.move, target, castle);
+                    node.evaluation = Math.Max(child.evaluation, node.evaluation);
+                    if (node.evaluation >= beta)
+                    {
+                        break;
+                    }
+                    node.AddChild(child);
+                    alpha = Math.Max(alpha, node.evaluation);
                 }
                 return;
             }
-
-            foreach (Move move in possibleMoves)
+            else
             {
-                BoardManager.UpdateSideToMove();
-                Node newNode = new Node(move, parentNode);
-                parentNode.AddChild(newNode);
-                (int tempPiece, int tempCastleRights) = BoardManager.MakeTempMove(move);
-
-                GenerateMoveTree(currentSearchDepth + 1, maxSearchDepth, newNode);
-
-                BoardManager.UndoMove(move, tempPiece, tempCastleRights);
-                BoardManager.UpdateSideToMove();
+                node.evaluation = 10000000;
+                foreach (Move move in possibleMoves)
+                {
+                    Node child = new Node(move, node);
+                    (int target, int castle) = BoardManager.MakeTempMove(move);
+                    GenerateMoveTree(currentSearchDepth + 1, maxSearchDepth, child, alpha, beta, !maximising);
+                    BoardManager.UndoMove(move, target, castle);
+                    node.evaluation = Math.Min(child.evaluation, node.evaluation);
+                    if (node.evaluation <= alpha)
+                    {
+                        break;
+                    }
+                    node.AddChild(child);
+                    beta = Math.Min(beta, node.evaluation);
+                }
+                return;
             }
-
-            //return parentNode;
         }
 
         public static (Move[], Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, List<Move> prevMoves, bool isWhite)
         {
             Dictionary<Move, int> positionsAftermove = new Dictionary<Move, int>();
 
-
-            //bool isWhite = currentSearchDepth % 2 == 1 ? false : true;
             BoardManager.whiteToMove = isWhite;
             BoardManager.UpdateAttackedPositions(!isWhite);
             Move[] possibleMoves = MoveGeneration.GenerateStricLegalMoves(isWhite);
-            //BoardManager.whiteToMove = !isWhite;
 
             if (currentSearchDepth == maxSearchDepth)
             {
@@ -263,7 +286,6 @@ namespace ChessUI
                     prevMoves = new List<Move>();
                 }
 
-                //BoardManager.UpdateAttackedPositions(!isWhite);
                 prevMoves.Add(move);
                 (Move[] furtherMoves, Dictionary<Move, int>  xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, prevMoves, !isWhite);
                 movesAtLevel = movesAtLevel.Concat(furtherMoves).ToList();
