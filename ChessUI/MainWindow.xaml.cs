@@ -92,8 +92,9 @@ namespace ChessUI
                 if (success) { return; }
                 MakeSearchMove();
             }
-            else 
+            else
             {
+                BoardManager.UpdateSideToMove();
                 MakeSearchMove();
             }
         }
@@ -114,7 +115,7 @@ namespace ChessUI
 
         private void MakeSearchMove()
         {
-            int maxDepth = 7;
+            int maxDepth = 5;
             Move? move = AIPlayer.MakeBestEvaluatedMove(maxDepth);
             Move move_ = move ?? new Move(0, 0);
             (_, _) = BoardManager.MakeTempMove(move_);

@@ -37,6 +37,8 @@ namespace ChessUI
 
             int totalPositions = CountPositions(root);
             Console.WriteLine("Total positions: " + totalPositions.ToString());
+            Console.WriteLine("Total Quiescence Positions: " + totalQuiescenceMoves.ToString());
+            totalQuiescenceMoves = 0;
             //Console.WriteLine("positions evaluated: " + searched.ToString());
             return GetBestMove(root, BoardManager.whiteToMove);
         }
@@ -211,12 +213,16 @@ namespace ChessUI
             }
         }
 
+        static int totalQuiescenceMoves = 0;
         private static void GenerateMoveTree(int currentSearchDepth, int maxSearchDepth, Node node, int alpha, int beta, bool maximising)
         {            
             
             if (currentSearchDepth == maxSearchDepth)
             {
-                node.evaluation = MoveEvaluation.EvaluateBoard(BoardManager.GetBoard());
+                //node.evaluation = MoveEvaluation.EvaluateBoard(BoardManager.GetBoard());
+                (int eval, int movesExplored) = QuiescenceSearch(alpha, beta, !maximising, 0, 5);
+                totalQuiescenceMoves += movesExplored;
+                node.evaluation = eval;
                 return;
             }
             Move[] possibleMoves = MoveGeneration.GenerateStricLegalMoves(maximising);
@@ -260,6 +266,46 @@ namespace ChessUI
                 }
                 return;
             }
+        }
+
+        private static (int, int) QuiescenceSearch(int alpha, int beta, bool maximising, int currentDepth, int maxDepth)
+         {
+            int exploredMoves = 1;
+            int stand_pat = MoveEvaluation.EvaluateBoard(BoardManager.GetBoard());
+            if (stand_pat >= beta)
+            {
+                return (beta, exploredMoves);
+            }
+
+            int maxDelta = 500; // queen value
+
+            if (stand_pat < alpha - maxDelta)
+            {
+                return (alpha, exploredMoves);
+            }
+            if (alpha < stand_pat) { alpha = stand_pat; }
+
+            if(currentDepth == maxDepth) { return (alpha, exploredMoves); }
+
+            Move[] captureMoves = MoveGeneration.GenerateStricLegalMoves(maximising, generateOnlyCaptures: true);
+            if(captureMoves.Length == 0) { return (alpha, exploredMoves); }
+            captureMoves = MoveEvaluation.MoveOrdering(captureMoves);
+
+            foreach (Move move in captureMoves)
+            {
+                (int target, int castle) = BoardManager.MakeTempMove(move);
+                (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, maxDepth);
+                score = -score;
+                exploredMoves += additionalMoves;
+                BoardManager.UndoMove(move, target, castle);
+
+                if (score >= beta)
+                    return (beta, exploredMoves);
+                if (score > alpha)
+                    alpha = score;
+            }
+            return (alpha, exploredMoves);
+
         }
 
         public static (Move[], Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, List<Move> prevMoves, bool isWhite)

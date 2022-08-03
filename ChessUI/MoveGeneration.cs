@@ -12,7 +12,7 @@ namespace ChessUI
         private static readonly short[] directionOffsets = { 8, -8, -1, 1, 7, 9, -9, -7};
         private readonly static List<Move> moves = new List<Move>();
 
-        private static void GenerateMoves(bool whiteMoves)
+        private static void GenerateMoves(bool whiteMoves, bool generateOnlyCaptures)
         {
             moves.Clear();
             int[] board = BoardManager.GetBoard();
@@ -31,39 +31,34 @@ namespace ChessUI
 
                 if (Piece.IsType(pieceAtPosition, Piece.PieceType.Pawn))
                 {
-                    GeneratePawnMoves(sourceSquare, pieceAtPosition, board);
+                    GeneratePawnMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
                     continue;
                 }
                 if (Piece.IsSlidingPiece(pieceAtPosition)){
-                    GenerateSlidingMoves(sourceSquare, pieceAtPosition, board);
+                    GenerateSlidingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
                     continue;
                 }
                 if (Piece.IsType(pieceAtPosition, Piece.PieceType.Knight))
                 {
-                    GenerateKnightMoves(sourceSquare, pieceAtPosition, board);
+                    GenerateKnightMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
                     continue;
                 }
                 if (Piece.IsType(pieceAtPosition, Piece.PieceType.King))
                 {
-                    GenerateKingMoves(sourceSquare, pieceAtPosition, board);
+                    GenerateKingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
                 }
             }
         }
 
-        public static List<Move> GetSudoLegalMoves(bool whiteMoves)
-        {
-            GenerateMoves(whiteMoves);
-            return moves;
-        }
 
-        public static Move[] GenerateStricLegalMoves(bool whiteMoves)
+        public static Move[] GenerateStricLegalMoves(bool whiteMoves, bool generateOnlyCaptures = false)
         {
-            GenerateMoves(whiteMoves);
+            GenerateMoves(whiteMoves, generateOnlyCaptures);
             RemoveIllegalMoves(whiteMoves);
             return moves.ToArray();
         }
 
-        private static void GenerateSlidingMoves(int sourceSquare, int piece, int[] board)
+        private static void GenerateSlidingMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
         {
             int startIdx = Piece.IsType(piece, Piece.PieceType.Bishop)? 4 : 0;
             int endIdx = Piece.IsType(piece, Piece.PieceType.Rook) ? 4 : 8;
@@ -87,12 +82,12 @@ namespace ChessUI
                             break;
                         }
                     }
-                    moves.Add(new Move(sourceSquare, targetSquare));
+                    if (!generateOnlyCaptures) { moves.Add(new Move(sourceSquare, targetSquare)); }
                 }
             }
         }
 
-        private static void GeneratePawnMoves(int sourceSquare, int piece, int[] board)
+        private static void GeneratePawnMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
         {
             bool isWhite = Piece.IsPieceColour(piece, 8); // check if piece is white. Enum is available but may be slower 
             int moveDirection = isWhite ? 1 : -1;
@@ -132,6 +127,8 @@ namespace ChessUI
                 }
             }
 
+            if (generateOnlyCaptures) { return; }
+
             int forwardMoves = Piece.HasPawnMoved(isWhite, sourceSquare) ? 1 : 2;
             for(int i = 1; i <= forwardMoves; i++)
             {
@@ -163,7 +160,7 @@ namespace ChessUI
             }
         }
 
-        private static void GenerateKnightMoves(int sourceSquare, int piece, int[] board)
+        private static void GenerateKnightMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
         {
             int[] offsets = LookUps.knightOffset[sourceSquare];
             for (int i = 0; i < offsets.Length; i++){
@@ -174,7 +171,7 @@ namespace ChessUI
                 }
                 int targetPiece = board[targetSquare];
                 
-                if(targetPiece == 0)
+                if(targetPiece == 0 && !generateOnlyCaptures)
                 {
                     moves.Add((Move)new Move(sourceSquare, targetSquare));
                     continue;
@@ -186,7 +183,7 @@ namespace ChessUI
             }
         }
 
-        private static void GenerateKingMoves(int sourceSquare, int piece, int[] board)
+        private static void GenerateKingMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
         {
             int[] offsets = LookUps.kingOffset[sourceSquare];
 
@@ -195,7 +192,7 @@ namespace ChessUI
                 int targetSquare = sourceSquare + offsets[i];
                 int targetPiece = board[targetSquare];
                 
-                if(targetPiece == 0)
+                if(targetPiece == 0 && !generateOnlyCaptures)
                 {
                     moves.Add((Move)new Move(sourceSquare, targetSquare));
                     continue;
@@ -205,6 +202,9 @@ namespace ChessUI
                     moves.Add((Move)new Move(sourceSquare, targetSquare, Move.MoveType.capture));
                 }
             }
+
+            if (generateOnlyCaptures) { return; }
+
             bool isWhite = Piece.IsPieceWhite(piece);
 
             if (CanCastleKingSide(isWhite, sourceSquare, board))
