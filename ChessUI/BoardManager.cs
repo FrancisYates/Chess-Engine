@@ -58,9 +58,17 @@ namespace ChessUI
             fullMoves += halfMoves;
             halfMoves = (halfMoves + 1) % 2;
         }
-        public static void LoadBoard(string saveFile)
+        public static void LoadBoard(string saveFile = "")
         {
-            string FEN = System.IO.File.ReadAllText(saveFile);
+            string FEN;
+            if (saveFile == "")
+            {
+                FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            }
+            else
+            {
+                FEN = System.IO.File.ReadAllText(saveFile);
+            }
             string[] FENSplit = FEN.Split(' ');
 
             byte[] asciiBytes = Encoding.ASCII.GetBytes(FENSplit[0]);
@@ -281,7 +289,7 @@ namespace ChessUI
             return board;
         }
 
-        public static (int, int) MakeTempMove(Move move)
+        public static (int, int) MakeMove(Move move)
         {
             enPesantSquare = -1;
             int targetContents = board[move.targetSquare];

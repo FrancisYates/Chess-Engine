@@ -60,7 +60,6 @@
     <Compile Include="bookNode.cs" />
     <Compile Include="LookUps.cs" />
     <Compile Include="Move.cs" />
-    <Compile Include="MoveChecking.cs" />
     <Compile Include="MoveEvaluation.cs" />
     <Compile Include="MoveGeneration.cs" />
     <Compile Include="Node.cs" />
@@ -133,6 +132,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="start.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MoveBook.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

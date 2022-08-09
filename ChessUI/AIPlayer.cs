@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Reflection;
 
 namespace ChessUI
 {
-    public static class AIPlayer
+    public class AIPlayer
     {
         public static BookNode bookMoveTree = new BookNode();
-        public static Move? MakeRandomMove()
+
+        public AIPlayer()
+        {
+
+        }
+        public Move? MakeRandomMove()
         {
             bool isWhite = BoardManager.whiteToMove;
             Move[] moves = MoveGeneration.GenerateStricLegalMoves(isWhite);
@@ -25,25 +29,22 @@ namespace ChessUI
             return moves[randomIndex];
         }
 
-        public static Move? MakeBestEvaluatedMove(int maxDepth)
+        public Move? MakeBestEvaluatedMove(int maxDepth)
         {
-            //MoveGeneration.GenerateStricLegalMoves(BoardManager.whiteToMove);
             Node root = new Node();
             int negativeIninity = -1000000;
             int positiveInfinity = 1000000;
-            //GenerateMoveTree(1, maxDepth, root);
             GenerateMoveTree(0, maxDepth, root, negativeIninity, positiveInfinity, BoardManager.whiteToMove);
-            //(_, int searched) = Minimax(root, 1, maxDepth, BoardManager.whiteToMove, -10000000, 10000000);
 
-            int totalPositions = CountPositions(root);
-            Console.WriteLine("Total positions: " + totalPositions.ToString());
-            Console.WriteLine("Total Quiescence Positions: " + totalQuiescenceMoves.ToString());
+            //prints for observing effect of search settings.
+            //int totalPositions = CountPositions(root);
+            //Console.WriteLine("Total positions: " + totalPositions.ToString());
+            //Console.WriteLine("Total Quiescence Positions: " + totalQuiescenceMoves.ToString());
             totalQuiescenceMoves = 0;
-            //Console.WriteLine("positions evaluated: " + searched.ToString());
             return GetBestMove(root, BoardManager.whiteToMove);
         }
 
-        private static int CountPositions(Node root)
+        private int CountPositions(Node root)
         {
             int count = 0;
             if (root.children.Count == 0)
@@ -58,7 +59,7 @@ namespace ChessUI
             return count;
         }
 
-        private static Move? GetBestMove(Node root, bool isWhite)
+        private Move? GetBestMove(Node root, bool isWhite)
         {
             Move? move = null;
             int bestEval = isWhite ? -10000000 : 10000000;
@@ -85,7 +86,7 @@ namespace ChessUI
             return move;
         }
 
-        private static (int, int) Minimax(Node node, int depth, int maxDepth, bool isWhite, int alpha, int beta)
+        private (int, int) Minimax(Node node, int depth, int maxDepth, bool isWhite, int alpha, int beta)
         {
             if (depth == maxDepth || node.children == null)
             {
@@ -98,7 +99,7 @@ namespace ChessUI
                 node.evaluation = -10000000;
                 foreach(Node child in node.children)
                 {
-                    (int target, int castle) = BoardManager.MakeTempMove(child.move);
+                    (int target, int castle) = BoardManager.MakeMove(child.move);
                     (int newValue, int searched) = Minimax(child, depth + 1, maxDepth, false, alpha, beta);
                     BoardManager.UndoMove(child.move, target, castle);
                     totalSearched += searched;
@@ -116,7 +117,7 @@ namespace ChessUI
                 node.evaluation = 10000000;
                 foreach (Node child in node.children)
                 {
-                    (int target, int castle) = BoardManager.MakeTempMove(child.move);
+                    (int target, int castle) = BoardManager.MakeMove(child.move);
                     (int newValue, int searched) = Minimax(child, depth + 1, maxDepth, true, alpha, beta);
                     BoardManager.UndoMove(child.move, target, castle);
                     totalSearched += searched;
@@ -131,12 +132,19 @@ namespace ChessUI
             }            
         }
 
-        public static void CreateBookTree()
+        public void CreateBookTree()
         {
-            string pgnAddress = "C:\\Users\\Jane\\source\\repos\\Chessv5\\ChessUI\\moveBook.txt";
-            string[] games = File.ReadAllLines(pgnAddress);
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "ChessUI.MoveBook.txt";
+            List<string> games = new List<string>();
+            string[] y = assembly.GetManifestResourceNames();
+            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                while (!reader.EndOfStream) { games.Add(reader.ReadLine()); }
+            }
 
-            for (int i = 0; i < games.Length; i++)
+            for (int i = 0; i < games.Count; i++)
             {
                 BookNode node = bookMoveTree;
                 int idx = 0;
@@ -156,7 +164,7 @@ namespace ChessUI
             }
         }
 
-        public static Move? MakeBookMove()
+        public Move? MakeBookMove()
         {
             int posibleBookMoves = bookMoveTree.children.Count();
             if (posibleBookMoves == 0) { return null; }
@@ -168,7 +176,7 @@ namespace ChessUI
             return LAN_ToMove(selectedMove);
         }
 
-        private static Move LAN_ToMove(string selectedMove)
+        private Move LAN_ToMove(string selectedMove)
         {
             int source = ToNumber(selectedMove[0]) + ((int)Char.GetNumericValue(selectedMove[1]) - 1) * 8;
             int target = ToNumber(selectedMove[2]) + ((int)Char.GetNumericValue(selectedMove[3]) - 1) * 8;
@@ -200,7 +208,7 @@ namespace ChessUI
             }
         }
 
-        public static void UpdateBookPosition(Move move)
+        public void UpdateBookPosition(Move move)
         {
             string madeMove = move.ToString();
             if (bookMoveTree.HasChild(madeMove))
@@ -214,7 +222,7 @@ namespace ChessUI
         }
 
         static int totalQuiescenceMoves = 0;
-        private static void GenerateMoveTree(int currentSearchDepth, int maxSearchDepth, Node node, int alpha, int beta, bool maximising)
+        private void GenerateMoveTree(int currentSearchDepth, int maxSearchDepth, Node node, int alpha, int beta, bool maximising)
         {            
             
             if (currentSearchDepth == maxSearchDepth)
@@ -234,7 +242,7 @@ namespace ChessUI
                 foreach (Move move in possibleMoves)
                 {
                     Node child = new Node(move, node);
-                    (int target, int castle) = BoardManager.MakeTempMove(move);
+                    (int target, int castle) = BoardManager.MakeMove(move);
                     GenerateMoveTree(currentSearchDepth + 1, maxSearchDepth, child, alpha, beta, !maximising);
                     BoardManager.UndoMove(child.move, target, castle);
                     node.evaluation = Math.Max(child.evaluation, node.evaluation);
@@ -253,7 +261,7 @@ namespace ChessUI
                 foreach (Move move in possibleMoves)
                 {
                     Node child = new Node(move, node);
-                    (int target, int castle) = BoardManager.MakeTempMove(move);
+                    (int target, int castle) = BoardManager.MakeMove(move);
                     GenerateMoveTree(currentSearchDepth + 1, maxSearchDepth, child, alpha, beta, !maximising);
                     BoardManager.UndoMove(move, target, castle);
                     node.evaluation = Math.Min(child.evaluation, node.evaluation);
@@ -268,7 +276,7 @@ namespace ChessUI
             }
         }
 
-        private static (int, int) QuiescenceSearch(int alpha, int beta, bool maximising, int currentDepth, int maxDepth)
+        private (int, int) QuiescenceSearch(int alpha, int beta, bool maximising, int currentDepth, int maxDepth)
          {
             int exploredMoves = 1;
             int stand_pat = MoveEvaluation.EvaluateBoard(BoardManager.GetBoard());
@@ -293,7 +301,7 @@ namespace ChessUI
 
             foreach (Move move in captureMoves)
             {
-                (int target, int castle) = BoardManager.MakeTempMove(move);
+                (int target, int castle) = BoardManager.MakeMove(move);
                 (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, maxDepth);
                 score = -score;
                 exploredMoves += additionalMoves;
@@ -308,7 +316,7 @@ namespace ChessUI
 
         }
 
-        public static (Move[], Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, List<Move> prevMoves, bool isWhite)
+        public (Move[], Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, List<Move> prevMoves, bool isWhite)
         {
             Dictionary<Move, int> positionsAftermove = new Dictionary<Move, int>();
 
@@ -325,7 +333,7 @@ namespace ChessUI
             foreach (Move move in possibleMoves)
             {
                 //BoardManager.UpdatePiecePositions(move);
-                (int tempPiece, int tempCastleRights) = BoardManager.MakeTempMove(move);
+                (int tempPiece, int tempCastleRights) = BoardManager.MakeMove(move);
 
                 if (currentSearchDepth == 1)
                 {

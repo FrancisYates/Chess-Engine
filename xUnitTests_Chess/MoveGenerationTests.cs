@@ -67,11 +67,12 @@ namespace xUnitTests_Chess
             MoveGeneration.CalculateDirections();
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
-            
+
+            AIPlayer aiPlayer = new AIPlayer();
             Move[] moves;
             List<Move> prevMoves = new();
             Dictionary<Move, int> positionsAftermove;
-            (moves, positionsAftermove) = AIPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
+            (moves, positionsAftermove) = aiPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
             int numMoves = moves.Length;
 
             foreach (Move move in positionsAftermove.Keys)
@@ -96,9 +97,10 @@ namespace xUnitTests_Chess
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
 
+            AIPlayer aiPlayer = new AIPlayer();
             Move[] moves;
             List<Move> prevMoves = new();
-            (moves, _) = AIPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
+            (moves, _) = aiPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
             int numMoves = moves.Length;
 
 
@@ -120,10 +122,11 @@ namespace xUnitTests_Chess
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
 
+            AIPlayer aiPlayer = new AIPlayer();
             Move[] moves;
             List<Move> prevMoves = new();
             Dictionary<Move, int> positionsAftermove;
-            (moves, positionsAftermove) = AIPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
+            (moves, positionsAftermove) = aiPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
             int numMoves = moves.Length;
 
             foreach (Move move in positionsAftermove.Keys)
