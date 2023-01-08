@@ -76,29 +76,15 @@ namespace ChessUI
                     case Move.MoveType.enPesant:
                         captureMoves.Add(move);
                         break;
-                    case Move.MoveType.promotionQueen:
-                        promotionMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionRook:
-                        promotionMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionBishop:
-                        promotionMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionKnight:
-                        promotionMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionQueenCapture:
-                        promotionCaptureMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionRookCapture:
-                        promotionCaptureMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionBishopCapture:
-                        promotionCaptureMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionKnightCapture:
-                        promotionCaptureMoves.Add(move);
+                    case Move.MoveType.promotion:
+                        if (!move.promotionCapture)
+                        {
+                            promotionMoves.Add(move);
+                        }
+                        else
+                        {
+                            promotionCaptureMoves.Add(move);
+                        }
                         break;
                     default:
                         ordinaryMoves.Add(move);

@@ -12,6 +12,7 @@ namespace ChessUI
         int selectedPosition = -1;
         bool pieceSelected = false;
         public Move.MoveType promotionSelection;
+        public Move.PromotionType promotionType;
         readonly AIPlayer aiPlayer;
         readonly Player player;
         public MainWindow()
@@ -28,7 +29,11 @@ namespace ChessUI
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
         }
-        public void SetPromotion(Move.MoveType selection) { promotionSelection = selection; }
+        public void SetPromotion(Move.MoveType selection, Move.PromotionType type) 
+        { 
+            promotionSelection = selection;
+            promotionType = type;
+        }
 
         private void HandelClick(short y, short x)
         {
@@ -54,6 +59,7 @@ namespace ChessUI
                         PromotionSelection selectionWin = new PromotionSelection(this);
                         selectionWin.ShowDialog();
                         move.moveType = promotionSelection;
+                        move.promotionType = promotionType;
                     }
                     (_, _) = BoardManager.MakeMove(move);
                     aiPlayer.UpdateBookPosition(move);

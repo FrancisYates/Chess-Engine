@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ChessUI
 {
-    internal static class Piece
+    public static class Piece
     {
 
         public static bool IsSameColour(int piece1, int piece2)

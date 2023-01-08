@@ -296,14 +296,13 @@ namespace ChessUI
             BoardManager.whiteToMove = isWhite;
             BoardManager.UpdateAttackedPositions(!isWhite);
             Move[] possibleMoves = MoveGeneration.GenerateStricLegalMoves(isWhite);
-
             if (currentSearchDepth == maxSearchDepth) return (possibleMoves, positionsAftermove);
 
             List<Move> movesAtLevel = new List<Move>();
             foreach (Move move in possibleMoves)
             {
-                //BoardManager.UpdatePiecePositions(move);
-                (int tempPiece, int tempCastleRights) = BoardManager.MakeMove(move);
+                    //BoardManager.UpdatePiecePositions(move);
+                    (int tempPiece, int tempCastleRights) = BoardManager.MakeMove(move);
 
                 if (currentSearchDepth == 1) prevMoves = new List<Move>();
 

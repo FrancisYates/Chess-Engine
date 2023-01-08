@@ -116,10 +116,10 @@ namespace ChessUI
                 {
                     if (Piece.IsAtFinalRank(isWhite, targetSquare))
                     {
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionBishopCapture));
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionRookCapture));
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionKnightCapture));
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionQueenCapture));
+                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.bishop, true));
+                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.rook, true));
+                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.knight, true));
+                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.queen, true));
                         continue;
                     }
                     moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.capture));
@@ -145,10 +145,10 @@ namespace ChessUI
                 }
                 if (Piece.IsAtFinalRank(isWhite, targetSquare))
                 {
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionBishop));
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionRook));
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionKnight));
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionQueen));
+                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.bishop, false));
+                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.rook, false));
+                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.knight, false));
+                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.queen, false));
                     continue;
                 }
                 if(i == 2)

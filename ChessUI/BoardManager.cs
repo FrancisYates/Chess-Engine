@@ -334,49 +334,8 @@ namespace ChessUI
                     CastleMove(move, isWhite);
                     break;
 
-                case Move.MoveType.promotionBishop:
-                    targetContents = 0;
-                    board[move.targetSquare] = (int)Piece.PieceType.Bishop | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                case Move.MoveType.promotionBishopCapture:
-                    targetContents = board[move.targetSquare];
-                    board[move.targetSquare] = (int)Piece.PieceType.Bishop | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                case Move.MoveType.promotionRook:
-                    targetContents = 0;
-                    board[move.targetSquare] = (int)Piece.PieceType.Rook | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-                case Move.MoveType.promotionRookCapture:
-                    targetContents = board[move.targetSquare];
-                    board[move.targetSquare] = (int)Piece.PieceType.Rook | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                case Move.MoveType.promotionKnight:
-                    targetContents = 0;
-                    board[move.targetSquare] = (int)Piece.PieceType.Knight | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-                case Move.MoveType.promotionKnightCapture:
-                    targetContents = board[move.targetSquare];
-                    board[move.targetSquare] = (int)Piece.PieceType.Knight | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                case Move.MoveType.promotionQueen:
-                    targetContents = 0;
-                    board[move.targetSquare] = (int)Piece.PieceType.Queen | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-                case Move.MoveType.promotionQueenCapture:
-                    targetContents = board[move.targetSquare];
-                    board[move.targetSquare] = (int)Piece.PieceType.Queen | side;
-                    board[move.sourceSquare] = 0;
+                case Move.MoveType.promotion:
+                    PromotionMove(move, side);
                     break;
 
                 default:
@@ -385,6 +344,15 @@ namespace ChessUI
             }
 
             return (targetContents, validCastling);
+        }
+
+        private static void PromotionMove(Move move, int side)
+        {
+            //int targetContents = move.promotionCapture? board[move.targetSquare]: 0;
+            Piece.PieceType type = move.GetPromotionPiece();
+            board[move.targetSquare] = (int)type | side;
+            board[move.sourceSquare] = 0;
+            //return targetContents;
         }
         private static void CastleMove(Move move, bool isWhite)
         {
@@ -465,41 +433,10 @@ namespace ChessUI
                     UndoCastle(move, side);
                     break;
 
-                case Move.MoveType.promotionBishop:
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-                case Move.MoveType.promotionBishopCapture:
-                    board[move.targetSquare] = priorTargetContent;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
+                case Move.MoveType.promotion:
+                    UndoPromotionMove(move, side, priorTargetContent);
                     break;
 
-                case Move.MoveType.promotionRook:
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-                case Move.MoveType.promotionRookCapture:
-                    board[move.targetSquare] = priorTargetContent;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-
-                case Move.MoveType.promotionKnight:
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-                case Move.MoveType.promotionKnightCapture:
-                    board[move.targetSquare] = priorTargetContent;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-
-                case Move.MoveType.promotionQueen:
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-                case Move.MoveType.promotionQueenCapture:
-                    board[move.targetSquare] = priorTargetContent;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
 
                 default:
                     board[move.sourceSquare] = board[move.targetSquare];
@@ -508,6 +445,12 @@ namespace ChessUI
                     break;
             }
             //UndoPiecePositions(move);
+        }
+
+        private static void UndoPromotionMove(Move move, int side , int priorTargetContent)
+        {
+            board[move.targetSquare] = move.promotionCapture? priorTargetContent  : 0;
+            board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
         }
 
         private static void UndoCastle(Move move, int side)

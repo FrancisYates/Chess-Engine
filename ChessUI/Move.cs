@@ -11,6 +11,8 @@ namespace ChessUI
         public int sourceSquare;
         public int targetSquare;
         public MoveType moveType;
+        public PromotionType promotionType;
+        public bool promotionCapture;
         public enum MoveType
         {
             move,
@@ -18,14 +20,42 @@ namespace ChessUI
             doublePawnMove,
             capture,
             castle,
-            promotionKnight,
-            promotionRook,
-            promotionQueen,
-            promotionBishop,
-            promotionKnightCapture,
-            promotionRookCapture,
-            promotionQueenCapture,
-            promotionBishopCapture
+            promotion
+        }
+
+        public enum PromotionType
+        {
+            queen = 0b_0000_0001,
+            rook = 0b_0000_0010,
+            bishop = 0b_0000_0100,
+            knight = 0b_0000_1000,
+        }
+
+        public bool IsPromotionType(PromotionType type)
+        {
+            return (this.promotionType & type) == type;
+        }
+
+        public Piece.PieceType GetPromotionPiece()
+        {
+            Piece.PieceType type = Piece.PieceType.Queen;
+            if (this.IsPromotionType(Move.PromotionType.queen))
+            {
+                type = Piece.PieceType.Queen;
+            }
+            else if (this.IsPromotionType(Move.PromotionType.knight))
+            {
+                type = Piece.PieceType.Knight;
+            }
+            else if (this.IsPromotionType(Move.PromotionType.rook))
+            {
+                type = Piece.PieceType.Rook;
+            }
+            else if (this.IsPromotionType(Move.PromotionType.bishop))
+            {
+                type = Piece.PieceType.Bishop;
+            }
+            return type;
         }
 
         public Move(int sourceSquare, int targetSquare) : this()
@@ -34,11 +64,20 @@ namespace ChessUI
             this.targetSquare = targetSquare;
             this.moveType = MoveType.move;
         }
+
         public Move(int sourceSquare, int targetSquare, MoveType moveType) : this()
         {
             this.sourceSquare = sourceSquare;
             this.targetSquare = targetSquare;
             this.moveType = moveType;
+        }
+        public Move(int sourceSquare, int targetSquare, MoveType moveType, PromotionType promotionType, bool isCapture) : this()
+        {
+            this.sourceSquare = sourceSquare;
+            this.targetSquare = targetSquare;
+            this.moveType = moveType;
+            this.promotionType = promotionType;
+            this.promotionCapture = isCapture;
         }
 
         public bool IsPromotion()
@@ -62,21 +101,24 @@ namespace ChessUI
             string endPos = ToLetter(x) + y.ToString();
 
             string finalString = startPos + endPos;
-            if (moveType == MoveType.promotionBishop || moveType == MoveType.promotionBishopCapture)
+            if(this.moveType == MoveType.promotion)
             {
-                finalString += "b";
-            }
-            else if (moveType == MoveType.promotionRook || moveType == MoveType.promotionRookCapture)
-            {
-                finalString += "r";
-            }
-            else if (moveType == MoveType.promotionKnight || moveType == MoveType.promotionKnightCapture)
-            {
+                if (this.IsPromotionType(PromotionType.bishop))
+                {
+                    finalString += "b";
+                }
+                else if (this.IsPromotionType(PromotionType.rook))
+                {
+                    finalString += "r";
+                }
+                else if (this.IsPromotionType(PromotionType.knight))
+                {
                 finalString += "n";
-            }
-            else if (moveType == MoveType.promotionQueen || moveType == MoveType.promotionQueenCapture)
-            {
+                }
+                else if (this.IsPromotionType(PromotionType.queen))
+                {
                 finalString += "q";
+                }
             }
             return finalString;
 
