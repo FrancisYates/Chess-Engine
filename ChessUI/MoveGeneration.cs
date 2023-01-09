@@ -78,7 +78,7 @@ namespace ChessUI
                         }
                         else
                         {
-                            moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.capture));
+                            moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture));
                             break;
                         }
                     }
@@ -105,7 +105,7 @@ namespace ChessUI
 
                 if (enPesantPossible && targetSquare == BoardManager.enPesantSquare)
                 {
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.enPesant));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.enPesant));
                     continue;
                 }
                 if (pieceAtTarget == 0)
@@ -116,13 +116,13 @@ namespace ChessUI
                 {
                     if (Piece.IsAtFinalRank(isWhite, targetSquare))
                     {
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.bishop, true));
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.rook, true));
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.knight, true));
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.queen, true));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.bishop));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.rook));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.knight));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.queen));
                         continue;
                     }
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.capture));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture));
                     continue;
                 }
             }
@@ -145,15 +145,15 @@ namespace ChessUI
                 }
                 if (Piece.IsAtFinalRank(isWhite, targetSquare))
                 {
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.bishop, false));
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.rook, false));
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.knight, false));
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotion, Move.PromotionType.queen, false));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.bishop));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.rook));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.knight));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.queen));
                     continue;
                 }
                 if(i == 2)
                 {
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.doublePawnMove));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.doublePawnMove));
                     continue;
                 }
                 moves.Add(new Move(sourceSquare, targetSquare));
@@ -178,7 +178,7 @@ namespace ChessUI
                 }
                 if(!Piece.IsSameColour(piece, targetPiece))
                 {
-                    moves.Add((Move)new Move(sourceSquare,targetSquare, Move.MoveType.capture));
+                    moves.Add((Move)new Move(sourceSquare,targetSquare, MoveType.capture));
                 }
             }
         }
@@ -199,7 +199,7 @@ namespace ChessUI
                 }
                 if (!Piece.IsSameColour(piece, targetPiece))
                 {
-                    moves.Add((Move)new Move(sourceSquare, targetSquare, Move.MoveType.capture));
+                    moves.Add((Move)new Move(sourceSquare, targetSquare, MoveType.capture));
                 }
             }
 
@@ -209,11 +209,11 @@ namespace ChessUI
 
             if (CanCastleKingSide(isWhite, sourceSquare, board))
             {
-                moves.Add((Move)new Move(sourceSquare, sourceSquare + 2, Move.MoveType.castle));
+                moves.Add((Move)new Move(sourceSquare, sourceSquare + 2, MoveType.castle));
             }
             if (CanCastleQueenSide(isWhite, sourceSquare, board))
             {
-                moves.Add((Move)new Move(sourceSquare, sourceSquare - 2, Move.MoveType.castle));
+                moves.Add((Move)new Move(sourceSquare, sourceSquare - 2, MoveType.castle));
             }
         }
 
@@ -407,7 +407,7 @@ namespace ChessUI
                 {
                     return true;
                 }
-                if (move.moveType == Move.MoveType.enPesant)
+                if (move.IsType(MoveType.enPesant))
                 {
                     int captureOffset = !Piece.IsPieceWhite(king) ? 8 : -8;
                     return move.targetSquare + captureOffset != piecePosition;
@@ -433,14 +433,8 @@ namespace ChessUI
             }
             else
             {
-                if (move.moveType == Move.MoveType.enPesant)
-                {
-                    return DoesEnPesantCreatesCheck(kingPosition, move);
-                }
-                if (IsSquareAttackedByOpponent(move.sourceSquare, isOpponentWhite))
-                {
-                    return IsCheckCreatedInDirection(kingPosition, move);
-                }
+                if (move.IsType( MoveType.enPesant)) return DoesEnPesantCreatesCheck(kingPosition, move);
+                if (IsSquareAttackedByOpponent(move.sourceSquare, isOpponentWhite))return IsCheckCreatedInDirection(kingPosition, move);
                 return false;
             }
         }

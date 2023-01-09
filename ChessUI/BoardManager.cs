@@ -310,37 +310,35 @@ namespace ChessUI
             int validCastling = castleingRights;
 
             //UpdatePiecePositions(move);
-            switch (move.moveType)
+            if (move.IsType(MoveType.promotion))
             {
-                case Move.MoveType.doublePawnMove:
-                    int offset = isWhite ? -8 : 8;
-                    enPesantSquare = move.targetSquare + offset;
+                PromotionMove(move, side);
+            }
+            else if (move.IsType(MoveType.doublePawnMove))
+            {
+                int offset = isWhite ? -8 : 8;
+                enPesantSquare = move.targetSquare + offset;
 
-                    board[move.targetSquare] = board[move.sourceSquare];
-                    board[move.sourceSquare] = 0;
-                    break;
+                board[move.targetSquare] = board[move.sourceSquare];
+                board[move.sourceSquare] = 0;
+            }
+            else if (move.IsType(MoveType.enPesant))
+            {
+                int xDelta = move.targetSquare % 8 - move.sourceSquare % 8;
 
-                case Move.MoveType.enPesant:
-                    int xDelta = move.targetSquare % 8 - move.sourceSquare % 8;
-
-                    targetContents = board[move.sourceSquare + xDelta];
-                    //RemovePiecePosition(move.sourceSquare + xDelta, targetContents);
-                    board[move.targetSquare] = board[move.sourceSquare];
-                    board[move.sourceSquare] = 0;
-                    board[move.sourceSquare + xDelta] = 0;
-                    break;
-
-                case Move.MoveType.castle:
-                    CastleMove(move, isWhite);
-                    break;
-
-                case Move.MoveType.promotion:
-                    PromotionMove(move, side);
-                    break;
-
-                default:
-                    targetContents = StandardMove(move, isWhite, movedPiece);
-                    break;
+                targetContents = board[move.sourceSquare + xDelta];
+                //RemovePiecePosition(move.sourceSquare + xDelta, targetContents);
+                board[move.targetSquare] = board[move.sourceSquare];
+                board[move.sourceSquare] = 0;
+                board[move.sourceSquare + xDelta] = 0;
+            }
+            else if (move.IsType(MoveType.castle))
+            {
+                CastleMove(move, isWhite);
+            }
+            else
+            {
+                targetContents = StandardMove(move, isWhite, movedPiece);
             }
 
             return (targetContents, validCastling);
@@ -411,45 +409,40 @@ namespace ChessUI
             int side = Piece.IsPieceWhite(movedPiece) ? 8 : 0;
             castleingRights = priorCastlingRights;
 
-            switch (move.moveType)
+            if (move.IsType(MoveType.promotion))
             {
-                case Move.MoveType.doublePawnMove:
-                    int offset = Piece.IsPieceWhite(movedPiece) ? -8 : 8;
-                    enPesantSquare = move.targetSquare + offset;
-
-                    board[move.sourceSquare] = board[move.targetSquare];
-                    board[move.targetSquare] = 0;
-                    break;
-
-                case Move.MoveType.enPesant:
-                    int xDelta = move.targetSquare % 8 - move.sourceSquare % 8;
-                    board[move.sourceSquare] = board[move.targetSquare];
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare + xDelta] = priorTargetContent;
-                    //AddPiecePosition(move.sourceSquare + xDelta, priorTargetContent);
-                    break;
-
-                case Move.MoveType.castle:
-                    UndoCastle(move, side);
-                    break;
-
-                case Move.MoveType.promotion:
-                    UndoPromotionMove(move, side, priorTargetContent);
-                    break;
-
-
-                default:
-                    board[move.sourceSquare] = board[move.targetSquare];
-                    board[move.targetSquare] = priorTargetContent;
-                    //AddPiecePosition(move.targetSquare, priorTargetContent);
-                    break;
+                UndoPromotionMove(move, side, priorTargetContent);
+                return;
             }
-            //UndoPiecePositions(move);
+            if (move.IsType(MoveType.doublePawnMove))
+            {
+                int offset = Piece.IsPieceWhite(movedPiece) ? -8 : 8;
+                enPesantSquare = move.targetSquare + offset;
+
+                board[move.sourceSquare] = board[move.targetSquare];
+                board[move.targetSquare] = 0;
+                return;
+            }
+            if (move.IsType(MoveType.enPesant))
+            {
+                int xDelta = move.targetSquare % 8 - move.sourceSquare % 8;
+                board[move.sourceSquare] = board[move.targetSquare];
+                board[move.targetSquare] = 0;
+                board[move.sourceSquare + xDelta] = priorTargetContent;
+                return;
+            }
+            if (move.IsType(MoveType.castle))
+            {
+                UndoCastle(move, side);
+                return;
+            }
+            board[move.sourceSquare] = board[move.targetSquare];
+            board[move.targetSquare] = priorTargetContent;
         }
 
         private static void UndoPromotionMove(Move move, int side , int priorTargetContent)
         {
-            board[move.targetSquare] = move.promotionCapture? priorTargetContent  : 0;
+            board[move.targetSquare] = priorTargetContent;
             board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
         }
 

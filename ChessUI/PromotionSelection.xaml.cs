@@ -27,27 +27,27 @@ namespace ChessUI
             this.mainWindow = mainWindow;
         }
 
-        private void HandelClick(Move.PromotionType promotionType)
+        private void HandelClick(PromotionPiece promotionType)
         {
-            mainWindow.SetPromotion(Move.MoveType.promotion, promotionType);
+            mainWindow.SetPromotion(MoveType.promotion, promotionType);
             this.Close();
         }
 
         private void QueenClick(object sender, RoutedEventArgs e)
         {
-            HandelClick(Move.PromotionType.queen);
+            HandelClick(PromotionPiece.queen);
         }
         private void RookClick(object sender, RoutedEventArgs e)
         {
-            HandelClick(Move.PromotionType.rook);
+            HandelClick(PromotionPiece.rook);
         }
         private void BishopClick(object sender, RoutedEventArgs e)
         {
-            HandelClick(Move.PromotionType.bishop);
+            HandelClick(PromotionPiece.bishop);
         }
         private void KnightClick(object sender, RoutedEventArgs e)
         {
-            HandelClick(Move.PromotionType.knight);
+            HandelClick(PromotionPiece.knight);
         }
     }
 }

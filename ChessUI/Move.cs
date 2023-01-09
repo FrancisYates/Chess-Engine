@@ -6,52 +6,55 @@ using System.Threading.Tasks;
 
 namespace ChessUI
 {
+    public enum MoveType
+    {
+        move =              0b_0000_0000,
+        enPesant =          0b_0000_0001,
+        doublePawnMove =    0b_0000_0010,
+        capture =           0b_1000_0000,
+        castle =            0b_0100_0000,
+        promotion =         0b_0010_0000
+    }
+
+    public enum PromotionPiece
+    {
+        queen =             0b_0011_0000,
+        rook =              0b_0010_1000,
+        bishop =            0b_0010_0100,
+        knight =            0b_0010_0010,
+    }
+
     public struct Move
     {
         public int sourceSquare;
         public int targetSquare;
-        public MoveType moveType;
-        public PromotionType promotionType;
-        public bool promotionCapture;
-        public enum MoveType
+        public int moveFlag;
+
+        public bool IsPromotionType(PromotionPiece piece)
         {
-            move,
-            enPesant,
-            doublePawnMove,
-            capture,
-            castle,
-            promotion
+            return (this.moveFlag & (int)piece) == (int)piece;
         }
 
-        public enum PromotionType
+        public bool IsType(MoveType type)
         {
-            queen = 0b_0000_0001,
-            rook = 0b_0000_0010,
-            bishop = 0b_0000_0100,
-            knight = 0b_0000_1000,
+            return (this.moveFlag & (int)type) == (int)type;
         }
-
-        public bool IsPromotionType(PromotionType type)
-        {
-            return (this.promotionType & type) == type;
-        }
-
         public Piece.PieceType GetPromotionPiece()
         {
             Piece.PieceType type = Piece.PieceType.Queen;
-            if (this.IsPromotionType(Move.PromotionType.queen))
+            if (this.IsPromotionType(PromotionPiece.queen))
             {
                 type = Piece.PieceType.Queen;
             }
-            else if (this.IsPromotionType(Move.PromotionType.knight))
+            else if (this.IsPromotionType(PromotionPiece.knight))
             {
                 type = Piece.PieceType.Knight;
             }
-            else if (this.IsPromotionType(Move.PromotionType.rook))
+            else if (this.IsPromotionType(PromotionPiece.rook))
             {
                 type = Piece.PieceType.Rook;
             }
-            else if (this.IsPromotionType(Move.PromotionType.bishop))
+            else if (this.IsPromotionType(PromotionPiece.bishop))
             {
                 type = Piece.PieceType.Bishop;
             }
@@ -62,32 +65,25 @@ namespace ChessUI
         {
             this.sourceSquare = sourceSquare;
             this.targetSquare = targetSquare;
-            this.moveType = MoveType.move;
+            this.moveFlag = 0;
         }
 
         public Move(int sourceSquare, int targetSquare, MoveType moveType) : this()
         {
             this.sourceSquare = sourceSquare;
             this.targetSquare = targetSquare;
-            this.moveType = moveType;
+            this.moveFlag = (int)moveType;
         }
-        public Move(int sourceSquare, int targetSquare, MoveType moveType, PromotionType promotionType, bool isCapture) : this()
+        public Move(int sourceSquare, int targetSquare, MoveType moveType, PromotionPiece piece) : this()
         {
             this.sourceSquare = sourceSquare;
             this.targetSquare = targetSquare;
-            this.moveType = moveType;
-            this.promotionType = promotionType;
-            this.promotionCapture = isCapture;
+            this.moveFlag = (int)moveType | (int)piece;
         }
 
         public bool IsPromotion()
         {
-            if(this.moveType == MoveType.move || this.moveType == MoveType.enPesant ||  
-                this.moveType == MoveType.doublePawnMove || this.moveType == MoveType.capture || this.moveType == MoveType.castle)
-            {
-                return false;
-            }
-            return true;
+            return (this.moveFlag & (int)MoveType.promotion) == (int)MoveType.promotion;
         }
 
         public override string ToString()
@@ -101,21 +97,21 @@ namespace ChessUI
             string endPos = ToLetter(x) + y.ToString();
 
             string finalString = startPos + endPos;
-            if(this.moveType == MoveType.promotion)
+            if(this.IsType(MoveType.promotion))
             {
-                if (this.IsPromotionType(PromotionType.bishop))
+                if (this.IsPromotionType(PromotionPiece.bishop))
                 {
                     finalString += "b";
                 }
-                else if (this.IsPromotionType(PromotionType.rook))
+                else if (this.IsPromotionType(PromotionPiece.rook))
                 {
                     finalString += "r";
                 }
-                else if (this.IsPromotionType(PromotionType.knight))
+                else if (this.IsPromotionType(PromotionPiece.knight))
                 {
                 finalString += "n";
                 }
-                else if (this.IsPromotionType(PromotionType.queen))
+                else if (this.IsPromotionType(PromotionPiece.queen))
                 {
                 finalString += "q";
                 }

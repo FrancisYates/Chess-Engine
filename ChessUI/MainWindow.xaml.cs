@@ -11,8 +11,8 @@ namespace ChessUI
         readonly List<Button> buttons;
         int selectedPosition = -1;
         bool pieceSelected = false;
-        public Move.MoveType promotionSelection;
-        public Move.PromotionType promotionType;
+        public MoveType promotionSelection;
+        public PromotionPiece promotionPiece;
         readonly AIPlayer aiPlayer;
         readonly Player player;
         public MainWindow()
@@ -29,10 +29,10 @@ namespace ChessUI
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
         }
-        public void SetPromotion(Move.MoveType selection, Move.PromotionType type) 
+        public void SetPromotion(MoveType selection, PromotionPiece piece) 
         { 
             promotionSelection = selection;
-            promotionType = type;
+            promotionPiece = piece;
         }
 
         private void HandelClick(short y, short x)
@@ -58,8 +58,7 @@ namespace ChessUI
                     {
                         PromotionSelection selectionWin = new PromotionSelection(this);
                         selectionWin.ShowDialog();
-                        move.moveType = promotionSelection;
-                        move.promotionType = promotionType;
+                        move.moveFlag = ((int)promotionSelection | (int)promotionPiece);
                     }
                     (_, _) = BoardManager.MakeMove(move);
                     aiPlayer.UpdateBookPosition(move);

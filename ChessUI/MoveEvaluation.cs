@@ -68,28 +68,26 @@ namespace ChessUI
 
             foreach (Move move in unorderedMoves)
             {
-                switch (move.moveType)
+                if (move.IsType(MoveType.capture))
                 {
-                    case Move.MoveType.capture:
-                        captureMoves.Add(move);
-                        break;
-                    case Move.MoveType.enPesant:
-                        captureMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotion:
-                        if (!move.promotionCapture)
-                        {
-                            promotionMoves.Add(move);
-                        }
-                        else
-                        {
-                            promotionCaptureMoves.Add(move);
-                        }
-                        break;
-                    default:
-                        ordinaryMoves.Add(move);
-                        break;
+                    if (!move.IsPromotion())
+                    {
+                        promotionCaptureMoves.Add(move);
+                        continue;
+                    }
+                    captureMoves.Add(move);
+                    continue;
                 }
+                if (move.IsType(MoveType.enPesant))
+                {
+                    captureMoves.Add(move);
+                    continue;
+                }
+                if (move.IsType(MoveType.promotion))
+                {
+                    promotionMoves.Add(move);
+                }
+                ordinaryMoves.Add(move);
             }
 
             List<Move> orderedMoves = promotionCaptureMoves;
@@ -110,7 +108,7 @@ namespace ChessUI
             {
                 int capturingPiece = board[move.sourceSquare];
                 int capturedPiece;
-                if (move.moveType == Move.MoveType.enPesant)
+                if (move.IsType(MoveType.enPesant))
                 {
                     if (Piece.IsPieceWhite(capturingPiece))
                     {

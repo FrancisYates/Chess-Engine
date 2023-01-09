@@ -32,7 +32,7 @@ namespace ChessUI
             {
                 if (proposedMove.sourceSquare == move.sourceSquare && proposedMove.targetSquare == move.targetSquare) 
                 {
-                    proposedMove.moveType = move.moveType;
+                    proposedMove.moveFlag = move.moveFlag;
                     return true; 
                 }
             }
