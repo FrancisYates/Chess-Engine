@@ -14,7 +14,7 @@ namespace ChessUI
         public MoveType promotionSelection;
         public PromotionPiece promotionPiece;
         readonly AIPlayer aiPlayer;
-        readonly Player player;
+        //readonly Player player;
         public MainWindow()
         {
             InitializeComponent();
@@ -38,7 +38,7 @@ namespace ChessUI
         private void HandelClick(short y, short x)
         {
             int thisPosition = 63 - (y * 8 + (7 - x));
-            bool validSelection = player.IsValidSelection(BoardManager.GetBoard(), thisPosition);
+            bool validSelection = Player.IsValidSelection(BoardManager.GetBoard(), thisPosition);
             if (validSelection)
             {
                 if(selectedPosition != -1)
@@ -52,7 +52,7 @@ namespace ChessUI
             if (!validSelection && pieceSelected)
             {
                 Move move = new Move(selectedPosition, thisPosition);
-                if (player.IsMoveValid(ref move))
+                if (Player.IsMoveValid(ref move))
                 {
                     if (move.IsPromotion())
                     {
