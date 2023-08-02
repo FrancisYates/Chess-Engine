@@ -62,7 +62,7 @@ namespace ChessUI
                         selectionWin.ShowDialog();
                         move.moveFlag = ((int)promotionSelection | (int)promotionPiece);
                     }
-                    (_, _) = BoardManager.MakeMove(move);
+                    (_, _) = MoveManager.MakeMove(move, BoardManager.GetBoard());
                     aiPlayer.UpdateBookPosition(move);
                     Render.UpdateBoard(buttons, BoardManager.GetBoard());
                     Render.HighlightSquare(buttons, selectedPosition);
@@ -99,7 +99,7 @@ namespace ChessUI
             Move? bookMove = aiPlayer.MakeBookMove();
             if (bookMove == null) { return false; }
             Move move_ = bookMove ?? new Move(0, 0);
-            (_, _) = BoardManager.MakeMove(move_);
+            (_, _) = MoveManager.MakeMove(move_, BoardManager.GetBoard());
             Render.UpdateBoard(buttons, BoardManager.GetBoard());
 
             BoardManager.UpdateSideToMove();
@@ -113,7 +113,7 @@ namespace ChessUI
             int maxDepth = 5;
             Move? move = aiPlayer.MakeBestEvaluatedMove(maxDepth);
             Move move_ = move ?? new Move(0, 0);
-            (_, _) = BoardManager.MakeMove(move_);
+            (_, _) = MoveManager.MakeMove(move_, BoardManager.GetBoard());
             Render.UpdateBoard(buttons, BoardManager.GetBoard());
 
             BoardManager.UpdateSideToMove();
