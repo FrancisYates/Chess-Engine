@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using ChessUI.Enums;
+
 namespace ChessUI
 {
     /// <summary>

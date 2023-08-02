@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ChessUI.Enums;
 
 namespace ChessUI
 {
@@ -347,7 +348,7 @@ namespace ChessUI
         private static void PromotionMove(Move move, int side)
         {
             //int targetContents = move.promotionCapture? board[move.targetSquare]: 0;
-            Piece.PieceType type = move.GetPromotionPiece();
+            PieceType type = move.GetPromotionPiece();
             board[move.targetSquare] = (int)type | side;
             board[move.sourceSquare] = 0;
             //return targetContents;
@@ -360,13 +361,13 @@ namespace ChessUI
             if (kingSide)
             {
                 int rookPosition = isWhite ? 7 : 63;
-                board[move.sourceSquare + 1] = (int)Piece.PieceType.Rook | side;
+                board[move.sourceSquare + 1] = (int)PieceType.Rook | side;
                 board[rookPosition] = 0;
             }
             else
             {
                 int rookPosition = isWhite ? 0 : 56;
-                board[move.sourceSquare - 1] = (int)Piece.PieceType.Rook | side;
+                board[move.sourceSquare - 1] = (int)PieceType.Rook | side;
                 board[rookPosition] = 0;
             }
 
@@ -383,7 +384,7 @@ namespace ChessUI
             board[move.targetSquare] = board[move.sourceSquare];
             board[move.sourceSquare] = 0;
 
-            if (Piece.IsType(movedPiece, Piece.PieceType.Rook))
+            if (Piece.IsType(movedPiece, PieceType.Rook))
             {
                 if (!Piece.HasRookMoved(isWhite, move.sourceSquare))
                 {
@@ -394,7 +395,7 @@ namespace ChessUI
                     castleingRights &= newCastleRights;
                 }
             }
-            else if (Piece.IsType(movedPiece, Piece.PieceType.King))
+            else if (Piece.IsType(movedPiece, PieceType.King))
             {
                 int castleingChange = isWhite ? 0b_0011 : 0b_1100;
                 castleingRights &= castleingChange;
@@ -443,7 +444,7 @@ namespace ChessUI
         private static void UndoPromotionMove(Move move, int side , int priorTargetContent)
         {
             board[move.targetSquare] = priorTargetContent;
-            board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
+            board[move.sourceSquare] = (int)PieceType.Pawn | side;
         }
 
         private static void UndoCastle(Move move, int side)
@@ -455,13 +456,13 @@ namespace ChessUI
             {
                 board[move.sourceSquare + 1] = 0;
                 int rookPosition = isWhite ? 7 : 63;
-                board[rookPosition] = (int)Piece.PieceType.Rook | side;
+                board[rookPosition] = (int)PieceType.Rook | side;
             }
             else
             {
                 board[move.sourceSquare - 1] = 0;
                 int rookPosition = isWhite ? 0 : 56;
-                board[rookPosition] = (int)Piece.PieceType.Rook | side;
+                board[rookPosition] = (int)PieceType.Rook | side;
             }
             board[move.sourceSquare] = board[move.targetSquare];
             board[move.targetSquare] = 0;
@@ -472,7 +473,7 @@ namespace ChessUI
             for(int position = 0; position < 64; position++)
             {
                 int piece = board[position];
-                if(Piece.IsType(piece, Piece.PieceType.King))
+                if(Piece.IsType(piece, PieceType.King))
                 {
                     if (Piece.IsPieceWhite(piece) == whiteKing)
                     {
@@ -493,7 +494,7 @@ namespace ChessUI
 
                 if (pieceAtPosition == 0 || Piece.IsPieceWhite(pieceAtPosition) != whiteMoves) continue;
 
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.Pawn))
+                if (Piece.IsType(pieceAtPosition, PieceType.Pawn))
                 {
                     UpdatePawnAttacked(sourceSquare, pieceAtPosition);
                     continue;
@@ -503,12 +504,12 @@ namespace ChessUI
                     UpdateSlidingAttacked(sourceSquare, pieceAtPosition);
                     continue;
                 }
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.Knight))
+                if (Piece.IsType(pieceAtPosition, PieceType.Knight))
                 {
                     UpdateKnightAttacked(sourceSquare, pieceAtPosition);
                     continue;
                 }
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.King))
+                if (Piece.IsType(pieceAtPosition, PieceType.King))
                 {
                     UpdateKingAttacked(sourceSquare, pieceAtPosition);
                 }
@@ -526,8 +527,8 @@ namespace ChessUI
 
         private static void UpdateSlidingAttacked(int sourceSquare, int piece)
         {
-            int startIdx = Piece.IsType(piece, Piece.PieceType.Bishop) ? 4 : 0;
-            int endIdx = Piece.IsType(piece, Piece.PieceType.Rook) ? 4 : 8;
+            int startIdx = Piece.IsType(piece, PieceType.Bishop) ? 4 : 0;
+            int endIdx = Piece.IsType(piece, PieceType.Rook) ? 4 : 8;
 
             int[][] numSquaresInDirection = MoveGeneration.numSquaresInDirection;
             int attackIndicator = Piece.IsPieceWhite(piece) ? 2 : 1;
@@ -643,9 +644,9 @@ namespace ChessUI
                     {
                         if(direction < 4)
                         {
-                            return Piece.IsType(pieceAtTarget, Piece.PieceType.Rook) || Piece.IsType(pieceAtTarget, Piece.PieceType.Queen);
+                            return Piece.IsType(pieceAtTarget, PieceType.Rook) || Piece.IsType(pieceAtTarget, PieceType.Queen);
                         }
-                        return Piece.IsType(pieceAtTarget, Piece.PieceType.Bishop) || Piece.IsType(pieceAtTarget, Piece.PieceType.Queen);
+                        return Piece.IsType(pieceAtTarget, PieceType.Bishop) || Piece.IsType(pieceAtTarget, PieceType.Queen);
                     }
                     break;
                 }
@@ -677,12 +678,12 @@ namespace ChessUI
                     {
                         if (Piece.IsSlidingPiece(pieceAtTarget))
                         {
-                            if(directionIdx < 4 && !Piece.IsType(pieceAtTarget, Piece.PieceType.Bishop))
+                            if(directionIdx < 4 && !Piece.IsType(pieceAtTarget, PieceType.Bishop))
                             {
                                 pieces.Add(targetSquare);
                                 break;
                             }
-                            if(directionIdx > 3 && !Piece.IsType(pieceAtTarget, Piece.PieceType.Rook))
+                            if(directionIdx > 3 && !Piece.IsType(pieceAtTarget, PieceType.Rook))
                             {
                                 pieces.Add(targetSquare);
                                 break;
@@ -711,7 +712,7 @@ namespace ChessUI
                 int targetPiece = board[targetSquare];
                 if (Piece.IsSameColour(piece, targetPiece)) continue;
 
-                if (Piece.IsType(targetPiece, Piece.PieceType.Knight)) pieces.Add(targetSquare);
+                if (Piece.IsType(targetPiece, PieceType.Knight)) pieces.Add(targetSquare);
             }
 
             return pieces;
@@ -801,7 +802,7 @@ namespace ChessUI
                 int targetPiece = board[targetSquare];
                 if(targetPiece == 0) continue;
                 if (Piece.IsSameColour(piece, targetPiece)) continue;
-                if (Piece.IsType(targetPiece, Piece.PieceType.Pawn)) pieces.Add(targetSquare);
+                if (Piece.IsType(targetPiece, PieceType.Pawn)) pieces.Add(targetSquare);
             }
 
             return pieces;

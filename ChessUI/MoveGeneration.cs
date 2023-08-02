@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ChessUI.Enums;
 
 namespace ChessUI
 {
@@ -17,7 +15,7 @@ namespace ChessUI
             moves.Clear();
             int[] board = BoardManager.GetBoard();
             int toMoveColour = whiteMoves ? 8 : 0;
-            List<int> piecePositions = whiteMoves ? BoardManager.whitePiecePositions : BoardManager.blackPiecePositions;
+            //List<int> piecePositions = whiteMoves ? BoardManager.whitePiecePositions : BoardManager.blackPiecePositions;
             //PERF Store Piece position rather than looping
             for (int sourceSquare = 0; sourceSquare < 64; sourceSquare++)
             //foreach (int sourceSquare in piecePositions)
@@ -28,24 +26,22 @@ namespace ChessUI
                 {
                     continue;
                 }
-
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.Pawn))
+                switch (Piece.GetPieceType(pieceAtPosition))
                 {
-                    GeneratePawnMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                    continue;
-                }
-                if (Piece.IsSlidingPiece(pieceAtPosition)){
-                    GenerateSlidingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                    continue;
-                }
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.Knight))
-                {
-                    GenerateKnightMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                    continue;
-                }
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.King))
-                {
-                    GenerateKingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                    case PieceType.Pawn:
+                        GeneratePawnMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                        break;
+                    case PieceType.Bishop:
+                    case PieceType.Queen:
+                    case PieceType.Rook:
+                        GenerateSlidingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                        break;
+                    case PieceType.Knight:
+                        GenerateKnightMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                        break;
+                    case PieceType.King:
+                        GenerateKingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                        break;
                 }
             }
         }
@@ -60,8 +56,8 @@ namespace ChessUI
 
         private static void GenerateSlidingMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
         {
-            int startIdx = Piece.IsType(piece, Piece.PieceType.Bishop)? 4 : 0;
-            int endIdx = Piece.IsType(piece, Piece.PieceType.Rook) ? 4 : 8;
+            int startIdx = Piece.IsType(piece, PieceType.Bishop)? 4 : 0;
+            int endIdx = Piece.IsType(piece, PieceType.Rook) ? 4 : 8;
 
             for (int directionIdx = startIdx; directionIdx < endIdx; directionIdx++)
             {
@@ -422,7 +418,7 @@ namespace ChessUI
             bool isOpponentWhite = !Piece.IsPieceWhite(king);
             int movedPiece = BoardManager.GetBoard()[move.sourceSquare];
 
-            if (Piece.IsType(movedPiece, Piece.PieceType.King))
+            if (Piece.IsType(movedPiece, PieceType.King))
             {
                 return DoesKingMoveCauseCheck(move);
             }
@@ -500,9 +496,9 @@ namespace ChessUI
                     {
                         if (directionIdx < 4)
                         {
-                            return Piece.IsType(pieceAtTarget, Piece.PieceType.Rook) || Piece.IsType(pieceAtTarget, Piece.PieceType.Queen);
+                            return Piece.IsType(pieceAtTarget, PieceType.Rook) || Piece.IsType(pieceAtTarget, PieceType.Queen);
                         }
-                        return Piece.IsType(pieceAtTarget, Piece.PieceType.Bishop) || Piece.IsType(pieceAtTarget, Piece.PieceType.Queen);
+                        return Piece.IsType(pieceAtTarget, PieceType.Bishop) || Piece.IsType(pieceAtTarget, PieceType.Queen);
                     }
                     return false;
                 }
