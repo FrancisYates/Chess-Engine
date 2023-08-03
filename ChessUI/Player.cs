@@ -17,7 +17,7 @@ namespace ChessUI
             {
                 return false;
             }
-            if (Piece.IsPieceWhite(selectedPiece) != BoardManager.whiteToMove)
+            if (Piece.IsPieceWhite(selectedPiece) != BoardManager.WhiteToMove)
             {
                 return false;
             }
@@ -26,7 +26,7 @@ namespace ChessUI
 
         public static bool IsMoveValid( ref Move proposedMove)
         {
-            Move[] moves = MoveGeneration.GenerateStricLegalMoves(BoardManager.whiteToMove);
+            Move[] moves = MoveGeneration.GenerateStricLegalMoves(BoardManager.WhiteToMove);
             foreach (Move move in moves)
             {
                 if (proposedMove.sourceSquare == move.sourceSquare && proposedMove.targetSquare == move.targetSquare) 

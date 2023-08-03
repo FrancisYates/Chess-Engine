@@ -13,7 +13,7 @@ namespace ChessUI
         private static void GenerateMoves(bool whiteMoves, bool generateOnlyCaptures)
         {
             moves.Clear();
-            int[] board = BoardManager.GetBoard();
+            int[] board = BoardManager.Board;
             int toMoveColour = whiteMoves ? 8 : 0;
             //List<int> piecePositions = whiteMoves ? BoardManager.whitePiecePositions : BoardManager.blackPiecePositions;
             //PERF Store Piece position rather than looping
@@ -89,7 +89,7 @@ namespace ChessUI
             int moveDirection = isWhite ? 1 : -1;
 
             int[] attackOffsets = LookUps.pawnAttackOffset[isWhite ? 1 : 0, sourceSquare];
-            bool enPesantPossible = BoardManager.enPesantSquare != -1;
+            bool enPesantPossible = BoardManager.EnPesantSquare != -1;
             foreach (int offset in attackOffsets)
             {
                 int targetSquare = sourceSquare + offset;
@@ -99,7 +99,7 @@ namespace ChessUI
                 }
                 int pieceAtTarget = board[targetSquare];
 
-                if (enPesantPossible && targetSquare == BoardManager.enPesantSquare)
+                if (enPesantPossible && targetSquare == BoardManager.EnPesantSquare)
                 {
                     moves.Add(new Move(sourceSquare, targetSquare, MoveType.enPesant));
                     continue;
@@ -307,7 +307,7 @@ namespace ChessUI
 
         private static bool DoesKingMoveCauseCheck(Move move)
         {
-            int king = BoardManager.GetBoard()[move.sourceSquare];
+            int king = BoardManager.Board[move.sourceSquare];
             bool isOpponentWhite = !Piece.IsPieceWhite(king);
 
             if (IsSquareAttackedByOpponent(move.targetSquare, isOpponentWhite))
@@ -320,7 +320,7 @@ namespace ChessUI
                 if (checkingPieces.Count == 1)
                 {
                     int checkingPiecePosition = checkingPieces[0];
-                    int checkingPiece = BoardManager.GetBoard()[checkingPiecePosition];
+                    int checkingPiece = BoardManager.Board[checkingPiecePosition];
                     if (move.targetSquare == checkingPiecePosition)
                     {
                         return false;
@@ -341,7 +341,7 @@ namespace ChessUI
 
                 foreach (int checkingPosition in checkingPieces)
                 {
-                    int checkingPiece = BoardManager.GetBoard()[checkingPosition];
+                    int checkingPiece = BoardManager.Board[checkingPosition];
                     if (Piece.IsSlidingPiece(checkingPiece))
                     {
                         int kingToMove = LookUps.directionIndex[move.sourceSquare, move.targetSquare];
@@ -364,7 +364,7 @@ namespace ChessUI
 
         private static bool IsCheckBlocked(int kingPosition, Move move)
         {
-            int king = BoardManager.GetBoard()[kingPosition];
+            int king = BoardManager.Board[kingPosition];
 
             List<int> checkingPieces = BoardManager.FindCheckingPieces(kingPosition, king);
 
@@ -380,7 +380,7 @@ namespace ChessUI
             }
 
             int piecePosition = checkingPieces[0];
-            int checkingPiece = BoardManager.GetBoard()[piecePosition];
+            int checkingPiece = BoardManager.Board[piecePosition];
             if (Piece.IsSlidingPiece(checkingPiece))
             {
                 if (IsPieceInDirection(kingPosition, move.targetSquare, piecePosition))
@@ -414,9 +414,9 @@ namespace ChessUI
 
         private static bool DoesMoveCauseCheck(int kingPosition, Move move)
         {
-            int king = BoardManager.GetBoard()[kingPosition];
+            int king = BoardManager.Board[kingPosition];
             bool isOpponentWhite = !Piece.IsPieceWhite(king);
-            int movedPiece = BoardManager.GetBoard()[move.sourceSquare];
+            int movedPiece = BoardManager.Board[move.sourceSquare];
 
             if (Piece.IsType(movedPiece, PieceType.King))
             {
@@ -437,7 +437,7 @@ namespace ChessUI
 
         private static bool DoesEnPesantCreatesCheck(int kingPosition, Move move)
         {
-            int king = BoardManager.GetBoard()[kingPosition];
+            int king = BoardManager.Board[kingPosition];
 
             int capturedOffest = move.targetSquare % 8 - move.sourceSquare % 8;
             int capturedPosition = move.sourceSquare + capturedOffest;
@@ -452,7 +452,7 @@ namespace ChessUI
             for (int i = 0; i < maxOffset; i++)
             {
                 int targetSquare = move.sourceSquare + (i + 1) * directionOffsets[directionToKing];
-                int pieceAtTarget = BoardManager.GetBoard()[targetSquare];
+                int pieceAtTarget = BoardManager.Board[targetSquare];
 
                 if (pieceAtTarget == 0) { continue; }
 
@@ -481,7 +481,7 @@ namespace ChessUI
                     continue;
                 }
 
-                int pieceAtTarget = BoardManager.GetBoard()[targetSquare];
+                int pieceAtTarget = BoardManager.Board[targetSquare];
 
                 if (pieceAtTarget == 0) { continue; }
 
@@ -516,7 +516,7 @@ namespace ChessUI
         private static bool IsSquareAttackedByOpponent(int squareIndex, bool isOpponentWhite)
         {
             int attackedIndicator = isOpponentWhite ? 2 : 1;
-            int positionAndIndicator = BoardManager.attackPositionBoard[squareIndex] & attackedIndicator;
+            int positionAndIndicator = BoardManager.AttackPositionBoard[squareIndex] & attackedIndicator;
             return positionAndIndicator == attackedIndicator;
         }
 
@@ -548,7 +548,7 @@ namespace ChessUI
                 return false;
             }
 
-            int king = BoardManager.GetBoard()[kingPosition];
+            int king = BoardManager.Board[kingPosition];
             int sideColour = Piece.IsPieceWhite(king) ? 8 : 0;
             return BoardManager.IsSlidingPieceInDirection(move.sourceSquare, directionFromKing, sideColour);
         }
@@ -567,7 +567,7 @@ namespace ChessUI
             for (int i = 0; i < maxOffset; i++)
             {
                 int targetSquare = movedPiecePosition + (i + 1) * directionOffsets[directionIdx];
-                int pieceAtTarget = BoardManager.GetBoard()[targetSquare];
+                int pieceAtTarget = BoardManager.Board[targetSquare];
 
                 if (pieceAtTarget == 0) { continue; }
 

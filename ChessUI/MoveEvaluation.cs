@@ -52,7 +52,7 @@ namespace ChessUI
 
             for (int i = 0; i < 64; i++)
             {
-                int position = BoardManager.attackPositionBoard[i];
+                int position = BoardManager.AttackPositionBoard[i];
                 whiteControlled += (position & 2) / 2;
                 blackControlled += position & 1;
             }
@@ -103,7 +103,7 @@ namespace ChessUI
         private static List<Move> CaptureOrdering(List<Move> captureMoves)
         {
             (int, int)[] x = new (int, int)[captureMoves.Count];
-            int[] board = BoardManager.GetBoard();
+            int[] board = BoardManager.Board;
             int idx = 0;
             foreach(Move move in captureMoves)
             {

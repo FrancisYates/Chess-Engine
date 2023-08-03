@@ -26,7 +26,7 @@ namespace ChessUI
             aiPlayer.CreateBookTree();
             MoveGeneration.CalculateDirections();
             BoardManager.LoadBoard();
-            Render.UpdateBoard(buttons, BoardManager.GetBoard());
+            Render.UpdateBoard(buttons, BoardManager.Board);
 
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
@@ -40,7 +40,7 @@ namespace ChessUI
         private void HandelClick(short y, short x)
         {
             int thisPosition = 63 - (y * 8 + (7 - x));
-            bool validSelection = Player.IsValidSelection(BoardManager.GetBoard(), thisPosition);
+            bool validSelection = Player.IsValidSelection(BoardManager.Board, thisPosition);
             if (validSelection)
             {
                 if(selectedPosition != -1)
@@ -62,9 +62,9 @@ namespace ChessUI
                         selectionWin.ShowDialog();
                         move.moveFlag = ((int)promotionSelection | (int)promotionPiece);
                     }
-                    (_, _) = MoveManager.MakeMove(move, BoardManager.GetBoard());
+                    (_, _) = MoveManager.MakeMove(move, BoardManager.Board);
                     aiPlayer.UpdateBookPosition(move);
-                    Render.UpdateBoard(buttons, BoardManager.GetBoard());
+                    Render.UpdateBoard(buttons, BoardManager.Board);
                     Render.HighlightSquare(buttons, selectedPosition);
                     Render.RemoveHighlightFromSquare(buttons, selectedPosition);
                     selectedPosition = -1;
@@ -72,7 +72,7 @@ namespace ChessUI
 
                     //BoardManager.UpdateSideToMove();
                     BoardManager.UpdateMoveCount();
-                    BoardManager.UpdateAttackedPositions(BoardManager.whiteToMove);
+                    BoardManager.UpdateAttackedPositions(BoardManager.WhiteToMove);
                     OpponentMove();
                 }
             }
@@ -80,7 +80,7 @@ namespace ChessUI
 
         private void OpponentMove()
         {
-            if (BoardManager.fullMoves <= 5)
+            if (BoardManager.FullMoves <= 5)
             {
                 BoardManager.UpdateSideToMove();
                 bool success = MakeBookMove();
@@ -99,12 +99,12 @@ namespace ChessUI
             Move? bookMove = aiPlayer.MakeBookMove();
             if (bookMove == null) { return false; }
             Move move_ = bookMove ?? new Move(0, 0);
-            (_, _) = MoveManager.MakeMove(move_, BoardManager.GetBoard());
-            Render.UpdateBoard(buttons, BoardManager.GetBoard());
+            (_, _) = MoveManager.MakeMove(move_, BoardManager.Board);
+            Render.UpdateBoard(buttons, BoardManager.Board);
 
             BoardManager.UpdateSideToMove();
             BoardManager.UpdateMoveCount();
-            BoardManager.UpdateAttackedPositions(!BoardManager.whiteToMove);
+            BoardManager.UpdateAttackedPositions(!BoardManager.WhiteToMove);
             return true;
         }
 
@@ -113,12 +113,12 @@ namespace ChessUI
             int maxDepth = 5;
             Move? move = aiPlayer.MakeBestEvaluatedMove(maxDepth);
             Move move_ = move ?? new Move(0, 0);
-            (_, _) = MoveManager.MakeMove(move_, BoardManager.GetBoard());
-            Render.UpdateBoard(buttons, BoardManager.GetBoard());
+            (_, _) = MoveManager.MakeMove(move_, BoardManager.Board);
+            Render.UpdateBoard(buttons, BoardManager.Board);
 
             BoardManager.UpdateSideToMove();
             BoardManager.UpdateMoveCount();
-            BoardManager.UpdateAttackedPositions(!BoardManager.whiteToMove);
+            BoardManager.UpdateAttackedPositions(!BoardManager.WhiteToMove);
         }
 
         #region rank_1_ClickHandel

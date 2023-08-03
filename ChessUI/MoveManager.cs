@@ -11,12 +11,12 @@ namespace ChessUI
     {
         public static (int, int) MakeMove(Move move, int[] board)
         {
-            BoardManager.enPesantSquare = -1;
+            BoardManager.EnPesantSquare = -1;
             int targetContents = board[move.targetSquare];
             int movedPiece = board[move.sourceSquare];
             bool isWhite = Piece.IsPieceWhite(movedPiece);
             int side = isWhite ? 8 : 0;
-            int validCastling = BoardManager.castleingRights;
+            int validCastling = BoardManager.CastleingRights;
 
             //UpdatePiecePositions(move);
             if (move.IsType(MoveType.promotion))
@@ -26,7 +26,7 @@ namespace ChessUI
             else if (move.IsType(MoveType.doublePawnMove))
             {
                 int offset = isWhite ? -8 : 8;
-                BoardManager.enPesantSquare = move.targetSquare + offset;
+                BoardManager.EnPesantSquare = move.targetSquare + offset;
 
                 board[move.targetSquare] = board[move.sourceSquare];
                 board[move.sourceSquare] = 0;
@@ -79,7 +79,7 @@ namespace ChessUI
             board[move.targetSquare] = board[move.sourceSquare];
             board[move.sourceSquare] = 0;
             int castleingChange = isWhite ? 0b_0011 : 0b_1100;
-            BoardManager.castleingRights &= castleingChange;
+            BoardManager.CastleingRights &= castleingChange;
 
         }
 
@@ -97,13 +97,13 @@ namespace ChessUI
                     int rookKingSideSquare = isWhite ? 7 : 63;
                     int kingOrQueen = move.sourceSquare == rookKingSideSquare ? 0b_0101 : 0b_1010;
                     int newCastleRights = kingOrQueen | whiteOrBlack;
-                    BoardManager.castleingRights &= newCastleRights;
+                    BoardManager.CastleingRights &= newCastleRights;
                 }
             }
             else if (Piece.IsType(movedPiece, PieceType.King))
             {
                 int castleingChange = isWhite ? 0b_0011 : 0b_1100;
-                BoardManager.castleingRights &= castleingChange;
+                BoardManager.CastleingRights &= castleingChange;
             }
 
             return target;
@@ -113,7 +113,7 @@ namespace ChessUI
         {
             int movedPiece = board[move.targetSquare];
             int side = Piece.IsPieceWhite(movedPiece) ? 8 : 0;
-            BoardManager.castleingRights = priorCastlingRights;
+            BoardManager.CastleingRights = priorCastlingRights;
 
             if (move.IsType(MoveType.promotion))
             {
@@ -123,7 +123,7 @@ namespace ChessUI
             if (move.IsType(MoveType.doublePawnMove))
             {
                 int offset = Piece.IsPieceWhite(movedPiece) ? -8 : 8;
-                BoardManager.enPesantSquare = move.targetSquare + offset;
+                BoardManager.EnPesantSquare = move.targetSquare + offset;
 
                 board[move.sourceSquare] = board[move.targetSquare];
                 board[move.targetSquare] = 0;

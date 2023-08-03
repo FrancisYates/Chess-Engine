@@ -16,7 +16,7 @@ namespace ChessUI
         }
         public Move? MakeRandomMove()
         {
-            bool isWhite = BoardManager.whiteToMove;
+            bool isWhite = BoardManager.WhiteToMove;
             Move[] moves = MoveGeneration.GenerateStricLegalMoves(isWhite);
 
             Random random = new Random();
@@ -34,14 +34,14 @@ namespace ChessUI
             Node root = new Node();
             int negativeIninity = -1000000;
             int positiveInfinity = 1000000;
-            GenerateMoveTree(0, maxDepth, root, negativeIninity, positiveInfinity, BoardManager.whiteToMove);
+            GenerateMoveTree(0, maxDepth, root, negativeIninity, positiveInfinity, BoardManager.WhiteToMove);
 
             //prints for observing effect of search settings.
             //int totalPositions = CountPositions(root);
             //Console.WriteLine("Total positions: " + totalPositions.ToString());
             //Console.WriteLine("Total Quiescence Positions: " + totalQuiescenceMoves.ToString());
             totalQuiescenceMoves = 0;
-            return GetBestMove(root, BoardManager.whiteToMove);
+            return GetBestMove(root, BoardManager.WhiteToMove);
         }
 
         private int CountPositions(Node root)
@@ -84,7 +84,7 @@ namespace ChessUI
         {
             if (depth == maxDepth || node.children == null)
             {
-                node.evaluation = MoveEvaluation.EvaluateBoard(BoardManager.GetBoard());
+                node.evaluation = MoveEvaluation.EvaluateBoard(BoardManager.Board);
                 return (node.evaluation, 1);
             }
             int totalSearched = 0;
@@ -113,9 +113,9 @@ namespace ChessUI
 
             void Search(Node child)
             {
-                (int target, int castle) = MoveManager.MakeMove(child.move, BoardManager.GetBoard());
+                (int target, int castle) = MoveManager.MakeMove(child.move, BoardManager.Board);
                 (int newValue, int searched) = Minimax(child, depth + 1, maxDepth, true, alpha, beta);
-                MoveManager.UndoMove(child.move, target, castle, BoardManager.GetBoard());
+                MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
                 totalSearched += searched;
                 node.evaluation = Math.Min(newValue, node.evaluation);
             }
@@ -251,9 +251,9 @@ namespace ChessUI
         private Node GenerateChild(Move move, Node parent, int currentDepth, int maxDepth, int alpha, int beta, bool maximising)
         {
             Node child = new Node(move, parent);
-            (int target, int castle) = MoveManager.MakeMove(move, BoardManager.GetBoard());
+            (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
             GenerateMoveTree(currentDepth + 1, maxDepth, child, alpha, beta, !maximising);
-            MoveManager.UndoMove(child.move, target, castle, BoardManager.GetBoard());
+            MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
             parent.evaluation = Math.Max(child.evaluation, parent.evaluation);
             return child;
         }
@@ -261,7 +261,7 @@ namespace ChessUI
         private (int, int) QuiescenceSearch(int alpha, int beta, bool maximising, int currentDepth, int maxDepth)
          {
             int exploredMoves = 1;
-            int stand_pat = MoveEvaluation.EvaluateBoard(BoardManager.GetBoard());
+            int stand_pat = MoveEvaluation.EvaluateBoard(BoardManager.Board);
             if (stand_pat >= beta) return (beta, exploredMoves);
 
             int maxDelta = 500; // queen value
@@ -277,11 +277,11 @@ namespace ChessUI
 
             foreach (Move move in captureMoves)
             {
-                (int target, int castle) = MoveManager.MakeMove(move, BoardManager.GetBoard());
+                (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
                 (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, maxDepth);
                 score = -score;
                 exploredMoves += additionalMoves;
-                MoveManager.UndoMove(move, target, castle, BoardManager.GetBoard());
+                MoveManager.UndoMove(move, target, castle, BoardManager.Board);
 
                 if (score >= beta) return (beta, exploredMoves);
                 if (score > alpha) alpha = score;
@@ -293,7 +293,7 @@ namespace ChessUI
         {
             Dictionary<Move, int> positionsAftermove = new Dictionary<Move, int>();
 
-            BoardManager.whiteToMove = isWhite;
+            BoardManager.WhiteToMove = isWhite;
             BoardManager.UpdateAttackedPositions(!isWhite);
             Move[] possibleMoves = MoveGeneration.GenerateStricLegalMoves(isWhite);
             if (currentSearchDepth == maxSearchDepth) return (possibleMoves, positionsAftermove);
@@ -302,7 +302,7 @@ namespace ChessUI
             foreach (Move move in possibleMoves)
             {
                     //BoardManager.UpdatePiecePositions(move);
-                    (int tempPiece, int tempCastleRights) = MoveManager.MakeMove(move, BoardManager.GetBoard());
+                    (int tempPiece, int tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
 
                 if (currentSearchDepth == 1) prevMoves = new List<Move>();
 
@@ -311,7 +311,7 @@ namespace ChessUI
                 movesAtLevel = movesAtLevel.Concat(furtherMoves).ToList();
                 prevMoves.Remove(move);
 
-                MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.GetBoard());
+                MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
                 //BoardManager.UndoPiecePositions(move);
             }
 
