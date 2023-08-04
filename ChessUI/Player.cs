@@ -6,11 +6,10 @@ using System.Threading.Tasks;
 
 namespace ChessUI
 {
-    internal class Player
+    public static class Player
     {
-        public Player() { }
 
-        public bool IsValidSelection(int[] board, int selectedSquare)
+        public static bool IsValidSelection(int[] board, int selectedSquare)
         {
             int selectedPiece = board[selectedSquare];
 
@@ -18,21 +17,21 @@ namespace ChessUI
             {
                 return false;
             }
-            if (Piece.IsPieceWhite(selectedPiece) != BoardManager.whiteToMove)
+            if (Piece.IsPieceWhite(selectedPiece) != BoardManager.WhiteToMove)
             {
                 return false;
             }
             return true;
         }
 
-        public bool IsMoveValid( ref Move proposedMove)
+        public static bool IsMoveValid( ref Move proposedMove)
         {
-            Move[] moves = MoveGeneration.GenerateStricLegalMoves(BoardManager.whiteToMove);
+            Move[] moves = MoveGeneration.GenerateStricLegalMoves(BoardManager.WhiteToMove);
             foreach (Move move in moves)
             {
                 if (proposedMove.sourceSquare == move.sourceSquare && proposedMove.targetSquare == move.targetSquare) 
                 {
-                    proposedMove.moveType = move.moveType;
+                    proposedMove.moveFlag = move.moveFlag;
                     return true; 
                 }
             }

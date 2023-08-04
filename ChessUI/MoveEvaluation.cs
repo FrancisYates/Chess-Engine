@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ChessUI.Enums;
 
 namespace ChessUI
 {
@@ -51,7 +52,7 @@ namespace ChessUI
 
             for (int i = 0; i < 64; i++)
             {
-                int position = BoardManager.attackPositionBoard[i];
+                int position = BoardManager.AttackPositionBoard[i];
                 whiteControlled += (position & 2) / 2;
                 blackControlled += position & 1;
             }
@@ -68,42 +69,26 @@ namespace ChessUI
 
             foreach (Move move in unorderedMoves)
             {
-                switch (move.moveType)
+                if (move.IsType(MoveType.capture))
                 {
-                    case Move.MoveType.capture:
-                        captureMoves.Add(move);
-                        break;
-                    case Move.MoveType.enPesant:
-                        captureMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionQueen:
-                        promotionMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionRook:
-                        promotionMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionBishop:
-                        promotionMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionKnight:
-                        promotionMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionQueenCapture:
+                    if (!move.IsPromotion())
+                    {
                         promotionCaptureMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionRookCapture:
-                        promotionCaptureMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionBishopCapture:
-                        promotionCaptureMoves.Add(move);
-                        break;
-                    case Move.MoveType.promotionKnightCapture:
-                        promotionCaptureMoves.Add(move);
-                        break;
-                    default:
-                        ordinaryMoves.Add(move);
-                        break;
+                        continue;
+                    }
+                    captureMoves.Add(move);
+                    continue;
                 }
+                if (move.IsType(MoveType.enPesant))
+                {
+                    captureMoves.Add(move);
+                    continue;
+                }
+                if (move.IsType(MoveType.promotion))
+                {
+                    promotionMoves.Add(move);
+                }
+                ordinaryMoves.Add(move);
             }
 
             List<Move> orderedMoves = promotionCaptureMoves;
@@ -118,13 +103,13 @@ namespace ChessUI
         private static List<Move> CaptureOrdering(List<Move> captureMoves)
         {
             (int, int)[] x = new (int, int)[captureMoves.Count];
-            int[] board = BoardManager.GetBoard();
+            int[] board = BoardManager.Board;
             int idx = 0;
             foreach(Move move in captureMoves)
             {
                 int capturingPiece = board[move.sourceSquare];
                 int capturedPiece;
-                if (move.moveType == Move.MoveType.enPesant)
+                if (move.IsType(MoveType.enPesant))
                 {
                     if (Piece.IsPieceWhite(capturingPiece))
                     {

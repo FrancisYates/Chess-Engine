@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ChessUI.Enums;
 
 namespace ChessUI
 {
@@ -10,100 +6,76 @@ namespace ChessUI
     {
         public int sourceSquare;
         public int targetSquare;
-        public MoveType moveType;
-        public enum MoveType
-        {
-            move,
-            enPesant,
-            doublePawnMove,
-            capture,
-            castle,
-            promotionKnight,
-            promotionRook,
-            promotionQueen,
-            promotionBishop,
-            promotionKnightCapture,
-            promotionRookCapture,
-            promotionQueenCapture,
-            promotionBishopCapture
-        }
+        public int moveFlag;
 
         public Move(int sourceSquare, int targetSquare) : this()
         {
             this.sourceSquare = sourceSquare;
             this.targetSquare = targetSquare;
-            this.moveType = MoveType.move;
+            this.moveFlag = 0;
         }
+
         public Move(int sourceSquare, int targetSquare, MoveType moveType) : this()
         {
             this.sourceSquare = sourceSquare;
             this.targetSquare = targetSquare;
-            this.moveType = moveType;
+            this.moveFlag = (int)moveType;
+        }
+        public Move(int sourceSquare, int targetSquare, MoveType moveType, PromotionPiece piece) : this()
+        {
+            this.sourceSquare = sourceSquare;
+            this.targetSquare = targetSquare;
+            this.moveFlag = (int)moveType | (int)piece;
         }
 
-        public bool IsPromotion()
+        public PromotionPiece GetPromotionType() => (PromotionPiece)(this.moveFlag & 0b_0011_1110);
+
+        public bool IsType(MoveType type)
         {
-            if(this.moveType == MoveType.move || this.moveType == MoveType.enPesant ||  
-                this.moveType == MoveType.doublePawnMove || this.moveType == MoveType.capture || this.moveType == MoveType.castle)
-            {
-                return false;
-            }
-            return true;
+            return (this.moveFlag & (int)type) == (int)type;
         }
+        public MoveType GetMoveType()
+        {
+            return (MoveType)(this.moveFlag & 0b_1110_0011);
+        }
+
+        public PieceType GetPromotionPiece()
+        {
+            return this.GetPromotionType() switch
+            {
+                PromotionPiece.queen => PieceType.Queen,
+                PromotionPiece.knight => PieceType.Knight,
+                PromotionPiece.bishop => PieceType.Bishop,
+                PromotionPiece.rook => PieceType.Rook,
+                _ => PieceType.Rook
+            };
+        }
+
+        public bool IsPromotion() => (this.moveFlag & (int)MoveType.promotion) == (int)MoveType.promotion;
 
         public override string ToString()
         {
+            string[] letterLookup = { "a", "b", "c", "d", "e", "f", "g", "h" };
             int x = this.sourceSquare % 8;
             int y = this.sourceSquare / 8 + 1;
-            string startPos = ToLetter(x) + y.ToString();
+            string startPos = letterLookup[x] + y.ToString();
 
             x = this.targetSquare % 8;
             y = this.targetSquare / 8 + 1;
-            string endPos = ToLetter(x) + y.ToString();
+            string endPos = letterLookup[x] + y.ToString();
 
             string finalString = startPos + endPos;
-            if (moveType == MoveType.promotionBishop || moveType == MoveType.promotionBishopCapture)
+            if( this.IsPromotion() )
             {
-                finalString += "b";
-            }
-            else if (moveType == MoveType.promotionRook || moveType == MoveType.promotionRookCapture)
-            {
-                finalString += "r";
-            }
-            else if (moveType == MoveType.promotionKnight || moveType == MoveType.promotionKnightCapture)
-            {
-                finalString += "n";
-            }
-            else if (moveType == MoveType.promotionQueen || moveType == MoveType.promotionQueenCapture)
-            {
-                finalString += "q";
+                finalString += this.GetPromotionType() switch
+                {
+                    PromotionPiece.queen => "q",
+                    PromotionPiece.knight => "n",
+                    PromotionPiece.rook => "r",
+                    PromotionPiece.bishop => "b",
+                };
             }
             return finalString;
-
-        }
-
-        private string ToLetter(int xVal)
-        {
-            switch (xVal)
-            {
-                case 0:
-                    return "a";
-                case 1:
-                    return "b";
-                case 2:
-                    return "c";
-                case 3:
-                    return "d";
-                case 4:
-                    return "e";
-                case 5:
-                    return "f";
-                case 6:
-                    return "g";
-                case 7:
-                    return "h";
-            }
-            return "x";
         }
     }
 }

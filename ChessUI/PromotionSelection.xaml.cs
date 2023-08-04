@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using ChessUI.Enums;
 
 namespace ChessUI
 {
@@ -27,41 +28,27 @@ namespace ChessUI
             this.mainWindow = mainWindow;
         }
 
-        private void HandelClick(int selectedPiece)
+        private void HandelClick(PromotionPiece promotionType)
         {
-            switch (selectedPiece)
-            {
-                case 0:
-                    mainWindow.SetPromotion(Move.MoveType.promotionQueen);
-                    break;
-                case 1:
-                    mainWindow.SetPromotion(Move.MoveType.promotionRook);
-                    break;
-                case 2:
-                    mainWindow.SetPromotion(Move.MoveType.promotionBishop);
-                    break;
-                case 3:
-                    mainWindow.SetPromotion(Move.MoveType.promotionKnight);
-                    break;
-            }
+            mainWindow.SetPromotion(MoveType.promotion, promotionType);
             this.Close();
         }
 
         private void QueenClick(object sender, RoutedEventArgs e)
         {
-            HandelClick(0);
+            HandelClick(PromotionPiece.queen);
         }
         private void RookClick(object sender, RoutedEventArgs e)
         {
-            HandelClick(1);
+            HandelClick(PromotionPiece.rook);
         }
         private void BishopClick(object sender, RoutedEventArgs e)
         {
-            HandelClick(2);
+            HandelClick(PromotionPiece.bishop);
         }
         private void KnightClick(object sender, RoutedEventArgs e)
         {
-            HandelClick(3);
+            HandelClick(PromotionPiece.knight);
         }
     }
 }

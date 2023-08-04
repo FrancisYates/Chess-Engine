@@ -3,62 +3,65 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ChessUI.Enums;
 
 namespace ChessUI
 {
     public static class BoardManager
     {
-        private static int castleingRights;
-        public static bool whiteToMove;
-        public static int halfMoves;
-        public static int fullMoves;
-        private readonly static int[] board = new int[64];
-        public static int enPesantSquare = -1;
-        public static int[] attackPositionBoard = new int[64];
+        private readonly static int[] _board = new int[64];
+        public static int CastleingRights { get; set; }
+        public static bool WhiteToMove { get; set; }
+        public static int HalfMoves { get; set; }
+        public static int FullMoves { get; set; }
+        public  static int[] Board => _board;
+        public static int EnPesantSquare { get; set; } = -1;
+        public static int[] AttackPositionBoard { get; set; } = new int[64];
         static readonly int[] directionOffsets = { 8, -8, -1, 1, 7, 9, -9, -7 };
-        public static List<int> whitePiecePositions = new List<int>();
-        public static List<int> blackPiecePositions = new List<int>();
+        public static List<int> WhitePiecePositions { get; set; } = new List<int>();
+        public static List<int> BlackPiecePositions { get; set; } = new List<int>();
 
         public static int GetCastilingRights()
         {
-            return castleingRights;
+            return CastleingRights;
         }
         public static void SetCastilingRights(int rights)
         {
-            castleingRights = rights;
+            CastleingRights = rights;
         }
 
         public static bool CanWhiteCastleKS()
         {
-            int rook = board[7];
+            int rook = Board[7];
             bool validRook = rook == 13;
-            return validRook && (castleingRights & 8) == 8;
+            return validRook && (CastleingRights & 8) == 8;
         }
         public static bool CanWhiteCastleQS()
         {
-            int rook = board[0];
+            int rook = Board[0];
             bool validRook = rook == 13;
-            return validRook && (castleingRights & 4) == 4;
+            return validRook && (CastleingRights & 4) == 4;
         }
         public static bool CanBlackCastleKS()
         {
-            int rook = board[63];
+            int rook = Board[63];
             bool validRook = rook == 5;
-            return validRook && (castleingRights & 2) == 2;
+            return validRook && (CastleingRights & 2) == 2;
         }
         public static bool CanBlackCastleQS()
         {
-            int rook = board[56];
+            int rook = Board[56];
             bool validRook = rook == 5;
-            return validRook && (castleingRights & 1) == 1;
+            return validRook && (CastleingRights & 1) == 1;
         }
 
         public static void UpdateMoveCount()
         {
-            fullMoves += halfMoves;
-            halfMoves = (halfMoves + 1) % 2;
+            FullMoves += HalfMoves;
+            HalfMoves = (HalfMoves + 1) % 2;
         }
-        public static void LoadBoard(string saveFile = "")
+
+        private static string[] GetFEN(string saveFile)
         {
             string FEN;
             if (saveFile == "")
@@ -69,15 +72,18 @@ namespace ChessUI
             {
                 FEN = System.IO.File.ReadAllText(saveFile);
             }
-            string[] FENSplit = FEN.Split(' ');
+            return FEN.Split(' ');
+        }
 
-            byte[] asciiBytes = Encoding.ASCII.GetBytes(FENSplit[0]);
+        private static void PopulateBoard(string boardFen)
+        {
+            byte[] asciiBytes = Encoding.ASCII.GetBytes(boardFen);
 
             int rank = 7;
             int file = 0;
 
             int index;
-            foreach (char asciiValue in asciiBytes)
+            foreach (char asciiValue in asciiBytes.Select(v => (char)v))
             {
                 if (asciiValue == '/')
                 {
@@ -92,144 +98,111 @@ namespace ChessUI
                     }
                     else
                     {
-                        int pieceNumber = getPieceNum(asciiValue);
+                        int pieceNumber = asciiValue switch
+                        {
+                            'P' => 9,
+                            'p' => 1,
+                            'R' => 13,
+                            'r' => 5,
+                            'N' => 10,
+                            'n' => 2,
+                            'B' => 14,
+                            'b' => 6,
+                            'K' => 11,
+                            'k' => 3,
+                            'Q' => 15,
+                            'q' => 7,
+                            _ => 0
+                        }; 
                         index = 8 * rank + file;
-                        board[index] = pieceNumber;
+                        Board[index] = pieceNumber;
                         if (Piece.IsPieceWhite(pieceNumber))
                         {
-                            whitePiecePositions.Add(index);
+                            WhitePiecePositions.Add(index);
                         }
                         else
                         {
-                            blackPiecePositions.Add(index);
+                            BlackPiecePositions.Add(index);
                         }
                         file++;
                     }
                 }
             }
+        }
 
-            whiteToMove = (FENSplit[1] == "w");
+        public static void LoadBoard(string saveFile = "")
+        {
+            string[] FENSplit = GetFEN(saveFile);
+
+            PopulateBoard(FENSplit[0]);
+
+            WhiteToMove = (FENSplit[1] == "w");
             string castlingRightsString = FENSplit[2];
             SetupCastleRights(castlingRightsString);
 
-            string enPesantString = FENSplit[3]; //TODO convert this string to int position
-            enPesantSquare = -1;
+            string enPesantString = FENSplit[3];
+            EnPesantSquare = -1;
             if (enPesantString != "-")
             {
-                enPesantSquare = GetSquareFromNotation(enPesantString);
+                EnPesantSquare = GetSquareFromNotation(enPesantString);
             }
-            halfMoves = Int32.Parse(FENSplit[4]);
-            fullMoves = Int32.Parse(FENSplit[4]);
-
-            int GetSquareFromNotation(string positionNotation)
+            HalfMoves = Int32.Parse(FENSplit[4]);
+            FullMoves = Int32.Parse(FENSplit[4]);
+        }
+        private static int GetSquareFromNotation(string positionNotation)
+        {
+            int notationRank = (int)Char.GetNumericValue(positionNotation[1]) - 1;
+            char notationFileChar = positionNotation[0];
+            int notationFile = notationFileChar switch
             {
-                int notationRank = (int)Char.GetNumericValue(positionNotation[1]) - 1;
-                char notationFileChar = positionNotation[0];
-                int notationFile = 0;
-                switch (notationFileChar)
-                {
-                    case 'a':
-                        notationFile = 0;
-                        break;
-                    case 'b':
-                        notationFile = 1;
-                        break;
-                    case 'c':
-                        notationFile = 2;
-                        break;
-                    case 'd':
-                        notationFile = 3;
-                        break;
-                    case 'e':
-                        notationFile = 4;
-                        break;
-                    case 'f':
-                        notationFile = 5;
-                        break;
-                    case 'g':
-                        notationFile = 6;
-                        break;
-                    case 'h':
-                        notationFile = 7;
-                        break;
-                }
-                return notationRank * 8 + notationFile;
-            }
-
-            int getPieceNum(char aciiVal)
-            {
-                switch (aciiVal)
-                {
-                    case 'P':
-                        return 9;
-                    case 'p':
-                        return 1;
-
-                    case 'R':
-                        return 13;
-                    case 'r':
-                        return 5;
-
-                    case 'N':
-                        return 10;
-                    case 'n':
-                        return 2;
-
-                    case 'B':
-                        return 14;
-                    case 'b':
-                        return 6;
-
-                    case 'K':
-                        return 11;
-                    case 'k':
-                        return 3;
-
-                    case 'Q':
-                        return 15;
-                    case 'q':
-                        return 7;
-                    default:
-                        return 0;
-                }
-            }
+                'a' => 0,
+                'b' => 1,
+                'c' => 2,
+                'd' => 3,
+                'e' => 4,
+                'f' => 5,
+                'g' => 6,
+                'h' => 7,
+                _ => throw new NotImplementedException()
+            };
+            return notationRank * 8 + notationFile;
         }
 
         public static void ResetBoardToEmpty()
         {
             for (int i = 0; i < 64; i++)
             {
-                board[i] = 0;
+                Board[i] = 0;
             }
         }
 
         private static void UpdatePiecePositions(Move move)
         {
-            int piece = board[move.sourceSquare];
+            int piece = Board[move.sourceSquare];
             if (Piece.IsPieceWhite(piece))
             {
-                whitePiecePositions.Remove(move.sourceSquare);
-                whitePiecePositions.Add(move.targetSquare);
+                WhitePiecePositions.Remove(move.sourceSquare);
+                WhitePiecePositions.Add(move.targetSquare);
             }
             else
             {
-                blackPiecePositions.Remove(move.sourceSquare);
-                blackPiecePositions.Add(move.targetSquare);
+                BlackPiecePositions.Remove(move.sourceSquare);
+                BlackPiecePositions.Add(move.targetSquare);
             }
         }
 
         private static void UndoPiecePositions(Move move)
         {
-            int piece = board[move.sourceSquare];
+            int piece = Board[move.sourceSquare];
             if (Piece.IsPieceWhite(piece))
             {
-                whitePiecePositions.Remove(move.targetSquare);
-                whitePiecePositions.Add(move.sourceSquare);
+                WhitePiecePositions.Remove(move.targetSquare);
+                WhitePiecePositions.Add(move.sourceSquare);
             }
             else
             {
-                blackPiecePositions.Remove(move.targetSquare);
-                blackPiecePositions.Add(move.sourceSquare);
+                BlackPiecePositions.Remove(move.targetSquare);
+                BlackPiecePositions.Add(move.sourceSquare);
             }
         }
 
@@ -237,11 +210,11 @@ namespace ChessUI
         {
             if (Piece.IsPieceWhite(piece))
             {
-                whitePiecePositions.Add(position);
+                WhitePiecePositions.Add(position);
             }
             else
             {
-                blackPiecePositions.Add(position);
+                BlackPiecePositions.Add(position);
             }
         }
 
@@ -250,273 +223,47 @@ namespace ChessUI
             //int piece = board[position];
             if (Piece.IsPieceWhite(piece))
             {
-                whitePiecePositions.Remove(position);
+                WhitePiecePositions.Remove(position);
             }
             else
             {
-                blackPiecePositions.Remove(position);
+                BlackPiecePositions.Remove(position);
             }
         }
 
         private static void SetupCastleRights(string castleRightsString)
         {
-            castleingRights = 0;
+            CastleingRights = 0;
             if (castleRightsString.Contains("K"))
             {
-                castleingRights |= 8;
+                CastleingRights |= 8;
             }
             if (castleRightsString.Contains("Q"))
             {
-                castleingRights |= 4;
+                CastleingRights |= 4;
             }
             if (castleRightsString.Contains("k"))
             {
-                castleingRights |= 2;
+                CastleingRights |= 2;
             }
             if (castleRightsString.Contains("q"))
             {
-                castleingRights |= 1;
+                CastleingRights |= 1;
             }
         }
 
         public static void UpdateSideToMove()
         {
-            whiteToMove = !whiteToMove;
+            WhiteToMove = !WhiteToMove;
         }
 
-        public static int[] GetBoard()
-        {
-            return board;
-        }
-
-        public static (int, int) MakeMove(Move move)
-        {
-            enPesantSquare = -1;
-            int targetContents = board[move.targetSquare];
-            int movedPiece = board[move.sourceSquare];
-            bool isWhite = Piece.IsPieceWhite(movedPiece);
-            int side = isWhite ? 8 : 0;
-            int validCastling = castleingRights;
-
-            //UpdatePiecePositions(move);
-            switch (move.moveType)
-            {
-                case Move.MoveType.doublePawnMove:
-                    int offset = isWhite ? -8 : 8;
-                    enPesantSquare = move.targetSquare + offset;
-
-                    board[move.targetSquare] = board[move.sourceSquare];
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                case Move.MoveType.enPesant:
-                    int xDelta = move.targetSquare % 8 - move.sourceSquare % 8;
-
-                    targetContents = board[move.sourceSquare + xDelta];
-                    //RemovePiecePosition(move.sourceSquare + xDelta, targetContents);
-                    board[move.targetSquare] = board[move.sourceSquare];
-                    board[move.sourceSquare] = 0;
-                    board[move.sourceSquare + xDelta] = 0;
-                    break;
-
-                case Move.MoveType.castle:
-                    bool kingSide = move.sourceSquare - move.targetSquare < 0;
-
-                    if (kingSide)
-                    {
-                        int rookPosition = isWhite ? 7 : 63;
-                        //UpdatePiecePositions(new Move(rookPosition, rookPosition - 2));
-                        board[move.sourceSquare + 1] = (int)Piece.PieceType.Rook | side;
-                        board[rookPosition] = 0;
-                    }
-                    else
-                    {
-                        int rookPosition = isWhite ? 0 : 56;
-                        //UpdatePiecePositions(new Move(rookPosition, rookPosition + 3));
-                        board[move.sourceSquare - 1] = (int)Piece.PieceType.Rook | side;
-                        board[rookPosition] = 0;
-                    }
-
-                    board[move.targetSquare] = board[move.sourceSquare];
-                    board[move.sourceSquare] = 0;
-                    int castleingChange = isWhite ? 0b_0011 : 0b_1100;
-                    castleingRights &= castleingChange;
-                    break;
-
-                case Move.MoveType.promotionBishop:
-                    targetContents = 0;
-                    board[move.targetSquare] = (int)Piece.PieceType.Bishop | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                case Move.MoveType.promotionBishopCapture:
-                    targetContents = board[move.targetSquare];
-                    board[move.targetSquare] = (int)Piece.PieceType.Bishop | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                case Move.MoveType.promotionRook:
-                    targetContents = 0;
-                    board[move.targetSquare] = (int)Piece.PieceType.Rook | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-                case Move.MoveType.promotionRookCapture:
-                    targetContents = board[move.targetSquare];
-                    board[move.targetSquare] = (int)Piece.PieceType.Rook | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                case Move.MoveType.promotionKnight:
-                    targetContents = 0;
-                    board[move.targetSquare] = (int)Piece.PieceType.Knight | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-                case Move.MoveType.promotionKnightCapture:
-                    targetContents = board[move.targetSquare];
-                    board[move.targetSquare] = (int)Piece.PieceType.Knight | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                case Move.MoveType.promotionQueen:
-                    targetContents = 0;
-                    board[move.targetSquare] = (int)Piece.PieceType.Queen | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-                case Move.MoveType.promotionQueenCapture:
-                    targetContents = board[move.targetSquare];
-                    board[move.targetSquare] = (int)Piece.PieceType.Queen | side;
-                    board[move.sourceSquare] = 0;
-                    break;
-
-                default:
-                    targetContents = board[move.targetSquare];
-                    /*
-                    if(targetContents != 0)
-                    {
-                        RemovePiecePosition(move.targetSquare, targetContents);
-                    }*/
-                    board[move.targetSquare] = board[move.sourceSquare];
-                    board[move.sourceSquare] = 0;
-
-                    if (Piece.IsType(movedPiece, Piece.PieceType.Rook))
-                    {
-                        if (!Piece.HasRookMoved(isWhite, move.sourceSquare))
-                        {
-                            int whiteOrBlack = isWhite ? 0b_0011 : 0b_1100;
-                            int rookKingSideSquare = isWhite ? 7 : 63;
-                            int kingOrQueen = move.sourceSquare == rookKingSideSquare ? 0b_0101 : 0b_1010;
-                            int newCastleRights = kingOrQueen | whiteOrBlack;
-                            castleingRights &= newCastleRights;
-                        }
-                    }
-                    else if (Piece.IsType(movedPiece, Piece.PieceType.King))
-                    {
-                        castleingChange = isWhite ? 0b_0011 : 0b_1100;
-                        castleingRights &= castleingChange;
-                    }
-                    break;
-            }
-
-            return (targetContents, validCastling);
-        }
-
-        public static void UndoMove(Move move, int priorTargetContent, int priorCastlingRights)
-        {
-            int movedPiece = board[move.targetSquare];
-            int side = Piece.IsPieceWhite(movedPiece) ? 8 : 0;
-            castleingRights = priorCastlingRights;
-
-            switch (move.moveType)
-            {
-                case Move.MoveType.doublePawnMove:
-                    int offset = Piece.IsPieceWhite(movedPiece) ? -8 : 8;
-                    enPesantSquare = move.targetSquare + offset;
-
-                    board[move.sourceSquare] = board[move.targetSquare];
-                    board[move.targetSquare] = 0;
-                    break;
-
-                case Move.MoveType.enPesant:
-                    int xDelta = move.targetSquare % 8 - move.sourceSquare % 8;
-                    board[move.sourceSquare] = board[move.targetSquare];
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare + xDelta] = priorTargetContent;
-                    //AddPiecePosition(move.sourceSquare + xDelta, priorTargetContent);
-                    break;
-
-                case Move.MoveType.castle:
-                    bool isWhite = Piece.IsPieceWhite(board[move.targetSquare]);
-                    bool kingSide = move.sourceSquare - move.targetSquare < 0;
-
-                    if (kingSide)
-                    {
-                        board[move.sourceSquare + 1] = 0;
-                        int rookPosition = isWhite ? 7 : 63;
-                        board[rookPosition] = (int)Piece.PieceType.Rook | side;
-                        //UndoPiecePositions(new Move(rookPosition - 2, rookPosition));
-                    }
-                    else
-                    {
-                        board[move.sourceSquare - 1] = 0;
-                        int rookPosition = isWhite ? 0 : 56;
-                        board[rookPosition] = (int)Piece.PieceType.Rook | side;
-                        //UndoPiecePositions(new Move(rookPosition + 3, rookPosition));
-                    }
-                    board[move.sourceSquare] = board[move.targetSquare];
-                    board[move.targetSquare] = 0;
-                    break;
-
-                case Move.MoveType.promotionBishop:
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-                case Move.MoveType.promotionBishopCapture:
-                    board[move.targetSquare] = priorTargetContent;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-
-                case Move.MoveType.promotionRook:
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-                case Move.MoveType.promotionRookCapture:
-                    board[move.targetSquare] = priorTargetContent;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-
-                case Move.MoveType.promotionKnight:
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-                case Move.MoveType.promotionKnightCapture:
-                    board[move.targetSquare] = priorTargetContent;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-
-                case Move.MoveType.promotionQueen:
-                    board[move.targetSquare] = 0;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-                case Move.MoveType.promotionQueenCapture:
-                    board[move.targetSquare] = priorTargetContent;
-                    board[move.sourceSquare] = (int)Piece.PieceType.Pawn | side;
-                    break;
-
-                default:
-                    board[move.sourceSquare] = board[move.targetSquare];
-                    board[move.targetSquare] = priorTargetContent;
-                    //AddPiecePosition(move.targetSquare, priorTargetContent);
-                    break;
-            }
-            //UndoPiecePositions(move);
-        }
 
         public static int GetKingPosition(bool whiteKing)
         {
             for(int position = 0; position < 64; position++)
             {
-                int piece = board[position];
-                if(Piece.IsType(piece, Piece.PieceType.King))
+                int piece = Board[position];
+                if(Piece.IsType(piece, PieceType.King))
                 {
                     if (Piece.IsPieceWhite(piece) == whiteKing)
                     {
@@ -533,14 +280,11 @@ namespace ChessUI
 
             for (int sourceSquare = 0; sourceSquare < 64; sourceSquare++)
             {
-                int pieceAtPosition = board[sourceSquare];
+                int pieceAtPosition = Board[sourceSquare];
 
-                if (pieceAtPosition == 0 || Piece.IsPieceWhite(pieceAtPosition) != whiteMoves)
-                {
-                    continue;
-                }
+                if (pieceAtPosition == 0 || Piece.IsPieceWhite(pieceAtPosition) != whiteMoves) continue;
 
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.Pawn))
+                if (Piece.IsType(pieceAtPosition, PieceType.Pawn))
                 {
                     UpdatePawnAttacked(sourceSquare, pieceAtPosition);
                     continue;
@@ -550,12 +294,12 @@ namespace ChessUI
                     UpdateSlidingAttacked(sourceSquare, pieceAtPosition);
                     continue;
                 }
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.Knight))
+                if (Piece.IsType(pieceAtPosition, PieceType.Knight))
                 {
                     UpdateKnightAttacked(sourceSquare, pieceAtPosition);
                     continue;
                 }
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.King))
+                if (Piece.IsType(pieceAtPosition, PieceType.King))
                 {
                     UpdateKingAttacked(sourceSquare, pieceAtPosition);
                 }
@@ -567,14 +311,14 @@ namespace ChessUI
             int resetMask = resetWhite ? 1 : 2;
             for (int i = 0; i < 64; i++)
             {
-                attackPositionBoard[i] = attackPositionBoard[i] & resetMask;
+                AttackPositionBoard[i] = AttackPositionBoard[i] & resetMask;
             }
         }
 
         private static void UpdateSlidingAttacked(int sourceSquare, int piece)
         {
-            int startIdx = Piece.IsType(piece, Piece.PieceType.Bishop) ? 4 : 0;
-            int endIdx = Piece.IsType(piece, Piece.PieceType.Rook) ? 4 : 8;
+            int startIdx = Piece.IsType(piece, PieceType.Bishop) ? 4 : 0;
+            int endIdx = Piece.IsType(piece, PieceType.Rook) ? 4 : 8;
 
             int[][] numSquaresInDirection = MoveGeneration.numSquaresInDirection;
             int attackIndicator = Piece.IsPieceWhite(piece) ? 2 : 1;
@@ -583,9 +327,9 @@ namespace ChessUI
                 for (int i = 1; i <= numSquaresInDirection[sourceSquare][directionIdx]; i++)
                 {
                     int targetSquare = sourceSquare + directionOffsets[directionIdx] * i;
-                    int pieceAtTarget = board[targetSquare];
+                    int pieceAtTarget = Board[targetSquare];
 
-                    attackPositionBoard[targetSquare] = attackPositionBoard[targetSquare] | attackIndicator;
+                    AttackPositionBoard[targetSquare] = AttackPositionBoard[targetSquare] | attackIndicator;
 
                     if (pieceAtTarget != 0)
                     {
@@ -608,7 +352,7 @@ namespace ChessUI
                 {
                     continue;
                 }
-                attackPositionBoard[targetSquare] = attackPositionBoard[targetSquare] | attackIndicator;
+                AttackPositionBoard[targetSquare] = AttackPositionBoard[targetSquare] | attackIndicator;
             }
         }
 
@@ -624,7 +368,7 @@ namespace ChessUI
                 {
                     continue;
                 }
-                attackPositionBoard[targetSquare] = attackPositionBoard[targetSquare] | attackIndicator;
+                AttackPositionBoard[targetSquare] = AttackPositionBoard[targetSquare] | attackIndicator;
             }
         }
 
@@ -640,27 +384,27 @@ namespace ChessUI
                 {
                     continue;
                 }
-                attackPositionBoard[targetSquare] = attackPositionBoard[targetSquare] | attackIndicator;
+                AttackPositionBoard[targetSquare] = AttackPositionBoard[targetSquare] | attackIndicator;
             }
         }
 
         public static List<int> FindCheckingPieces(int kingPosition, int king)
         {
-            List<int> checkingPieces = new List<int>();
+            List<int> checkingPieces = new();
 
-            List<int> slidingPieces = FindCheckingSlidingPiece(kingPosition, king, board);
+            List<int> slidingPieces = FindCheckingSlidingPiece(kingPosition, king, Board);
             foreach(int piece in slidingPieces)
             {
                 checkingPieces.Add(piece);
             }
 
-            List<int> knights = FindCheckingKnight(kingPosition, king, board);
+            List<int> knights = FindCheckingKnight(kingPosition, king, Board);
             foreach (int piece in knights)
             {
                 checkingPieces.Add(piece);
             }
 
-            List<int> pawns = FindCheckingPawn(kingPosition, king, board);
+            List<int> pawns = FindCheckingPawn(kingPosition, king, Board);
             foreach (int piece in pawns)
             {
                 checkingPieces.Add(piece);
@@ -670,32 +414,18 @@ namespace ChessUI
 
         public static bool IsSlidingPieceInDirection(int sourceSquare, int direction, int sideColour)
         {
-
             int maxOffset = MoveGeneration.numSquaresInDirection[sourceSquare][direction];
             for (int i = 0; i < maxOffset; i++)
             {
                 int targetSquare = sourceSquare + (i + 1) * directionOffsets[direction];
-                int pieceAtTarget = board[targetSquare];
+                int pieceAtTarget = Board[targetSquare];
 
                 if(pieceAtTarget == 0) { continue; }
+                if (Piece.IsSameColour(sideColour, pieceAtTarget)) return false;
+                if (!Piece.IsSlidingPiece(pieceAtTarget)) return false;
 
-                if (Piece.IsSameColour(sideColour, pieceAtTarget))
-                {
-                    break;
-                }
-
-                if (pieceAtTarget != 0)
-                {
-                    if (Piece.IsSlidingPiece(pieceAtTarget))
-                    {
-                        if(direction < 4)
-                        {
-                            return Piece.IsType(pieceAtTarget, Piece.PieceType.Rook) || Piece.IsType(pieceAtTarget, Piece.PieceType.Queen);
-                        }
-                        return Piece.IsType(pieceAtTarget, Piece.PieceType.Bishop) || Piece.IsType(pieceAtTarget, Piece.PieceType.Queen);
-                    }
-                    break;
-                }
+                var type = direction < 4 ? PieceType.Rook : PieceType.Bishop;
+                return Piece.IsType(pieceAtTarget, type) || Piece.IsType(pieceAtTarget, PieceType.Queen);
             }
 
             return false;
@@ -703,7 +433,7 @@ namespace ChessUI
 
         private static List<int> FindCheckingSlidingPiece(int sourceSquare, int piece, int[] board)
         {
-            List<int> pieces = new List<int>();
+            List<int> pieces = new();
 
             for (int directionIdx = 0; directionIdx < 8; directionIdx++)
             {
@@ -714,30 +444,15 @@ namespace ChessUI
                     int pieceAtTarget = board[targetSquare];
 
                     if(pieceAtTarget == 0) { continue; }
+                    if (Piece.IsSameColour(piece, pieceAtTarget)) break;
 
-                    if (Piece.IsSameColour(piece, pieceAtTarget))
+                    var type = directionIdx < 4 ? PieceType.Bishop : PieceType.Rook;
+                    if (Piece.IsSlidingPiece(pieceAtTarget) && !Piece.IsType(pieceAtTarget, type))
                     {
+                        pieces.Add(targetSquare);
                         break;
                     }
-
-                    if (pieceAtTarget != 0)
-                    {
-                        if (Piece.IsSlidingPiece(pieceAtTarget))
-                        {
-                            if(directionIdx < 4 && !Piece.IsType(pieceAtTarget, Piece.PieceType.Bishop))
-                            {
-                                pieces.Add(targetSquare);
-                                break;
-                            }
-                            if(directionIdx > 3 && !Piece.IsType(pieceAtTarget, Piece.PieceType.Rook))
-                            {
-                                pieces.Add(targetSquare);
-                                break;
-
-                            }
-                        }
-                        break;
-                    }
+                    break;
                 }
             }
 
@@ -746,26 +461,19 @@ namespace ChessUI
 
         private static List<int> FindCheckingKnight(int sourceSquare, int piece, int[] board)
         {
-            List<int> offsets = new List<int> { 15, 17, 10, -6, -15, -17, -10, 6 };
+            List<int> offsets = new() { 15, 17, 10, -6, -15, -17, -10, 6 };
             removeInvalidOffset();
-            List<int> pieces = new List<int>();
+            List<int> pieces = new();
 
             for (int i = 0; i < offsets.Count; i++)
             {
                 int targetSquare = sourceSquare + offsets[i];
-                if (targetSquare < 0 || targetSquare > 63)
-                {
-                    continue;
-                }
-                int targetPiece = board[targetSquare];
+                if (targetSquare < 0 || targetSquare > 63) continue;
 
-                if (!Piece.IsSameColour(piece, targetPiece))
-                {
-                    if(Piece.IsType(targetPiece, Piece.PieceType.Knight))
-                    {
-                        pieces.Add(targetSquare);
-                    }
-                }
+                int targetPiece = board[targetSquare];
+                if (Piece.IsSameColour(piece, targetPiece)) continue;
+
+                if (Piece.IsType(targetPiece, PieceType.Knight)) pieces.Add(targetSquare);
             }
 
             return pieces;
@@ -826,7 +534,6 @@ namespace ChessUI
                             offsets.Remove(17);
                             break;
                     }
-
                 }
             }
         }
@@ -836,38 +543,27 @@ namespace ChessUI
             int rank = sourceSquare / 8;
             int file = sourceSquare % 8;
             bool opponentIsWhite = !Piece.IsPieceWhite(piece);
-            List<int> pieces = new List<int>();
+            List<int> pieces = new();
 
-            if (opponentIsWhite && rank == 0 || !opponentIsWhite && rank == 7)
-            {
-                return pieces;
-            }
+            if (opponentIsWhite && rank <= 1 || !opponentIsWhite && rank >= 6) return pieces;
 
-            List<int> attackOffsets = !opponentIsWhite ? new List<int> { 7, 9 } : new List<int> { -9, -7 };
-            if (file == 0)
+            int[] attackOffsets = file switch
             {
-                attackOffsets.Remove(attackOffsets[0]);
-            }
-            else if (file == 7)
-            {
-                attackOffsets.Remove(attackOffsets[1]);
-            }
-
-            for (int i = 0; i < attackOffsets.Count; i++)
+                0 when opponentIsWhite => new[] { -7 },
+                0 => new[] { 9 },
+                7 when opponentIsWhite => new[] { -9 },
+                7 => new[] { 7 },
+                _ when opponentIsWhite => new[] { -9, -7 },
+                _ => new[] { 9, 7 },
+            };
+            
+            for (int i = 0; i < attackOffsets.Length; i++)
             {
                 int targetSquare = sourceSquare + attackOffsets[i];
                 int targetPiece = board[targetSquare];
-                if(targetPiece == 0)
-                {
-                    continue;
-                }
-                if (!Piece.IsSameColour(piece, targetPiece))
-                {
-                    if (Piece.IsType(targetPiece, Piece.PieceType.Pawn))
-                    {
-                        pieces.Add(targetSquare);
-                    }
-                }
+                if(targetPiece == 0) continue;
+                if (Piece.IsSameColour(piece, targetPiece)) continue;
+                if (Piece.IsType(targetPiece, PieceType.Pawn)) pieces.Add(targetSquare);
             }
 
             return pieces;

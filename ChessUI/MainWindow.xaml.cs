@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using ChessUI.Enums;
+
 namespace ChessUI
 {
     /// <summary>
@@ -8,32 +10,32 @@ namespace ChessUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        readonly List<Button> buttons;
+        private readonly List<Button> buttons;
+        public List<Button> Buttons => buttons;
         int selectedPosition = -1;
         bool pieceSelected = false;
-        public Move.MoveType promotionSelection;
-        readonly AIPlayer aiPlayer;
-        readonly Player player;
+        public MoveType promotionSelection;
+        public PromotionPiece promotionPiece;
+        private readonly GameInstance _game;
+        //readonly Player player;
         public MainWindow()
         {
             InitializeComponent();
             buttons = CreateButtonList();
 
-            aiPlayer = new AIPlayer();
-            aiPlayer.CreateBookTree();
-            MoveGeneration.CalculateDirections();
-            BoardManager.LoadBoard();
-            Render.UpdateBoard(buttons, BoardManager.GetBoard());
-
-            BoardManager.UpdateAttackedPositions(true);
-            BoardManager.UpdateAttackedPositions(false);
+            _game = new GameInstance(this);
+            Render.UpdateBoard(buttons, BoardManager.Board);
         }
-        public void SetPromotion(Move.MoveType selection) { promotionSelection = selection; }
+        public void SetPromotion(MoveType selection, PromotionPiece piece) 
+        { 
+            promotionSelection = selection;
+            promotionPiece = piece;
+        }
 
         private void HandelClick(short y, short x)
         {
             int thisPosition = 63 - (y * 8 + (7 - x));
-            bool validSelection = player.IsValidSelection(BoardManager.GetBoard(), thisPosition);
+            bool validSelection = Player.IsValidSelection(BoardManager.Board, thisPosition);
             if (validSelection)
             {
                 if(selectedPosition != -1)
@@ -47,72 +49,21 @@ namespace ChessUI
             if (!validSelection && pieceSelected)
             {
                 Move move = new Move(selectedPosition, thisPosition);
-                if (player.IsMoveValid(ref move))
+                if (!Player.IsMoveValid(ref move)) return;
+                if (move.IsPromotion())
                 {
-                    if (move.IsPromotion())
-                    {
-                        PromotionSelection selectionWin = new PromotionSelection(this);
-                        selectionWin.ShowDialog();
-                        move.moveType = promotionSelection;
-                    }
-                    (_, _) = BoardManager.MakeMove(move);
-                    aiPlayer.UpdateBookPosition(move);
-                    Render.UpdateBoard(buttons, BoardManager.GetBoard());
-                    Render.HighlightSquare(buttons, selectedPosition);
-                    Render.RemoveHighlightFromSquare(buttons, selectedPosition);
-                    selectedPosition = -1;
-                    pieceSelected = false;
-
-                    //BoardManager.UpdateSideToMove();
-                    BoardManager.UpdateMoveCount();
-                    BoardManager.UpdateAttackedPositions(BoardManager.whiteToMove);
-                    OpponentMove();
+                    PromotionSelection selectionWin = new(this);
+                    selectionWin.ShowDialog();
+                    move.moveFlag = ((int)promotionSelection | (int)promotionPiece);
                 }
+
+                _game.MakePlayerMove(move);
+
+                selectedPosition = -1;
+                pieceSelected = false;
             }
         }
 
-        private void OpponentMove()
-        {
-            if (BoardManager.fullMoves <= 5)
-            {
-                BoardManager.UpdateSideToMove();
-                bool success = MakeBookMove();
-                if (success) { return; }
-                MakeSearchMove();
-            }
-            else
-            {
-                BoardManager.UpdateSideToMove();
-                MakeSearchMove();
-            }
-        }
-
-        private bool MakeBookMove()
-        {
-            Move? bookMove = aiPlayer.MakeBookMove();
-            if (bookMove == null) { return false; }
-            Move move_ = bookMove ?? new Move(0, 0);
-            (_, _) = BoardManager.MakeMove(move_);
-            Render.UpdateBoard(buttons, BoardManager.GetBoard());
-
-            BoardManager.UpdateSideToMove();
-            BoardManager.UpdateMoveCount();
-            BoardManager.UpdateAttackedPositions(!BoardManager.whiteToMove);
-            return true;
-        }
-
-        private void MakeSearchMove()
-        {
-            int maxDepth = 5;
-            Move? move = aiPlayer.MakeBestEvaluatedMove(maxDepth);
-            Move move_ = move ?? new Move(0, 0);
-            (_, _) = BoardManager.MakeMove(move_);
-            Render.UpdateBoard(buttons, BoardManager.GetBoard());
-
-            BoardManager.UpdateSideToMove();
-            BoardManager.UpdateMoveCount();
-            BoardManager.UpdateAttackedPositions(!BoardManager.whiteToMove);
-        }
 
         #region rank_1_ClickHandel
         private void ButtonA1Click(object sender, RoutedEventArgs e)

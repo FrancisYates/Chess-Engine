@@ -113,7 +113,9 @@ namespace xUnitTests_Chess
         //[InlineData(true, "position3.txt", 1, 14)]
         //[InlineData(true, "position4.txt", 1, 6)]
         //[InlineData(true, "position5.txt", 1, 44)]
-        [InlineData(true, "position6.txt", 1, 46)]
+        [InlineData(true, "special.txt", 3, 62379)]
+        [InlineData(false, "special2.txt", 2, 1623)]
+        [InlineData(true, "special3.txt", 1, 33)]
         public void SpecialTesting(bool isWhite, string boardFile, int maxPly, int expectedResult)
         {
             BoardManager.ResetBoardToEmpty();
@@ -144,7 +146,7 @@ namespace xUnitTests_Chess
                 output.WriteLine($"{e.Message}");
                 foreach (Move move in moves)
                 {
-                    output.WriteLine(move.ToString());
+                    //output.WriteLine(move.ToString());
                 }
             }
             Assert.Equal(expectedResult, numMoves);

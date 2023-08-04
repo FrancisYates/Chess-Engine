@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ChessUI.Enums;
 
 namespace ChessUI
 {
@@ -15,9 +13,9 @@ namespace ChessUI
         private static void GenerateMoves(bool whiteMoves, bool generateOnlyCaptures)
         {
             moves.Clear();
-            int[] board = BoardManager.GetBoard();
+            int[] board = BoardManager.Board;
             int toMoveColour = whiteMoves ? 8 : 0;
-            List<int> piecePositions = whiteMoves ? BoardManager.whitePiecePositions : BoardManager.blackPiecePositions;
+            //List<int> piecePositions = whiteMoves ? BoardManager.whitePiecePositions : BoardManager.blackPiecePositions;
             //PERF Store Piece position rather than looping
             for (int sourceSquare = 0; sourceSquare < 64; sourceSquare++)
             //foreach (int sourceSquare in piecePositions)
@@ -28,24 +26,22 @@ namespace ChessUI
                 {
                     continue;
                 }
-
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.Pawn))
+                switch (Piece.GetPieceType(pieceAtPosition))
                 {
-                    GeneratePawnMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                    continue;
-                }
-                if (Piece.IsSlidingPiece(pieceAtPosition)){
-                    GenerateSlidingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                    continue;
-                }
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.Knight))
-                {
-                    GenerateKnightMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                    continue;
-                }
-                if (Piece.IsType(pieceAtPosition, Piece.PieceType.King))
-                {
-                    GenerateKingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                    case PieceType.Pawn:
+                        GeneratePawnMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                        break;
+                    case PieceType.Bishop:
+                    case PieceType.Queen:
+                    case PieceType.Rook:
+                        GenerateSlidingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                        break;
+                    case PieceType.Knight:
+                        GenerateKnightMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                        break;
+                    case PieceType.King:
+                        GenerateKingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
+                        break;
                 }
             }
         }
@@ -60,8 +56,8 @@ namespace ChessUI
 
         private static void GenerateSlidingMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
         {
-            int startIdx = Piece.IsType(piece, Piece.PieceType.Bishop)? 4 : 0;
-            int endIdx = Piece.IsType(piece, Piece.PieceType.Rook) ? 4 : 8;
+            int startIdx = Piece.IsType(piece, PieceType.Bishop)? 4 : 0;
+            int endIdx = Piece.IsType(piece, PieceType.Rook) ? 4 : 8;
 
             for (int directionIdx = startIdx; directionIdx < endIdx; directionIdx++)
             {
@@ -78,7 +74,7 @@ namespace ChessUI
                         }
                         else
                         {
-                            moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.capture));
+                            moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture));
                             break;
                         }
                     }
@@ -93,7 +89,7 @@ namespace ChessUI
             int moveDirection = isWhite ? 1 : -1;
 
             int[] attackOffsets = LookUps.pawnAttackOffset[isWhite ? 1 : 0, sourceSquare];
-            bool enPesantPossible = BoardManager.enPesantSquare != -1;
+            bool enPesantPossible = BoardManager.EnPesantSquare != -1;
             foreach (int offset in attackOffsets)
             {
                 int targetSquare = sourceSquare + offset;
@@ -103,9 +99,9 @@ namespace ChessUI
                 }
                 int pieceAtTarget = board[targetSquare];
 
-                if (enPesantPossible && targetSquare == BoardManager.enPesantSquare)
+                if (enPesantPossible && targetSquare == BoardManager.EnPesantSquare)
                 {
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.enPesant));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.enPesant));
                     continue;
                 }
                 if (pieceAtTarget == 0)
@@ -116,13 +112,13 @@ namespace ChessUI
                 {
                     if (Piece.IsAtFinalRank(isWhite, targetSquare))
                     {
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionBishopCapture));
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionRookCapture));
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionKnightCapture));
-                        moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionQueenCapture));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.bishop));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.rook));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.knight));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.queen));
                         continue;
                     }
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.capture));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture));
                     continue;
                 }
             }
@@ -145,15 +141,15 @@ namespace ChessUI
                 }
                 if (Piece.IsAtFinalRank(isWhite, targetSquare))
                 {
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionBishop));
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionRook));
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionKnight));
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.promotionQueen));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.bishop));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.rook));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.knight));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.queen));
                     continue;
                 }
                 if(i == 2)
                 {
-                    moves.Add(new Move(sourceSquare, targetSquare, Move.MoveType.doublePawnMove));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.doublePawnMove));
                     continue;
                 }
                 moves.Add(new Move(sourceSquare, targetSquare));
@@ -178,7 +174,7 @@ namespace ChessUI
                 }
                 if(!Piece.IsSameColour(piece, targetPiece))
                 {
-                    moves.Add((Move)new Move(sourceSquare,targetSquare, Move.MoveType.capture));
+                    moves.Add((Move)new Move(sourceSquare,targetSquare, MoveType.capture));
                 }
             }
         }
@@ -199,7 +195,7 @@ namespace ChessUI
                 }
                 if (!Piece.IsSameColour(piece, targetPiece))
                 {
-                    moves.Add((Move)new Move(sourceSquare, targetSquare, Move.MoveType.capture));
+                    moves.Add((Move)new Move(sourceSquare, targetSquare, MoveType.capture));
                 }
             }
 
@@ -209,11 +205,11 @@ namespace ChessUI
 
             if (CanCastleKingSide(isWhite, sourceSquare, board))
             {
-                moves.Add((Move)new Move(sourceSquare, sourceSquare + 2, Move.MoveType.castle));
+                moves.Add((Move)new Move(sourceSquare, sourceSquare + 2, MoveType.castle));
             }
             if (CanCastleQueenSide(isWhite, sourceSquare, board))
             {
-                moves.Add((Move)new Move(sourceSquare, sourceSquare - 2, Move.MoveType.castle));
+                moves.Add((Move)new Move(sourceSquare, sourceSquare - 2, MoveType.castle));
             }
         }
 
@@ -311,7 +307,7 @@ namespace ChessUI
 
         private static bool DoesKingMoveCauseCheck(Move move)
         {
-            int king = BoardManager.GetBoard()[move.sourceSquare];
+            int king = BoardManager.Board[move.sourceSquare];
             bool isOpponentWhite = !Piece.IsPieceWhite(king);
 
             if (IsSquareAttackedByOpponent(move.targetSquare, isOpponentWhite))
@@ -324,7 +320,7 @@ namespace ChessUI
                 if (checkingPieces.Count == 1)
                 {
                     int checkingPiecePosition = checkingPieces[0];
-                    int checkingPiece = BoardManager.GetBoard()[checkingPiecePosition];
+                    int checkingPiece = BoardManager.Board[checkingPiecePosition];
                     if (move.targetSquare == checkingPiecePosition)
                     {
                         return false;
@@ -345,7 +341,7 @@ namespace ChessUI
 
                 foreach (int checkingPosition in checkingPieces)
                 {
-                    int checkingPiece = BoardManager.GetBoard()[checkingPosition];
+                    int checkingPiece = BoardManager.Board[checkingPosition];
                     if (Piece.IsSlidingPiece(checkingPiece))
                     {
                         int kingToMove = LookUps.directionIndex[move.sourceSquare, move.targetSquare];
@@ -368,7 +364,7 @@ namespace ChessUI
 
         private static bool IsCheckBlocked(int kingPosition, Move move)
         {
-            int king = BoardManager.GetBoard()[kingPosition];
+            int king = BoardManager.Board[kingPosition];
 
             List<int> checkingPieces = BoardManager.FindCheckingPieces(kingPosition, king);
 
@@ -384,7 +380,7 @@ namespace ChessUI
             }
 
             int piecePosition = checkingPieces[0];
-            int checkingPiece = BoardManager.GetBoard()[piecePosition];
+            int checkingPiece = BoardManager.Board[piecePosition];
             if (Piece.IsSlidingPiece(checkingPiece))
             {
                 if (IsPieceInDirection(kingPosition, move.targetSquare, piecePosition))
@@ -407,7 +403,7 @@ namespace ChessUI
                 {
                     return true;
                 }
-                if (move.moveType == Move.MoveType.enPesant)
+                if (move.IsType(MoveType.enPesant))
                 {
                     int captureOffset = !Piece.IsPieceWhite(king) ? 8 : -8;
                     return move.targetSquare + captureOffset != piecePosition;
@@ -418,11 +414,11 @@ namespace ChessUI
 
         private static bool DoesMoveCauseCheck(int kingPosition, Move move)
         {
-            int king = BoardManager.GetBoard()[kingPosition];
+            int king = BoardManager.Board[kingPosition];
             bool isOpponentWhite = !Piece.IsPieceWhite(king);
-            int movedPiece = BoardManager.GetBoard()[move.sourceSquare];
+            int movedPiece = BoardManager.Board[move.sourceSquare];
 
-            if (Piece.IsType(movedPiece, Piece.PieceType.King))
+            if (Piece.IsType(movedPiece, PieceType.King))
             {
                 return DoesKingMoveCauseCheck(move);
             }
@@ -433,21 +429,15 @@ namespace ChessUI
             }
             else
             {
-                if (move.moveType == Move.MoveType.enPesant)
-                {
-                    return DoesEnPesantCreatesCheck(kingPosition, move);
-                }
-                if (IsSquareAttackedByOpponent(move.sourceSquare, isOpponentWhite))
-                {
-                    return IsCheckCreatedInDirection(kingPosition, move);
-                }
+                if (move.IsType( MoveType.enPesant)) return DoesEnPesantCreatesCheck(kingPosition, move);
+                if (IsSquareAttackedByOpponent(move.sourceSquare, isOpponentWhite))return IsCheckCreatedInDirection(kingPosition, move);
                 return false;
             }
         }
 
         private static bool DoesEnPesantCreatesCheck(int kingPosition, Move move)
         {
-            int king = BoardManager.GetBoard()[kingPosition];
+            int king = BoardManager.Board[kingPosition];
 
             int capturedOffest = move.targetSquare % 8 - move.sourceSquare % 8;
             int capturedPosition = move.sourceSquare + capturedOffest;
@@ -462,7 +452,7 @@ namespace ChessUI
             for (int i = 0; i < maxOffset; i++)
             {
                 int targetSquare = move.sourceSquare + (i + 1) * directionOffsets[directionToKing];
-                int pieceAtTarget = BoardManager.GetBoard()[targetSquare];
+                int pieceAtTarget = BoardManager.Board[targetSquare];
 
                 if (pieceAtTarget == 0) { continue; }
 
@@ -491,7 +481,7 @@ namespace ChessUI
                     continue;
                 }
 
-                int pieceAtTarget = BoardManager.GetBoard()[targetSquare];
+                int pieceAtTarget = BoardManager.Board[targetSquare];
 
                 if (pieceAtTarget == 0) { continue; }
 
@@ -506,9 +496,9 @@ namespace ChessUI
                     {
                         if (directionIdx < 4)
                         {
-                            return Piece.IsType(pieceAtTarget, Piece.PieceType.Rook) || Piece.IsType(pieceAtTarget, Piece.PieceType.Queen);
+                            return Piece.IsType(pieceAtTarget, PieceType.Rook) || Piece.IsType(pieceAtTarget, PieceType.Queen);
                         }
-                        return Piece.IsType(pieceAtTarget, Piece.PieceType.Bishop) || Piece.IsType(pieceAtTarget, Piece.PieceType.Queen);
+                        return Piece.IsType(pieceAtTarget, PieceType.Bishop) || Piece.IsType(pieceAtTarget, PieceType.Queen);
                     }
                     return false;
                 }
@@ -526,7 +516,7 @@ namespace ChessUI
         private static bool IsSquareAttackedByOpponent(int squareIndex, bool isOpponentWhite)
         {
             int attackedIndicator = isOpponentWhite ? 2 : 1;
-            int positionAndIndicator = BoardManager.attackPositionBoard[squareIndex] & attackedIndicator;
+            int positionAndIndicator = BoardManager.AttackPositionBoard[squareIndex] & attackedIndicator;
             return positionAndIndicator == attackedIndicator;
         }
 
@@ -558,7 +548,7 @@ namespace ChessUI
                 return false;
             }
 
-            int king = BoardManager.GetBoard()[kingPosition];
+            int king = BoardManager.Board[kingPosition];
             int sideColour = Piece.IsPieceWhite(king) ? 8 : 0;
             return BoardManager.IsSlidingPieceInDirection(move.sourceSquare, directionFromKing, sideColour);
         }
@@ -577,7 +567,7 @@ namespace ChessUI
             for (int i = 0; i < maxOffset; i++)
             {
                 int targetSquare = movedPiecePosition + (i + 1) * directionOffsets[directionIdx];
-                int pieceAtTarget = BoardManager.GetBoard()[targetSquare];
+                int pieceAtTarget = BoardManager.Board[targetSquare];
 
                 if (pieceAtTarget == 0) { continue; }
 
