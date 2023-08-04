@@ -10,26 +10,21 @@ namespace ChessUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        readonly List<Button> buttons;
+        private readonly List<Button> buttons;
+        public List<Button> Buttons => buttons;
         int selectedPosition = -1;
         bool pieceSelected = false;
         public MoveType promotionSelection;
         public PromotionPiece promotionPiece;
-        readonly AIPlayer aiPlayer;
+        private readonly GameInstance _game;
         //readonly Player player;
         public MainWindow()
         {
             InitializeComponent();
             buttons = CreateButtonList();
 
-            aiPlayer = new AIPlayer();
-            aiPlayer.CreateBookTree();
-            MoveGeneration.CalculateDirections();
-            BoardManager.LoadBoard();
+            _game = new GameInstance(this);
             Render.UpdateBoard(buttons, BoardManager.Board);
-
-            BoardManager.UpdateAttackedPositions(true);
-            BoardManager.UpdateAttackedPositions(false);
         }
         public void SetPromotion(MoveType selection, PromotionPiece piece) 
         { 
@@ -54,72 +49,21 @@ namespace ChessUI
             if (!validSelection && pieceSelected)
             {
                 Move move = new Move(selectedPosition, thisPosition);
-                if (Player.IsMoveValid(ref move))
+                if (!Player.IsMoveValid(ref move)) return;
+                if (move.IsPromotion())
                 {
-                    if (move.IsPromotion())
-                    {
-                        PromotionSelection selectionWin = new PromotionSelection(this);
-                        selectionWin.ShowDialog();
-                        move.moveFlag = ((int)promotionSelection | (int)promotionPiece);
-                    }
-                    (_, _) = MoveManager.MakeMove(move, BoardManager.Board);
-                    aiPlayer.UpdateBookPosition(move);
-                    Render.UpdateBoard(buttons, BoardManager.Board);
-                    Render.HighlightSquare(buttons, selectedPosition);
-                    Render.RemoveHighlightFromSquare(buttons, selectedPosition);
-                    selectedPosition = -1;
-                    pieceSelected = false;
-
-                    //BoardManager.UpdateSideToMove();
-                    BoardManager.UpdateMoveCount();
-                    BoardManager.UpdateAttackedPositions(BoardManager.WhiteToMove);
-                    OpponentMove();
+                    PromotionSelection selectionWin = new(this);
+                    selectionWin.ShowDialog();
+                    move.moveFlag = ((int)promotionSelection | (int)promotionPiece);
                 }
+
+                _game.MakePlayerMove(move);
+
+                selectedPosition = -1;
+                pieceSelected = false;
             }
         }
 
-        private void OpponentMove()
-        {
-            if (BoardManager.FullMoves <= 5)
-            {
-                BoardManager.UpdateSideToMove();
-                bool success = MakeBookMove();
-                if (success) { return; }
-                MakeSearchMove();
-            }
-            else
-            {
-                BoardManager.UpdateSideToMove();
-                MakeSearchMove();
-            }
-        }
-
-        private bool MakeBookMove()
-        {
-            Move? bookMove = aiPlayer.MakeBookMove();
-            if (bookMove == null) { return false; }
-            Move move_ = bookMove ?? new Move(0, 0);
-            (_, _) = MoveManager.MakeMove(move_, BoardManager.Board);
-            Render.UpdateBoard(buttons, BoardManager.Board);
-
-            BoardManager.UpdateSideToMove();
-            BoardManager.UpdateMoveCount();
-            BoardManager.UpdateAttackedPositions(!BoardManager.WhiteToMove);
-            return true;
-        }
-
-        private void MakeSearchMove()
-        {
-            int maxDepth = 5;
-            Move? move = aiPlayer.MakeBestEvaluatedMove(maxDepth);
-            Move move_ = move ?? new Move(0, 0);
-            (_, _) = MoveManager.MakeMove(move_, BoardManager.Board);
-            Render.UpdateBoard(buttons, BoardManager.Board);
-
-            BoardManager.UpdateSideToMove();
-            BoardManager.UpdateMoveCount();
-            BoardManager.UpdateAttackedPositions(!BoardManager.WhiteToMove);
-        }
 
         #region rank_1_ClickHandel
         private void ButtonA1Click(object sender, RoutedEventArgs e)
