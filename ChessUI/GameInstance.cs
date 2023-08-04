@@ -72,8 +72,8 @@ namespace ChessUI
         {
             int maxDepth = 5;
             Move? move = aiPlayer.MakeBestEvaluatedMove(maxDepth);
-            Move move_ = move ?? new Move(0, 0);
-            (_, _) = MoveManager.MakeMove(move_, BoardManager.Board);
+            if(move is null) throw new NullReferenceException(nameof(move));
+            (_, _) = MoveManager.MakeMove((Move)move, BoardManager.Board);
             Render.UpdateBoard(_window.Buttons, BoardManager.Board);
 
             BoardManager.UpdateSideToMove();

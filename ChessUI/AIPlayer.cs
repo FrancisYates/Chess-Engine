@@ -254,7 +254,15 @@ namespace ChessUI
             (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
             GenerateMoveTree(currentDepth + 1, maxDepth, child, alpha, beta, !maximising);
             MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
-            parent.evaluation = Math.Max(child.evaluation, parent.evaluation);
+
+            if(maximising)
+            {
+                parent.evaluation = Math.Max(child.evaluation, parent.evaluation);
+            }
+            else
+            {
+                parent.evaluation = Math.Min(child.evaluation, parent.evaluation);
+            }
             return child;
         }
 
