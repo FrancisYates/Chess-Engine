@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Reflection;
+using System.Threading;
+using System.Diagnostics;
 
 namespace ChessUI
 {
@@ -17,7 +19,7 @@ namespace ChessUI
         public Move? MakeRandomMove()
         {
             bool isWhite = BoardManager.WhiteToMove;
-            Move[] moves = MoveGeneration.GenerateStricLegalMoves(isWhite);
+            Move[] moves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
 
             Random random = new Random();
             int randomIndex = random.Next(0, moves.Length - 1);
@@ -31,10 +33,8 @@ namespace ChessUI
 
         public Move? MakeBestEvaluatedMove(int maxDepth)
         {
-            Node root = new Node();
-            int negativeIninity = -1000000;
-            int positiveInfinity = 1000000;
-            GenerateMoveTree(0, maxDepth, root, negativeIninity, positiveInfinity, BoardManager.WhiteToMove);
+            Node root = new();
+            GenerateMoveTree(0, maxDepth, int.MinValue, int.MaxValue, BoardManager.WhiteToMove);
 
             //prints for observing effect of search settings.
             //int totalPositions = CountPositions(root);
@@ -42,6 +42,26 @@ namespace ChessUI
             //Console.WriteLine("Total Quiescence Positions: " + totalQuiescenceMoves.ToString());
             totalQuiescenceMoves = 0;
             return GetBestMove(root, BoardManager.WhiteToMove);
+        }
+        public Move? MakeBestEvaluatedMoveItterativeDeepening(int maxDepth, int maxTimeMS)
+        {
+            CancellationTokenSource tokenSource = new CancellationTokenSource(maxTimeMS);
+            var sw1 = Stopwatch.StartNew();
+            Node previousSearch = GenerateMoveTree(0, maxDepth, int.MinValue, int.MaxValue, BoardManager.WhiteToMove);
+            sw1.Stop();
+            Debug.WriteLine("Initial search time " + sw1.ElapsedMilliseconds);
+            Node currentSearch = previousSearch;
+            for (int i = 1; i < maxDepth; i++)
+            {
+                if (tokenSource.Token.IsCancellationRequested) break;
+                var sw = Stopwatch.StartNew();
+                currentSearch = GenerateMoveTreeID(0, maxDepth, int.MinValue, int.MaxValue, BoardManager.WhiteToMove, previousSearch, tokenSource.Token);
+                sw.Stop();
+                Debug.WriteLine($"Itteration {i} time taken {sw.ElapsedMilliseconds}");
+            }
+
+            totalQuiescenceMoves = 0;
+            return GetBestMove(currentSearch, BoardManager.WhiteToMove);
         }
 
         private int CountPositions(Node root)
@@ -130,6 +150,7 @@ namespace ChessUI
             using (Stream stream = assembly.GetManifestResourceStream(resourceName))
             using (StreamReader reader = new StreamReader(stream))
             {
+                if (stream is null) return;
                 while (!reader.EndOfStream) { games.Add(reader.ReadLine()); }
             }
 
@@ -211,26 +232,27 @@ namespace ChessUI
         }
 
         static int totalQuiescenceMoves = 0;
-        private void GenerateMoveTree(int currentSearchDepth, int maxSearchDepth, Node node, int alpha, int beta, bool maximising)
+        private Node GenerateMoveTree(int currentSearchDepth, int maxDepth, int alpha, int beta, bool maximising, CancellationToken token = default)
         {            
-            
-            if (currentSearchDepth == maxSearchDepth)
+            var node = new Node();
+            if (currentSearchDepth == maxDepth)
             {
                 (int eval, int movesExplored) = QuiescenceSearch(alpha, beta, !maximising, 0, 5);
                 totalQuiescenceMoves += movesExplored;
                 node.evaluation = eval;
-                return;
+                return node;
             }
 
-            Move[] possibleMoves = MoveGeneration.GenerateStricLegalMoves(maximising);
+            IEnumerable<Move> possibleMoves = MoveGeneration.GenerateStrictLegalMoves(maximising);
             possibleMoves = MoveEvaluation.MoveOrdering(possibleMoves);
             if (maximising)
             {
                 node.evaluation = -10000000;
                 foreach (Move move in possibleMoves)
                 {
-                    Node child = GenerateChild(move, node, currentSearchDepth, maxSearchDepth, alpha, beta, maximising);
+                    if (token.IsCancellationRequested) break;
                     if (node.evaluation >= beta) break;
+                    Node child = GenerateChild(node.move, node, currentSearchDepth, maxDepth, alpha, beta, maximising);
                     node.AddChild(child);
                     alpha = Math.Max(alpha, node.evaluation);
                 }
@@ -240,19 +262,61 @@ namespace ChessUI
                 node.evaluation = 10000000;
                 foreach (Move move in possibleMoves)
                 {
-                    Node child = GenerateChild(move, node, currentSearchDepth, maxSearchDepth, alpha, beta, maximising);
+                    if (token.IsCancellationRequested) break;
                     if (node.evaluation <= alpha) break;
+                    Node child = GenerateChild(node.move, node, currentSearchDepth, maxDepth, alpha, beta, maximising);
                     node.AddChild(child);
                     beta = Math.Min(beta, node.evaluation);
                 }
             }
+            return node;
+        }
+        private Node GenerateMoveTreeID(int currentSearchDepth, int maxDepth , int alpha, int beta, bool maximising, Node previousSearch, CancellationToken token)
+        {            
+            var root = new Node();
+            IEnumerable<Node> possibleMoves = MoveEvaluation.MoveOrderingID(previousSearch);
+
+            if (maximising)
+            {
+                root.evaluation = -10000000;
+                foreach (Node node in possibleMoves)
+                {
+                    if (token.IsCancellationRequested) break;
+                    Node child = GenerateChildID(node.move, root, currentSearchDepth, maxDepth, alpha, beta, maximising, node, token);
+                    if (root.evaluation >= beta) break;
+                    root.AddChild(child);
+                    alpha = Math.Max(alpha, root.evaluation);
+                }
+            }
+            else
+            {
+                root.evaluation = 10000000;
+                foreach (Node node in possibleMoves)
+                {
+                    if (token.IsCancellationRequested) break;
+                    Node child = GenerateChildID(node.move, root, currentSearchDepth, maxDepth, alpha, beta, maximising, node, token);
+                    if (root.evaluation <= alpha) break;
+                    root.AddChild(child);
+                    beta = Math.Min(beta, root.evaluation);
+                }
+            }
+            return root;
         }
 
-        private Node GenerateChild(Move move, Node parent, int currentDepth, int maxDepth, int alpha, int beta, bool maximising)
+        private Node GenerateChildID(Move move, Node parent, int currentDepth, int maxDepth, int alpha, int beta, bool maximising, Node previousSearch, CancellationToken token)
         {
-            Node child = new Node(move, parent);
             (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
-            GenerateMoveTree(currentDepth + 1, maxDepth, child, alpha, beta, !maximising);
+            Node child;
+            if (previousSearch.children.Count > 0)
+            {
+                child = GenerateMoveTreeID(currentDepth + 1, maxDepth, alpha, beta, maximising, previousSearch, token);
+            }
+            else
+            {
+                child = GenerateMoveTree(currentDepth + 1, maxDepth, alpha, beta, maximising, token);
+            }
+            child.move = move;
+            child.parent = parent;
             MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
 
             if(maximising)
@@ -266,21 +330,39 @@ namespace ChessUI
             return child;
         }
 
-        private (int, int) QuiescenceSearch(int alpha, int beta, bool maximising, int currentDepth, int maxDepth)
+        private Node GenerateChild(Move move, Node parent, int currentDepth, int maxDepth, int alpha, int beta, bool maximising)
+        {
+            
+            (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
+            Node child = GenerateMoveTree(currentDepth + 1, maxDepth, alpha, beta, maximising);
+            MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
+
+            if(maximising)
+            {
+                parent.evaluation = Math.Max(child.evaluation, parent.evaluation);
+            }
+            else
+            {
+                parent.evaluation = Math.Min(child.evaluation, parent.evaluation);
+            }
+            return child;
+        }
+
+        private (int, int) QuiescenceSearch(int alpha, int beta, bool maximising, int currentDepth, int maxDepth, CancellationToken token = default)
          {
             int exploredMoves = 1;
             int stand_pat = MoveEvaluation.EvaluateBoard(BoardManager.Board);
             if (stand_pat >= beta) return (beta, exploredMoves);
 
-            int maxDelta = 500; // queen value
+            int maxDelta = 900; // queen value
 
             if (stand_pat < alpha - maxDelta) return (alpha, exploredMoves);
             if (alpha < stand_pat) alpha = stand_pat;
 
-            if(currentDepth == maxDepth) return (alpha, exploredMoves);
+            if(token.IsCancellationRequested) return (alpha, exploredMoves);
 
-            Move[] captureMoves = MoveGeneration.GenerateStricLegalMoves(maximising, generateOnlyCaptures: true);
-            if(captureMoves.Length == 0) return (alpha, exploredMoves);
+            IEnumerable<Move> captureMoves = MoveGeneration.GenerateStrictLegalMoves(maximising, generateOnlyCaptures: true);
+            if(!captureMoves.Any()) return (alpha, exploredMoves);
             captureMoves = MoveEvaluation.MoveOrdering(captureMoves);
 
             foreach (Move move in captureMoves)
@@ -303,7 +385,7 @@ namespace ChessUI
 
             BoardManager.WhiteToMove = isWhite;
             BoardManager.UpdateAttackedPositions(!isWhite);
-            Move[] possibleMoves = MoveGeneration.GenerateStricLegalMoves(isWhite);
+            Move[] possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
             if (currentSearchDepth == maxSearchDepth) return (possibleMoves, positionsAftermove);
 
             List<Move> movesAtLevel = new List<Move>();

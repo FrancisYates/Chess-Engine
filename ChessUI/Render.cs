@@ -35,6 +35,32 @@ namespace ChessUI
             selectedButton.Background = Brushes.Green;
         }
 
+        public static void HighlightPossibleMoves(List<Button> buttons, IEnumerable<Move> moves)
+        {
+            foreach (Move move in moves)
+            {
+                Button selectedButton = buttons[move.targetSquare];
+                selectedButton.Background = Brushes.LightGreen;
+            }
+        }
+        public static void RemovePossibleMovesHighlight(List<Button> buttons, IEnumerable<Move> moves)
+        {
+            foreach (Move move in moves)
+            {
+                bool isFileOdd = (move.targetSquare % 8) % 2 == 1;
+                bool isRankOdd = (move.targetSquare / 8) % 2 == 1;
+                Button selectedButton = buttons[move.targetSquare];
+                if (isRankOdd ^ isFileOdd)
+                {
+                    selectedButton.Background = Brushes.Beige;
+                }
+                else
+                {
+                    selectedButton.Background = Brushes.SaddleBrown;
+                }
+            }
+        }
+
         public static void RemoveHighlightFromSquare(List<Button> buttons, int position)
         {
             bool isFileOdd = (position % 8) % 2 == 1;

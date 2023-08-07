@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using ChessUI.Enums;
@@ -17,7 +18,6 @@ namespace ChessUI
         public MoveType promotionSelection;
         public PromotionPiece promotionPiece;
         private readonly GameInstance _game;
-        //readonly Player player;
         public MainWindow()
         {
             InitializeComponent();
@@ -36,19 +36,26 @@ namespace ChessUI
         {
             int thisPosition = 63 - (y * 8 + (7 - x));
             bool validSelection = Player.IsValidSelection(BoardManager.Board, thisPosition);
+            if (selectedPosition != -1)
+            {
+                Render.RemoveHighlightFromSquare(buttons, selectedPosition);
+                var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.sourceSquare == selectedPosition);
+                Render.RemovePossibleMovesHighlight(Buttons, legalMoves);
+            }
+
             if (validSelection)
             {
-                if(selectedPosition != -1)
-                {
-                    Render.RemoveHighlightFromSquare(buttons, selectedPosition);
-                }
                 selectedPosition = thisPosition;
                 pieceSelected = true;
                 Render.HighlightSquare(buttons, selectedPosition);
+                var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.sourceSquare == selectedPosition);
+                Render.HighlightPossibleMoves(Buttons, legalMoves);
             }
             if (!validSelection && pieceSelected)
             {
-                Move move = new Move(selectedPosition, thisPosition);
+                Move move = new(selectedPosition, thisPosition);
+                var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.sourceSquare == selectedPosition);
+                Render.RemovePossibleMovesHighlight(Buttons, legalMoves);
                 if (!Player.IsMoveValid(ref move)) return;
                 if (move.IsPromotion())
                 {

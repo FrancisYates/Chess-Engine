@@ -57,7 +57,7 @@ namespace ChessUI
         private bool TryMakeBookMove()
         {
             Move? bookMove = aiPlayer.MakeBookMove();
-            if (bookMove == null) { return false; }
+            if (bookMove is null) { return false; }
             Move move_ = bookMove ?? new Move(0, 0);
             (_, _) = MoveManager.MakeMove(move_, BoardManager.Board);
             Render.UpdateBoard(_window.Buttons, BoardManager.Board);
