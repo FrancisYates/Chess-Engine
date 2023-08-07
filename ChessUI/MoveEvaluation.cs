@@ -60,49 +60,64 @@ namespace ChessUI
             return whiteControlled - blackControlled;
         }
 
-        public static Move[] MoveOrdering(Move[] unorderedMoves)
+        public static IEnumerable<Move> MoveOrdering(IEnumerable<Move> unorderedMoves)
         {
-            List<Move> captureMoves = new List<Move>();
-            List<Move> promotionCaptureMoves = new List<Move>();
-            List<Move> promotionMoves = new List<Move>();
-            List<Move> ordinaryMoves = new List<Move>();
+            List<Move> captureMoves = new();
+            List<Move> promotionCaptureMoves = new();
+            List<Move> promotionMoves = new();
+            List<Move> ordinaryMoves = new();
 
             foreach (Move move in unorderedMoves)
             {
-                if (move.IsType(MoveType.capture))
+                switch (move.GetMoveType())
                 {
-                    if (!move.IsPromotion())
-                    {
-                        promotionCaptureMoves.Add(move);
-                        continue;
-                    }
-                    captureMoves.Add(move);
-                    continue;
+                    case MoveType.capture:
+                        if (!move.IsPromotion())
+                        {
+                            promotionCaptureMoves.Add(move);
+                            break;
+                        }
+                        captureMoves.Add(move);
+                        break;
+                    case MoveType.promotion:
+                        promotionMoves.Add(move);
+                        break;
+                    case MoveType.enPesant:
+                        captureMoves.Add(move);
+                        break;
+                    default:
+                        ordinaryMoves.Add(move);
+                        break;
                 }
-                if (move.IsType(MoveType.enPesant))
-                {
-                    captureMoves.Add(move);
-                    continue;
-                }
-                if (move.IsType(MoveType.promotion))
-                {
-                    promotionMoves.Add(move);
-                }
-                ordinaryMoves.Add(move);
             }
 
-            List<Move> orderedMoves = promotionCaptureMoves;
-            captureMoves = CaptureOrdering(captureMoves);
-            orderedMoves = orderedMoves.Concat(captureMoves).ToList();
-            orderedMoves = orderedMoves.Concat(promotionMoves).ToList();
-            orderedMoves = orderedMoves.Concat(ordinaryMoves).ToList();
+            foreach (Move move in promotionCaptureMoves)
+            {
+                yield return move;
+            }
+            foreach (Move move in promotionMoves)
+            {
+                yield return move;
+            }
+            foreach (Move move in CaptureOrdering(captureMoves))
+            {
+                yield return move;
+            }
+            foreach (Move move in ordinaryMoves)
+            {
+                yield return move;
+            }
 
-            return orderedMoves.ToArray();
         }
 
-        private static List<Move> CaptureOrdering(List<Move> captureMoves)
+        public static IEnumerable<Node> MoveOrderingID(Node previousEvaluation)
         {
-            (int, int)[] x = new (int, int)[captureMoves.Count];
+            return previousEvaluation.children.OrderByDescending(n => n.evaluation);
+        }
+
+        private static IEnumerable<Move> CaptureOrdering(List<Move> captureMoves)
+        {
+            (int, int)[] moveValuesDeltas = new (int, int)[captureMoves.Count];
             int[] board = BoardManager.Board;
             int idx = 0;
             foreach(Move move in captureMoves)
@@ -127,18 +142,17 @@ namespace ChessUI
                 int capturingValue = Piece.GetPieceValue(capturingPiece);
                 int capturedValue = Piece.GetPieceValue(capturedPiece);
                 int valueDelta = capturingValue - capturedValue;
-                x[idx] = (valueDelta, idx);
+
+                moveValuesDeltas[idx] = (valueDelta, idx);
                 idx++;
             }
 
-            List<Move> sortedCaptures = new List<Move>();
-            Array.Sort(x);
-            foreach ((_, int index) in x)
+            Array.Sort(moveValuesDeltas);
+            foreach ((_, int index) in moveValuesDeltas)
             {
-                sortedCaptures.Add(captureMoves[index]);
+                yield return captureMoves[index];
             }
 
-            return sortedCaptures;
         }
     }
 }

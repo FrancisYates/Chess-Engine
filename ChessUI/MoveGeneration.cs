@@ -47,7 +47,7 @@ namespace ChessUI
         }
 
 
-        public static Move[] GenerateStricLegalMoves(bool whiteMoves, bool generateOnlyCaptures = false)
+        public static Move[] GenerateStrictLegalMoves(bool whiteMoves, bool generateOnlyCaptures = false)
         {
             GenerateMoves(whiteMoves, generateOnlyCaptures);
             RemoveIllegalMoves(whiteMoves);
