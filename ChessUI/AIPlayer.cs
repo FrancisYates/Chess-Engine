@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Diagnostics;
+using ChessUI.Enums;
 
 namespace ChessUI
 {
@@ -14,15 +15,23 @@ namespace ChessUI
         private readonly ThinkTimeCalculator _timeCalculator;
         public MoveSelectionType MoveSelectionType { get; init; }
         public int MaxSearchDepth { get; set; } = 9;
-        public AIPlayer(ThinkTimeCalculator timeCalculator)
+        public AIPlayer(ThinkTimeCalculator timeCalculator, MoveSelectionType moveSelectionType = MoveSelectionType.ItterativeDeepening)
         {
+            MoveSelectionType = moveSelectionType;
             _timeCalculator = timeCalculator;
         }
 
-        public AIPlayer()
+        public Move? MakeMove()
         {
-
+            return MoveSelectionType switch
+            {
+                MoveSelectionType.Random => MakeRandomMove(),
+                MoveSelectionType.Minimax => MakeMinimaxMove(MaxSearchDepth),
+                MoveSelectionType.ItterativeDeepening => MakeItterativeDeepeningMove(MaxSearchDepth, _timeCalculator.GetThinkTimeMs()),
+                _ => throw new NotImplementedException($"MoveSelectionType is {MoveSelectionType}"),
+            };
         }
+
         public Move? MakeRandomMove()
         {
             bool isWhite = BoardManager.WhiteToMove;
@@ -38,7 +47,7 @@ namespace ChessUI
             return moves[randomIndex];
         }
 
-        public Move? MakeBestEvaluatedMove(int maxDepth)
+        public Move? MakeMinimaxMove(int maxDepth)
         {
             Node root = new();
             GenerateMoveTree(0, maxDepth, int.MinValue, int.MaxValue, BoardManager.WhiteToMove);
@@ -50,8 +59,9 @@ namespace ChessUI
             totalQuiescenceMoves = 0;
             return GetBestMove(root, BoardManager.WhiteToMove);
         }
-        public Move? MakeBestEvaluatedMoveItterativeDeepening(int maxDepth, int maxTimeMS)
+        public Move? MakeItterativeDeepeningMove(int maxDepth, int maxTimeMS)
         {
+            int thinkTime = _timeCalculator.GetThinkTimeMs();
             CancellationTokenSource tokenSource = new CancellationTokenSource(maxTimeMS);
             var sw1 = Stopwatch.StartNew();
             Node previousSearch = GenerateMoveTree(0, maxDepth, int.MinValue, int.MaxValue, BoardManager.WhiteToMove);

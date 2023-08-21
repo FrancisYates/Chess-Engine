@@ -11,7 +11,7 @@ namespace ChessUI
     public class GameInstance
     {
         readonly AIPlayer aiPlayer;
-        MainWindow _window;
+        private readonly GameWindow _window;
         public GameInstance(GameWindow window, ThinkTimeCalculator thinkTimer)
         {
             _window = window;
@@ -20,7 +20,7 @@ namespace ChessUI
             aiPlayer.CreateBookTree();
             MoveGeneration.CalculateDirections();
             BoardManager.LoadBoard();
-
+            
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
         }
@@ -70,8 +70,7 @@ namespace ChessUI
 
         private void MakeSearchMove()
         {
-            int maxDepth = 5;
-            Move? move = aiPlayer.MakeBestEvaluatedMove(maxDepth);
+            Move? move = aiPlayer.MakeMove();
             if(move is null) throw new NullReferenceException(nameof(move));
             (_, _) = MoveManager.MakeMove((Move)move, BoardManager.Board);
             Render.UpdateBoard(_window.Buttons, BoardManager.Board);

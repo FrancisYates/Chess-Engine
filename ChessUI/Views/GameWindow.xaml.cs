@@ -19,8 +19,8 @@ namespace ChessUI
         public MoveType promotionSelection;
         public PromotionPiece promotionPiece;
         private readonly GameInstance _game;
-        private readonly Menu _menu;
-        public GameWindow(Menu menu)
+        private readonly Views.Menu _menu;
+        public GameWindow(Views.Menu menu)
         {
             InitializeComponent();
             _menu = menu;

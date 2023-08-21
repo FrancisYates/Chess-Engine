@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChessUI.Views;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -13,5 +14,10 @@ namespace ChessUI
     /// </summary>
     public partial class App : Application
     {
+        void App_Startup(object sender, StartupEventArgs e)
+        {
+            Menu menu = new();
+            menu.Show();
+        }
     }
 }
