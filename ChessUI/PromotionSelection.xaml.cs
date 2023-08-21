@@ -20,9 +20,9 @@ namespace ChessUI
     /// </summary>
     public partial class PromotionSelection : Window
     {
-        MainWindow mainWindow;
+        GameWindow mainWindow;
 
-        public PromotionSelection(MainWindow mainWindow)
+        public PromotionSelection(GameWindow mainWindow)
         {
             InitializeComponent();
             this.mainWindow = mainWindow;

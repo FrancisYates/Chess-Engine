@@ -3,13 +3,14 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using ChessUI.Enums;
+using ChessUI.Time_Control;
 
 namespace ChessUI
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class GameWindow : Window
     {
         private readonly List<Button> buttons;
         public List<Button> Buttons => buttons;
@@ -18,12 +19,13 @@ namespace ChessUI
         public MoveType promotionSelection;
         public PromotionPiece promotionPiece;
         private readonly GameInstance _game;
-        public MainWindow()
+        private readonly Menu _menu;
+        public GameWindow(Menu menu)
         {
             InitializeComponent();
+            _menu = menu;
             buttons = CreateButtonList();
-
-            _game = new GameInstance(this);
+            _game = new GameInstance(this, new ThinkTimeCalculator(GameSetup.TimeControl));
             Render.UpdateBoard(buttons, BoardManager.Board);
         }
         public void SetPromotion(MoveType selection, PromotionPiece piece) 

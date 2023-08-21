@@ -10,7 +10,14 @@ namespace ChessUI
 {
     public class AIPlayer
     {
-        public static BookNode bookMoveTree = new BookNode();
+        public BookNode bookMoveTree = new();
+        private readonly ThinkTimeCalculator _timeCalculator;
+        public MoveSelectionType MoveSelectionType { get; init; }
+        public int MaxSearchDepth { get; set; } = 9;
+        public AIPlayer(ThinkTimeCalculator timeCalculator)
+        {
+            _timeCalculator = timeCalculator;
+        }
 
         public AIPlayer()
         {

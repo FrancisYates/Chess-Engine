@@ -12,10 +12,10 @@ namespace ChessUI
     {
         readonly AIPlayer aiPlayer;
         MainWindow _window;
-        public GameInstance(MainWindow window)
+        public GameInstance(GameWindow window, ThinkTimeCalculator thinkTimer)
         {
             _window = window;
-            aiPlayer = new AIPlayer();
+            aiPlayer = new AIPlayer(thinkTimer);
 
             aiPlayer.CreateBookTree();
             MoveGeneration.CalculateDirections();
