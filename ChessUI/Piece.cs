@@ -1,9 +1,5 @@
 ﻿using ChessUI.Enums;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChessUI
 {
@@ -99,6 +95,23 @@ namespace ChessUI
                 return 900;
             }
             return 0;
+        }
+
+        internal static char GetPieceCharacterRepresentation(int piece)
+        {
+            bool isWhite = IsPieceWhite(piece);
+            if (isWhite) piece -= 9;
+            char x = piece switch
+            {
+                1 => 'p',
+                2 => 'n',
+                3 => 'k',
+                5 => 'r',
+                6 => 'b',
+                7 => 'q'
+            };
+            if (isWhite) x = (char)(x + (char)32);
+            return x;
         }
     }
 }

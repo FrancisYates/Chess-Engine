@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Packaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ChessUI.Enums;
 
-namespace ChessUI
+namespace ChessUI.Engine
 {
     public static class BoardManager
     {
@@ -14,7 +15,7 @@ namespace ChessUI
         public static bool WhiteToMove { get; set; }
         public static int HalfMoves { get; set; }
         public static int FullMoves { get; set; }
-        public  static int[] Board => _board;
+        public static int[] Board => _board;
         public static int EnPesantSquare { get; set; } = -1;
         public static int[] AttackPositionBoard { get; set; } = new int[64];
         static readonly int[] directionOffsets = { 8, -8, -1, 1, 7, 9, -9, -7 };
@@ -94,7 +95,7 @@ namespace ChessUI
                 {
                     if (char.IsDigit(asciiValue))
                     {
-                        file += (int)Char.GetNumericValue(asciiValue);
+                        file += (int)char.GetNumericValue(asciiValue);
                     }
                     else
                     {
@@ -113,7 +114,7 @@ namespace ChessUI
                             'Q' => 15,
                             'q' => 7,
                             _ => 0
-                        }; 
+                        };
                         index = 8 * rank + file;
                         Board[index] = pieceNumber;
                         if (Piece.IsPieceWhite(pieceNumber))
@@ -136,7 +137,7 @@ namespace ChessUI
 
             PopulateBoard(FENSplit[0]);
 
-            WhiteToMove = (FENSplit[1] == "w");
+            WhiteToMove = FENSplit[1] == "w";
             string castlingRightsString = FENSplit[2];
             SetupCastleRights(castlingRightsString);
 
@@ -146,12 +147,12 @@ namespace ChessUI
             {
                 EnPesantSquare = GetSquareFromNotation(enPesantString);
             }
-            HalfMoves = Int32.Parse(FENSplit[4]);
-            FullMoves = Int32.Parse(FENSplit[4]);
+            HalfMoves = int.Parse(FENSplit[4]);
+            FullMoves = int.Parse(FENSplit[4]);
         }
         private static int GetSquareFromNotation(string positionNotation)
         {
-            int notationRank = (int)Char.GetNumericValue(positionNotation[1]) - 1;
+            int notationRank = (int)char.GetNumericValue(positionNotation[1]) - 1;
             char notationFileChar = positionNotation[0];
             int notationFile = notationFileChar switch
             {
@@ -260,10 +261,10 @@ namespace ChessUI
 
         public static int GetKingPosition(bool whiteKing)
         {
-            for(int position = 0; position < 64; position++)
+            for (int position = 0; position < 64; position++)
             {
                 int piece = Board[position];
-                if(Piece.IsType(piece, PieceType.King))
+                if (Piece.IsType(piece, PieceType.King))
                 {
                     if (Piece.IsPieceWhite(piece) == whiteKing)
                     {
@@ -393,7 +394,7 @@ namespace ChessUI
             List<int> checkingPieces = new();
 
             List<int> slidingPieces = FindCheckingSlidingPiece(kingPosition, king, Board);
-            foreach(int piece in slidingPieces)
+            foreach (int piece in slidingPieces)
             {
                 checkingPieces.Add(piece);
             }
@@ -420,7 +421,7 @@ namespace ChessUI
                 int targetSquare = sourceSquare + (i + 1) * directionOffsets[direction];
                 int pieceAtTarget = Board[targetSquare];
 
-                if(pieceAtTarget == 0) { continue; }
+                if (pieceAtTarget == 0) { continue; }
                 if (Piece.IsSameColour(sideColour, pieceAtTarget)) return false;
                 if (!Piece.IsSlidingPiece(pieceAtTarget)) return false;
 
@@ -443,7 +444,7 @@ namespace ChessUI
                     int targetSquare = sourceSquare + (i + 1) * directionOffsets[directionIdx];
                     int pieceAtTarget = board[targetSquare];
 
-                    if(pieceAtTarget == 0) { continue; }
+                    if (pieceAtTarget == 0) { continue; }
                     if (Piece.IsSameColour(piece, pieceAtTarget)) break;
 
                     var type = directionIdx < 4 ? PieceType.Bishop : PieceType.Rook;
@@ -556,17 +557,64 @@ namespace ChessUI
                 _ when opponentIsWhite => new[] { -9, -7 },
                 _ => new[] { 9, 7 },
             };
-            
+
             for (int i = 0; i < attackOffsets.Length; i++)
             {
                 int targetSquare = sourceSquare + attackOffsets[i];
                 int targetPiece = board[targetSquare];
-                if(targetPiece == 0) continue;
+                if (targetPiece == 0) continue;
                 if (Piece.IsSameColour(piece, targetPiece)) continue;
                 if (Piece.IsType(targetPiece, PieceType.Pawn)) pieces.Add(targetSquare);
             }
 
             return pieces;
+        }
+
+        internal static string GetCurrentFen()
+        {
+            var sb = new StringBuilder();
+            int emptySpace = 0;
+            for (int i = 0; i < 64; i++)
+            {
+                int contents = Board[i];
+                if (contents == 0)
+                {
+                    emptySpace++;
+                }
+                else
+                {
+                    sb.Append(Piece.GetPieceCharacterRepresentation(contents));
+                }
+
+                if((i + 1) % 8 == 0)
+                {
+                    if(emptySpace > 0) sb.Append(emptySpace);
+                    emptySpace = 0;
+                    sb.Append('/');
+                }
+            }
+
+            sb.Append(WhiteToMove? " w" : " b");
+
+            sb.Append(" ");
+            if ((CastleingRights & 8) == 0) sb.Append('K');
+            if((CastleingRights & 4) == 0) sb.Append('Q');
+            if((CastleingRights & 2) == 0) sb.Append('k');
+            if((CastleingRights & 1) == 0) sb.Append('q');
+
+            if(EnPesantSquare >= 0)
+            {
+
+            }
+            else
+            {
+                sb.Append(" -");
+            }
+
+            sb.Append($" {HalfMoves % 2}");
+            sb.Append($" {FullMoves}");
+
+            return sb.ToString();
         }
     }
 }
