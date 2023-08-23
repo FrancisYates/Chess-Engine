@@ -1,4 +1,5 @@
 ﻿using ChessUI.Views;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Configuration;

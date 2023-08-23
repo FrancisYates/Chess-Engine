@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using ChessUI.Engine;
 using ChessUI.Enums;
-using ChessUI.Time_Control;
 
 namespace ChessUI
 {

@@ -1,4 +1,6 @@
-﻿using ChessUI.Enums;
+﻿using ChessUI.Engine;
+using ChessUI.Enums;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +19,9 @@ namespace ChessUI
             _window = window;
             aiPlayer = new AIPlayer(thinkTimer);
 
-            aiPlayer.CreateBookTree();
+            //aiPlayer.CreateBookTree();
             MoveGeneration.CalculateDirections();
-            BoardManager.LoadBoard();
+            BoardManager.LoadBoard("C:\\Users\\Jane\\source\\repos\\Chessv5\\ChessUI\\bin\\Debug\\position6.txt");
             
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
@@ -41,7 +43,7 @@ namespace ChessUI
         }
         private void OpponentMove()
         {
-            if (BoardManager.FullMoves <= 5)
+            if (BoardManager.FullMoves < 0)
             {
                 BoardManager.UpdateSideToMove();
                 if ( TryMakeBookMove() ) return;
@@ -71,7 +73,12 @@ namespace ChessUI
         private void MakeSearchMove()
         {
             Move? move = aiPlayer.MakeMove();
-            if(move is null) throw new NullReferenceException(nameof(move));
+            if(move is null)
+            {
+                Log.Logger.Error("No Move found in board position: ");
+                Log.Logger.Error(BoardManager.GetCurrentFen());
+                throw new NullReferenceException(nameof(move));
+            }
             (_, _) = MoveManager.MakeMove((Move)move, BoardManager.Board);
             Render.UpdateBoard(_window.Buttons, BoardManager.Board);
 

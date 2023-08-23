@@ -19,7 +19,7 @@ namespace ChessUI
             foreach (Button btn in buttons)
             {
                 int pieceAtPosition = board[idx];
-                string text = GetSquareString(pieceAtPosition);
+                //string text = GetSquareString(pieceAtPosition);
                 string img = GetSquarePieceImg(pieceAtPosition);
                 //SetButtonText(btn, text);
                 SetButtonImg(btn, img);

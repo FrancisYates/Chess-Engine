@@ -5,6 +5,7 @@ using System;
 using Xunit.Abstractions;
 using System.Collections.Generic;
 using ChessUI.Time_Control;
+using ChessUI.Engine;
 
 namespace xUnitTests_Chess
 {

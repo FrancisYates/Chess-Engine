@@ -1,4 +1,5 @@
-﻿using ChessUI.Time_Control;
+﻿using ChessUI.Engine;
+using ChessUI.Time_Control;
 using System;
 
 namespace ChessUI
@@ -20,7 +21,7 @@ namespace ChessUI
             WhiteTimeRemaining = options.WhiteInitialTimeMs;
             BlackTimeRemaining = options.BlackInitialTimeMs;
             WhiteIncrement = options.WhiteIncrementMs;
-            WhiteIncrement = options.BlackIncrementMs;
+            BlackIncrement = options.BlackIncrementMs;
         }
         public ThinkTimeCalculator(int fixedThinkTime)
         {
@@ -42,7 +43,7 @@ namespace ChessUI
             }
             else
             {
-                thinkTime = time / (10 + Math.Max(30 - BoardManager.FullMoves, 0));
+                thinkTime = time / (2 + Math.Max(30 - BoardManager.FullMoves, 0));
                 thinkTime += (int)Math.Floor(increment * 0.2);
             }
 
