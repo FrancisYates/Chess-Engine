@@ -1,4 +1,5 @@
-﻿using ChessUI.Enums;
+﻿using ChessUI.Engine;
+using ChessUI.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;

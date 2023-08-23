@@ -47,4 +47,8 @@
     <EmbeddedResource Include="MoveBook.txt" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="3.0.1" />
+  </ItemGroup>
+
 </Project>

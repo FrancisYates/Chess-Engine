@@ -1,0 +1,31 @@
+﻿<Window x:Class="ChessUI.Views.Menu"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ChessUI.Views"
+        mc:Ignorable="d"
+        Title="Menu" Height="450" Width="800">
+    <Grid>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="0.5*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="0.5*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="30" />
+        </Grid.RowDefinitions>
+
+        <Button Grid.Column="1" Grid.Row="1" Name="StartBtn" Click="StartBtn_Click">Start Game</Button>
+        <Button Grid.Column="1" Grid.Row="3" Name="SettingsBtn" Click="SettingsBtn_Click">Settings</Button>
+        <Button Grid.Column="1" Grid.Row="5" Name="CloseBtn" Click="CloseBtn_Click">Close</Button>
+    </Grid>
+</Window>

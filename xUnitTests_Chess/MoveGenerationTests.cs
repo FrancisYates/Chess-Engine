@@ -4,12 +4,19 @@ using Xunit.Sdk;
 using System;
 using Xunit.Abstractions;
 using System.Collections.Generic;
+using ChessUI.Time_Control;
+using ChessUI.Engine;
 
 namespace xUnitTests_Chess
 {
     public class MoveGenerationTests
     {
         private readonly ITestOutputHelper output;
+        private ThinkTimeCalculator timeControl = new( new TimeControlOptions { 
+                WhiteInitialTimeMs = int.MaxValue,
+                BlackInitialTimeMs = int.MaxValue,
+            },
+            int.MaxValue);
         public MoveGenerationTests(ITestOutputHelper output)
         {
             this.output = output;
@@ -68,7 +75,7 @@ namespace xUnitTests_Chess
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
 
-            AIPlayer aiPlayer = new AIPlayer();
+            AIPlayer aiPlayer = new AIPlayer(timeControl);
             Move[] moves;
             List<Move> prevMoves = new();
             Dictionary<Move, int> positionsAftermove;
@@ -97,7 +104,7 @@ namespace xUnitTests_Chess
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
 
-            AIPlayer aiPlayer = new AIPlayer();
+            AIPlayer aiPlayer = new AIPlayer(timeControl);
             Move[] moves;
             List<Move> prevMoves = new();
             (moves, _) = aiPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
@@ -124,7 +131,7 @@ namespace xUnitTests_Chess
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
 
-            AIPlayer aiPlayer = new AIPlayer();
+            AIPlayer aiPlayer = new AIPlayer(timeControl);
             Move[] moves;
             List<Move> prevMoves = new();
             Dictionary<Move, int> positionsAftermove;
