@@ -17,11 +17,13 @@ namespace ChessUI
         public GameInstance(GameWindow window, ThinkTimeCalculator thinkTimer)
         {
             _window = window;
-            aiPlayer = new AIPlayer(thinkTimer);
+            aiPlayer = new AIPlayer(thinkTimer) {
+                MaxSearchDepth = 8
+            };
 
             //aiPlayer.CreateBookTree();
             MoveGeneration.CalculateDirections();
-            BoardManager.LoadBoard("C:\\Users\\Jane\\source\\repos\\Chessv5\\ChessUI\\bin\\Debug\\position6.txt");
+            BoardManager.LoadBoard("startPosition.txt");
             
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
