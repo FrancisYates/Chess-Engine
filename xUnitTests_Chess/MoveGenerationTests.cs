@@ -6,12 +6,16 @@ using Xunit.Abstractions;
 using System.Collections.Generic;
 using ChessUI.Time_Control;
 using ChessUI.Engine;
+using System.IO;
 
 namespace xUnitTests_Chess
 {
     public class MoveGenerationTests
     {
         private readonly ITestOutputHelper output;
+
+        private string BoardDirectory => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\TestBoards\\"));
+
         private ThinkTimeCalculator timeControl = new( new TimeControlOptions { 
                 WhiteInitialTimeMs = int.MaxValue,
                 BlackInitialTimeMs = int.MaxValue,
@@ -70,7 +74,7 @@ namespace xUnitTests_Chess
         public void AI_FindMovesToDepth_TestCount(bool isWhite, string boardFile, int maxPly, long expectedResult)
         {
             BoardManager.ResetBoardToEmpty();
-            BoardManager.LoadBoard("C:/Users/Jane/source/repos/Chessv5/ChessUI/bin/Debug/" + boardFile);
+            BoardManager.LoadBoard(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
@@ -99,7 +103,7 @@ namespace xUnitTests_Chess
         public void AI_FindMovesToDepth_TestPerf(bool isWhite, string boardFile, int maxPly, long expectedResult)
         {
             BoardManager.ResetBoardToEmpty();
-            BoardManager.LoadBoard("C:/Users/Jane/source/repos/Chessv5/ChessUI/bin/Debug/" + boardFile);
+            BoardManager.LoadBoard(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
@@ -126,7 +130,7 @@ namespace xUnitTests_Chess
         public void SpecialTesting(bool isWhite, string boardFile, int maxPly, int expectedResult)
         {
             BoardManager.ResetBoardToEmpty();
-            BoardManager.LoadBoard("C:/Users/Jane/source/repos/Chessv5/ChessUI/bin/Debug/" + boardFile);
+            BoardManager.LoadBoard(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
