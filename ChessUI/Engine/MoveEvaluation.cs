@@ -16,6 +16,7 @@ namespace ChessUI.Engine
 
             evaluation += MaterialDifference(board);
             evaluation += ControlledSquares();
+            evaluation += EvaluatePawnStructure(board);
 
             return evaluation;
         }
@@ -58,6 +59,25 @@ namespace ChessUI.Engine
             }
 
             return whiteControlled - blackControlled;
+        }
+        private static int EvaluatePawnStructure(int[] board) {
+            int whiteStructure = 0;
+            int blackStructure = 0;
+            for (int i = 0; i < 64; i++) {
+                int piece = board[i];
+                if(Piece.IsType(piece, PieceType.Pawn)) {
+                    int pieceSide = Piece.IsPieceWhite(piece) ? 1 : 0; //1 if white, 0 if black
+                    int[] attackOffsets = LookUps.pawnAttackOffset[pieceSide, i];
+                    var defended = attackOffsets.Count(offset => {
+                        var targetPiece = board[i+ offset];
+                        return Piece.IsType(targetPiece, PieceType.Pawn) && Piece.IsSameColour(targetPiece, piece);
+                        });
+                    whiteStructure += defended * pieceSide;
+                    blackStructure += defended * 1 - pieceSide;
+                }
+            }
+
+            return whiteStructure - blackStructure;
         }
 
         public static IEnumerable<Move> MoveOrdering(IEnumerable<Move> unorderedMoves)
