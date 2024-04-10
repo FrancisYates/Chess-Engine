@@ -14,18 +14,16 @@ namespace ChessUI
     {
         public static void UpdateBoard(List<Button> buttons, int[] board)
         {
-            int idx = 0;
-
-            foreach (Button btn in buttons)
-            {
-                int pieceAtPosition = board[idx];
-                //string text = GetSquareString(pieceAtPosition);
-                string img = GetSquarePieceImg(pieceAtPosition);
-                //SetButtonText(btn, text);
-                SetButtonImg(btn, img);
-
-                idx++;
+            for (int i = 0; i < buttons.Count; i++) {
+                UpdateSquareAtIndex(buttons, board, i);
             }
+        }
+
+        public static void UpdateSquareAtIndex(List<Button> buttons, int[] board, int index)
+        {
+            int pieceAtPosition = board[index];
+            string img = GetSquarePieceImg(pieceAtPosition);
+            SetButtonImg(buttons[index], img, index.ToString());
         }
 
 
@@ -82,9 +80,9 @@ namespace ChessUI
             btn.Content = text;
         }
 
-        private static void SetButtonImg(Button btn, string img)
+        private static void SetButtonImg(Button btn, string img, string id = "")
         {
-            btn.Content = new Image
+            Image image = new()
             {
                 Source = new BitmapImage(new Uri("\\Images\\" + img, UriKind.Relative)),
                 VerticalAlignment = VerticalAlignment.Center,
@@ -92,41 +90,34 @@ namespace ChessUI
                 Height = 60,
                 Width = 60
             };
+            Grid grid = new();
+            grid.Children.Add(image);
+#if DEBUG
+            TextBlock txt = new();
+            txt.Text = id;
+            grid.Children.Add(txt);
+#endif
+            btn.Content = grid;
         }
 
         private static string GetSquarePieceImg(int piece)
         {
-            switch (piece)
-            {
-                case 0:
-                    return "";
-                case 9:
-                    return "wPawn.png";
-                case 1:
-                    return "bPawn.png";
-                case 10:
-                    return "wKnight.png";
-                case 2:
-                    return "bKnight.png";
-                case 11:
-                    return "wKing.png";
-                case 3:
-                    return "bKing.png";
-                case 13:
-                    return "wRook.png";
-                case 5:
-                    return "bRook.png";
-                case 14:
-                    return "wBishop.png";
-                case 6:
-                    return "bBishop.png";
-                case 15:
-                    return "wQueen.png";
-                case 7:
-                    return "bQueen.png";
-                default:
-                    return "";
-            }
+            return piece switch {
+                0 => "",
+                9 => "wPawn.png",
+                1 => "bPawn.png",
+                10 => "wKnight.png",
+                2 => "bKnight.png",
+                11 => "wKing.png",
+                3 => "bKing.png",
+                13 => "wRook.png",
+                5 => "bRook.png",
+                14 => "wBishop.png",
+                6 => "bBishop.png",
+                15 => "wQueen.png",
+                7 => "bQueen.png",
+                _ => "",
+            };
         }
 
         private static string GetSquareString(int piece)
