@@ -6,6 +6,23 @@
         xmlns:local="clr-namespace:ChessUI"
         mc:Ignorable="d"
         Title="MainWindow" Height="940" Width="860" FontSize="20">
+    <Window.Resources>
+        <BitmapImage x:Key="emptySquare" UriSource="../Images/Empty.png" />
+        <BitmapImage x:Key="moveSquare" UriSource="../Images/Move.png" />
+        <BitmapImage x:Key="captureSquare" UriSource="../Images/Capture.png" />
+        <BitmapImage x:Key="bPawn" UriSource="../Images/bPawn.png" />
+        <BitmapImage x:Key="bBishop" UriSource="../Images/bBishop.png" />
+        <BitmapImage x:Key="bKnight" UriSource="../Images/bKnight.png" />
+        <BitmapImage x:Key="bRook" UriSource="../Images/bRook.png" />
+        <BitmapImage x:Key="bQueen" UriSource="../Images/bQueen.png" />
+        <BitmapImage x:Key="bKing" UriSource="../Images/bKing.png" />
+        <BitmapImage x:Key="wPawn" UriSource="../Images/wPawn.png" />
+        <BitmapImage x:Key="wBishop" UriSource="../Images/wBishop.png" />
+        <BitmapImage x:Key="wKnight" UriSource="../Images/wKnight.png" />
+        <BitmapImage x:Key="wRook" UriSource="../Images/wRook.png" />
+        <BitmapImage x:Key="wQueen" UriSource="../Images/wQueen.png" />
+        <BitmapImage x:Key="wKing" UriSource="../Images/wKing.png" />
+    </Window.Resources>
     <Grid>
         
         <Grid.ColumnDefinitions>
@@ -43,271 +60,271 @@
 
         <!--#region 8TH Rank-->
         <Button Name="A8" Grid.Row="2" Grid.Column="1" Click="ButtonA8Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <Button Name="B8" Grid.Row="2" Grid.Column="2" Click="ButtonB8Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="C8" Grid.Row="2" Grid.Column="3" Click="ButtonC8Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="D8" Grid.Row="2" Grid.Column="4" Click="ButtonD8Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="E8" Grid.Row="2" Grid.Column="5" Click="ButtonE8Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="F8" Grid.Row="2" Grid.Column="6" Click="ButtonF8Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="G8" Grid.Row="2" Grid.Column="7" Click="ButtonG8Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         
         <Button Name="H8" Grid.Row="2" Grid.Column="8" Click="ButtonH8Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <!--#endregion-->
 
 
         <!--#region 7TH Rank-->
         <Button Name="A7" Grid.Row="3" Grid.Column="1" Click="ButtonA7Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <Button Name="B7" Grid.Row="3" Grid.Column="2" Click="ButtonB7Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="C7" Grid.Row="3" Grid.Column="3" Click="ButtonC7Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="D7" Grid.Row="3" Grid.Column="4" Click="ButtonD7Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="E7" Grid.Row="3" Grid.Column="5" Click="ButtonE7Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="F7" Grid.Row="3" Grid.Column="6" Click="ButtonF7Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="G7" Grid.Row="3" Grid.Column="7" Click="ButtonG7Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="H7" Grid.Row="3" Grid.Column="8" Click="ButtonH7Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <!--#endregion-->
 
 
         <!--#region 6TH Rank-->
         <Button Name="A6" Grid.Row="4" Grid.Column="1" Click="ButtonA6Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <Button Name="B6" Grid.Row="4" Grid.Column="2" Click="ButtonB6Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="C6" Grid.Row="4" Grid.Column="3" Click="ButtonC6Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="D6" Grid.Row="4" Grid.Column="4" Click="ButtonD6Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="E6" Grid.Row="4" Grid.Column="5" Click="ButtonE6Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="F6" Grid.Row="4" Grid.Column="6" Click="ButtonF6Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="G6" Grid.Row="4" Grid.Column="7" Click="ButtonG6Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="H6" Grid.Row="4" Grid.Column="8" Click="ButtonH6Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <!--#endregion-->
 
 
         <!--#region 5TH Rank-->
         <Button Name="A5" Grid.Row="5" Grid.Column="1" Click="ButtonA5Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <Button Name="B5" Grid.Row="5" Grid.Column="2" Click="ButtonB5Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="C5" Grid.Row="5" Grid.Column="3" Click="ButtonC5Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="D5" Grid.Row="5" Grid.Column="4" Click="ButtonD5Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="E5" Grid.Row="5" Grid.Column="5" Click="ButtonE5Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="F5" Grid.Row="5" Grid.Column="6" Click="ButtonF5Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="G5" Grid.Row="5" Grid.Column="7" Click="ButtonG5Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="H5" Grid.Row="5" Grid.Column="8" Click="ButtonH5Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <!--#endregion-->
 
 
         <!--#region 4TH Rank-->
         <Button Name="A4" Grid.Row="6" Grid.Column="1" Click="ButtonA4Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <Button Name="B4" Grid.Row="6" Grid.Column="2" Click="ButtonB4Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="C4" Grid.Row="6" Grid.Column="3" Click="ButtonC4Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="D4" Grid.Row="6" Grid.Column="4" Click="ButtonD4Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="E4" Grid.Row="6" Grid.Column="5" Click="ButtonE4Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="F4" Grid.Row="6" Grid.Column="6" Click="ButtonF4Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="G4" Grid.Row="6" Grid.Column="7" Click="ButtonG4Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="H4" Grid.Row="6" Grid.Column="8" Click="ButtonH4Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <!--#endregion-->
 
 
         <!--#region 3RD Rank-->
         <Button Name="A3" Grid.Row="7" Grid.Column="1" Click="ButtonA3Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <Button Name="B3" Grid.Row="7" Grid.Column="2" Click="ButtonB3Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="C3" Grid.Row="7" Grid.Column="3" Click="ButtonC3Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="D3" Grid.Row="7" Grid.Column="4" Click="ButtonD3Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="E3" Grid.Row="7" Grid.Column="5" Click="ButtonE3Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="F3" Grid.Row="7" Grid.Column="6" Click="ButtonF3Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="G3" Grid.Row="7" Grid.Column="7" Click="ButtonG3Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="H3" Grid.Row="7" Grid.Column="8" Click="ButtonH3Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <!--#endregion-->
 
         <!--#region 2ND Rank-->
         <Button Name="A2" Grid.Row="8" Grid.Column="1" Click="ButtonA2Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <Button Name="B2" Grid.Row="8" Grid.Column="2" Click="ButtonB2Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="C2" Grid.Row="8" Grid.Column="3" Click="ButtonC2Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="D2" Grid.Row="8" Grid.Column="4" Click="ButtonD2Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="E2" Grid.Row="8" Grid.Column="5" Click="ButtonE2Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="F2" Grid.Row="8" Grid.Column="6" Click="ButtonF2Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="G2" Grid.Row="8" Grid.Column="7" Click="ButtonG2Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="H2" Grid.Row="8" Grid.Column="8" Click="ButtonH2Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <!--#endregion-->
 
 
         <!--#region 1ST Rank-->
         <Button Name="A1" Grid.Row="9" Grid.Column="1" Click="ButtonA1Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <Button Name="B1" Grid.Row="9" Grid.Column="2" Click="ButtonB1Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="C1" Grid.Row="9" Grid.Column="3" Click="ButtonC1Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="D1" Grid.Row="9" Grid.Column="4" Click="ButtonD1Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="E1" Grid.Row="9" Grid.Column="5" Click="ButtonE1Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="F1" Grid.Row="9" Grid.Column="6" Click="ButtonF1Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="G1" Grid.Row="9" Grid.Column="7" Click="ButtonG1Click" Background="{StaticResource DarkSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
 
         <Button Name="H1" Grid.Row="9" Grid.Column="8" Click="ButtonH1Click" Background="{StaticResource LightSquare}">
-            <Image Source="C:\Users\Jane\source\repos\Chessv5\ChessUI\Images\Empty.png"/>
+            <Image Source="{StaticResource emptySquare}"/>
         </Button>
         <!--#endregion-->
         
