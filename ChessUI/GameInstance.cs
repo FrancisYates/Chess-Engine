@@ -29,12 +29,12 @@ namespace ChessUI
             BoardManager.UpdateAttackedPositions(false);
         }
 
-        public void MakePlayerMove(Move move)
-        {
+        public void MakePlayerMove(Move move) {
+            Debug.WriteLine($"Making player move {move}");
             (_, _) = MoveManager.MakeMove(move, BoardManager.Board);
             aiPlayer.UpdateBookPosition(move);
 
-            Render.UpdateBoard(_window.Buttons, BoardManager.Board);
+            Render.UpdateBoard(_window.Buttons, BoardManager.Board, move);
             //Render.HighlightSquare(_window.Buttons, selectedPosition);
             Render.RemoveHighlightFromSquare(_window.Buttons, move.sourceSquare);
 
@@ -48,7 +48,10 @@ namespace ChessUI
             if (BoardManager.FullMoves < 0)
             {
                 BoardManager.UpdateSideToMove();
-                if ( TryMakeBookMove() ) return;
+                if (TryMakeBookMove()) {
+                    Debug.WriteLine("Making book Move");
+                    return;
+                }
                 MakeSearchMove();
             }
             else
@@ -61,10 +64,11 @@ namespace ChessUI
         private bool TryMakeBookMove()
         {
             Move? bookMove = aiPlayer.MakeBookMove();
-            if (bookMove is null) { return false; }
+            if (bookMove is null) return false; 
             Move move_ = bookMove ?? new Move(0, 0);
+            Debug.WriteLine($"Making ai move {move_}");
             (_, _) = MoveManager.MakeMove(move_, BoardManager.Board);
-            Render.UpdateBoard(_window.Buttons, BoardManager.Board);
+            Render.UpdateBoard(_window.Buttons, BoardManager.Board, move_);
 
             BoardManager.UpdateSideToMove();
             BoardManager.UpdateMoveCount();
@@ -72,8 +76,8 @@ namespace ChessUI
             return true;
         }
 
-        private void MakeSearchMove()
-        {
+        private void MakeSearchMove() {
+            Debug.WriteLine("Searching for move");
             Move? move = aiPlayer.MakeMove();
             if(move is null)
             {
@@ -81,8 +85,10 @@ namespace ChessUI
                 Log.Logger.Error(BoardManager.GetCurrentFen());
                 throw new NullReferenceException(nameof(move));
             }
+            Debug.WriteLine($"Making ai move {move}");
             (_, _) = MoveManager.MakeMove((Move)move, BoardManager.Board);
             Render.UpdateBoard(_window.Buttons, BoardManager.Board);
+            Render.UpdateBoard(_window.Buttons, BoardManager.Board, (Move)move);
 
             BoardManager.UpdateSideToMove();
             BoardManager.UpdateMoveCount();

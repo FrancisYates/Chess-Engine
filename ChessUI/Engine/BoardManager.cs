@@ -19,6 +19,10 @@ namespace ChessUI.Engine
         public static int EnPesantSquare { get; set; } = -1;
         public static int[] AttackPositionBoard { get; set; } = new int[64];
         static readonly int[] directionOffsets = { 8, -8, -1, 1, 7, 9, -9, -7 };
+
+        public static ulong WhitePawnBitboard { get; set; }
+        public static ulong BlackPawnBitboard { get; set; }
+
         public static List<int> WhitePiecePositions { get; set; } = new List<int>();
         public static List<int> BlackPiecePositions { get; set; } = new List<int>();
 
@@ -115,14 +119,20 @@ namespace ChessUI.Engine
                             'q' => 7,
                             _ => 0
                         };
+                        bool isPawn = pieceNumber == 1 || pieceNumber == 9;
                         index = 8 * rank + file;
                         Board[index] = pieceNumber;
                         if (Piece.IsPieceWhite(pieceNumber))
                         {
+                            if (isPawn) {
+                                WhitePawnBitboard |= 0b_1uL << index;
+                            }
                             WhitePiecePositions.Add(index);
                         }
-                        else
-                        {
+                        else {
+                            if (isPawn) {
+                                BlackPawnBitboard |= 0b_1uL << index;
+                            }
                             BlackPiecePositions.Add(index);
                         }
                         file++;
@@ -595,7 +605,8 @@ namespace ChessUI.Engine
             return pieces;
         }
 
-        internal static string GetCurrentFen()
+        static string[] letterLookup = { "a", "b", "c", "d", "e", "f", "g", "h" };
+        public static string GetCurrentFen()
         {
             var sb = new StringBuilder();
             int emptySpace = 0;
@@ -627,9 +638,10 @@ namespace ChessUI.Engine
             if((CastleingRights & 2) == 0) sb.Append('k');
             if((CastleingRights & 1) == 0) sb.Append('q');
 
-            if(EnPesantSquare >= 0)
-            {
-
+            if(EnPesantSquare >= 0) {
+                int x = EnPesantSquare % 8;
+                int y = EnPesantSquare / 8 + 1;
+                sb.Append(" "+ letterLookup[x] + y.ToString());
             }
             else
             {

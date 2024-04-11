@@ -10,7 +10,7 @@ namespace ChessUI
 {
     public static class MoveManager
     {
-        public static (int, int) MakeMove(Move move, int[] board)
+        public static (int target, int validCastling) MakeMove(Move move, int[] board)
         {
             BoardManager.EnPesantSquare = -1;
             int targetContents = board[move.targetSquare];
@@ -24,16 +24,18 @@ namespace ChessUI
             {
                 PromotionMove(move, side, board);
             }
-            else if (move.IsType(MoveType.doublePawnMove))
-            {
+            else if (move.IsType(MoveType.doublePawnMove)) {
+                UpdatePawnBitboard(move, isWhite);
                 int offset = isWhite ? -8 : 8;
                 BoardManager.EnPesantSquare = move.targetSquare + offset;
 
                 board[move.targetSquare] = board[move.sourceSquare];
                 board[move.sourceSquare] = 0;
             }
-            else if (move.IsType(MoveType.enPesant))
-            {
+            else if (move.IsType(MoveType.enPesant)) {
+                UpdatePawnBitboard(move, isWhite);
+                ulong caturedPieceMask = (0b_1ul << move.targetSquare);
+                UpdatePawnBitboard(caturedPieceMask, !isWhite);
                 int xDelta = move.targetSquare % 8 - move.sourceSquare % 8;
 
                 targetContents = board[move.sourceSquare + xDelta];
@@ -54,8 +56,22 @@ namespace ChessUI
             return (targetContents, validCastling);
         }
 
-        private static void PromotionMove(Move move, int side, int[] board)
-        {
+        private static void UpdatePawnBitboard(Move move, bool updateWhite = true) {
+            ulong xorMask = (0b_1ul << move.sourceSquare) | (0b_1ul << move.targetSquare);
+            UpdatePawnBitboard(xorMask, updateWhite);
+        }
+        
+        private static void UpdatePawnBitboard(ulong xorMask, bool updateWhite = true) {
+            if (updateWhite) {
+                BoardManager.WhitePawnBitboard ^= xorMask;
+            } else {
+                BoardManager.BlackPawnBitboard ^= xorMask;
+            }
+        }
+
+        private static void PromotionMove(Move move, int side, int[] board) {
+            ulong xorMask = (0b_1ul << move.sourceSquare);
+            UpdatePawnBitboard(xorMask, side == (int)Colour.White);
             PieceType type = move.GetPromotionPiece();
             board[move.targetSquare] = (int)type | side;
             board[move.sourceSquare] = 0;
@@ -106,6 +122,12 @@ namespace ChessUI
             {
                 int castleingChange = isWhite ? 0b_0011 : 0b_1100;
                 BoardManager.CastleingRights &= castleingChange;
+            }else if(Piece.IsType(movedPiece, PieceType.Pawn)) {
+                UpdatePawnBitboard(move, isWhite);
+            }
+            if(Piece.IsType(target, PieceType.Pawn)) {
+                ulong caturedPieceMask = (0b_1ul << move.targetSquare);
+                UpdatePawnBitboard(caturedPieceMask, !isWhite);
             }
 
             return target;
@@ -114,35 +136,41 @@ namespace ChessUI
         public static void UndoMove(Move move, int priorTargetContent, int priorCastlingRights, int[] board)
         {
             int movedPiece = board[move.targetSquare];
-            int side = Piece.IsPieceWhite(movedPiece) ? 8 : 0;
+            bool isWhite = Piece.IsPieceWhite(movedPiece);
+            int side = isWhite ? 8 : 0;
             BoardManager.CastleingRights = priorCastlingRights;
 
             if (move.IsType(MoveType.promotion))
             {
                 UndoPromotionMove(move, side, priorTargetContent, board);
                 return;
-            }
-            if (move.IsType(MoveType.doublePawnMove))
-            {
-                int offset = Piece.IsPieceWhite(movedPiece) ? -8 : 8;
+            }else if (move.IsType(MoveType.doublePawnMove)) {
+                UpdatePawnBitboard(move, side == (int)Colour.White);
+                int offset = isWhite ? -8 : 8;
                 BoardManager.EnPesantSquare = move.targetSquare + offset;
 
                 board[move.sourceSquare] = board[move.targetSquare];
                 board[move.targetSquare] = 0;
                 return;
-            }
-            if (move.IsType(MoveType.enPesant))
-            {
+            }else if (move.IsType(MoveType.enPesant)) {
+                UpdatePawnBitboard(move, isWhite);
+                ulong caturedPieceMask = (0b_1ul << move.targetSquare);
+                UpdatePawnBitboard(caturedPieceMask, !isWhite);
+
                 int xDelta = move.targetSquare % 8 - move.sourceSquare % 8;
                 board[move.sourceSquare] = board[move.targetSquare];
                 board[move.targetSquare] = 0;
                 board[move.sourceSquare + xDelta] = priorTargetContent;
                 return;
-            }
-            if (move.IsType(MoveType.castle))
+            }else if (move.IsType(MoveType.castle))
             {
                 UndoCastle(move, side, board);
                 return;
+            }
+            if(Piece.IsType(movedPiece, PieceType.Pawn)) UpdatePawnBitboard(move, isWhite);
+            if(Piece.IsType(priorTargetContent, PieceType.Pawn)) {
+                ulong mask = 0b_1ul << move.targetSquare;
+                UpdatePawnBitboard(mask, !isWhite);
             }
             board[move.sourceSquare] = board[move.targetSquare];
             board[move.targetSquare] = priorTargetContent;
@@ -150,8 +178,9 @@ namespace ChessUI
             BoardManager.UpdateAttackedPositions(false);
         }
 
-        private static void UndoPromotionMove(Move move, int side, int priorTargetContent, int[] board)
-        {
+        private static void UndoPromotionMove(Move move, int side, int priorTargetContent, int[] board) {
+            ulong xorMask = (0b_1ul << move.sourceSquare);
+            UpdatePawnBitboard(xorMask, side == (int)Colour.White);
             board[move.targetSquare] = priorTargetContent;
             board[move.sourceSquare] = (int)PieceType.Pawn | side;
         }

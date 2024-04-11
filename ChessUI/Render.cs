@@ -18,6 +18,24 @@ namespace ChessUI
                 UpdateSquareAtIndex(buttons, board, i);
             }
         }
+        public static void UpdateBoard(List<Button> buttons, int[] board, Move move) {
+            UpdateSquareAtIndex(buttons, board, move.sourceSquare);
+            UpdateSquareAtIndex(buttons, board, move.targetSquare);
+        }
+        
+        public static void RenderBitBoardBoard(List<Button> buttons, ulong bitBoard, SolidColorBrush brushColour) {
+            StringBuilder bb = new();
+            for (int i = 0;i < buttons.Count;i++) {
+                bb.Append(bitBoard & 0b_1ul);
+                if ((bitBoard & 0b_1ul) == 1) {
+                    Button selectedButton = buttons[i];
+                    selectedButton.Background = brushColour;
+                }
+
+                bitBoard >>= 1;
+            }
+            Debug.WriteLine($"Rendering bitboard {bb.ToString()}");
+        }
 
         public static void UpdateSquareAtIndex(List<Button> buttons, int[] board, int index)
         {
@@ -54,6 +72,19 @@ namespace ChessUI
                 }
                 else
                 {
+                    selectedButton.Background = Brushes.SaddleBrown;
+                }
+            }
+        }
+
+        public static void Reset(List<Button> buttons) {
+            for (int i = 0; i < 64; i++) {
+                bool isFileOdd = (i % 8) % 2 == 1;
+                bool isRankOdd = (i / 8) % 2 == 1;
+                Button selectedButton = buttons[i];
+                if (isRankOdd ^ isFileOdd) {
+                    selectedButton.Background = Brushes.Beige;
+                } else {
                     selectedButton.Background = Brushes.SaddleBrown;
                 }
             }
