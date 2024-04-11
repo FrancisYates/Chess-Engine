@@ -30,12 +30,14 @@ namespace ChessUI.Engine
 
         public Move? MakeMove()
         {
+            _search.MaxSearchDepth = MaxSearchDepth;
             _search.IsWhiteMove = BoardManager.WhiteToMove;
             return MoveSelectionType switch
             {
                 MoveSelectionType.Random => MakeRandomMove(),
                 MoveSelectionType.Minimax => _search.MiniMaxSearch(),
                 MoveSelectionType.ItterativeDeepening => _search.MakeItterativeDeepeningMove(_timeCalculator.GetThinkTimeMs()),
+                MoveSelectionType.ExhaustiveSearch => _search.ExhaustiveSearch(),
                 _ => throw new NotImplementedException($"MoveSelectionType is {MoveSelectionType}"),
             };
         }

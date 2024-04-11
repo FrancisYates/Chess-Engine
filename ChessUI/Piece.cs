@@ -100,18 +100,24 @@ namespace ChessUI
         internal static char GetPieceCharacterRepresentation(int piece)
         {
             bool isWhite = IsPieceWhite(piece);
-            if (isWhite) piece -= 9;
-            char x = piece switch
+            char pieceChar = piece switch
             {
                 1 => 'p',
                 2 => 'n',
                 3 => 'k',
                 5 => 'r',
                 6 => 'b',
-                7 => 'q'
+                7 => 'q',
+                9 => 'P',
+                10 => 'N',
+                11 => 'K',
+                13 => 'R',
+                14 => 'B',
+                15 => 'Q',
+                _ => throw new NotImplementedException()
             };
-            if (isWhite) x = (char)(x + (char)32);
-            return x;
+            if (isWhite) pieceChar = (char)(pieceChar + (char)32);
+            return pieceChar;
         }
     }
 }

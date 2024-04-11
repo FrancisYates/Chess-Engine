@@ -4,6 +4,7 @@
     {
         Random,
         Minimax,
-        ItterativeDeepening
+        ItterativeDeepening,
+        ExhaustiveSearch,
     }
 }
