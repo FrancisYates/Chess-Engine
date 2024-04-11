@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Positions\" />
     <Folder Include="TestBoards\" />
   </ItemGroup>
 

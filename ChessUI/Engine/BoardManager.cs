@@ -131,7 +131,7 @@ namespace ChessUI.Engine
             }
         }
 
-        public static void LoadBoard(string saveFile = "")
+        public static void LoadBoardFromFile(string saveFile)
         {
             string[] FENSplit = GetFEN(saveFile);
 
@@ -146,6 +146,31 @@ namespace ChessUI.Engine
             if (enPesantString != "-")
             {
                 EnPesantSquare = GetSquareFromNotation(enPesantString);
+            }
+            HalfMoves = int.Parse(FENSplit[4]);
+            FullMoves = int.Parse(FENSplit[4]);
+        }
+        public static void LoadBoardFromFen(string fen)
+        {
+            string[] FENSplit = fen.Split(' ');
+
+            PopulateBoard(FENSplit[0]);
+
+            WhiteToMove = FENSplit[1] == "w";
+            string castlingRightsString = FENSplit[2];
+            SetupCastleRights(castlingRightsString);
+
+            string enPesantString = FENSplit[3];
+            EnPesantSquare = -1;
+            if (enPesantString != "-")
+            {
+                try {
+
+                EnPesantSquare = GetSquareFromNotation(enPesantString);
+                } catch (Exception) {
+
+                    throw;
+                }
             }
             HalfMoves = int.Parse(FENSplit[4]);
             FullMoves = int.Parse(FENSplit[4]);

@@ -210,12 +210,43 @@ namespace ChessUI.Engine
                 (Move[] furtherMoves, Dictionary<Move, int> xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, prevMoves, !isWhite);
                 movesAtLevel = movesAtLevel.Concat(furtherMoves).ToList();
                 prevMoves.Remove(move);
-
                 MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
                 //BoardManager.UndoPiecePositions(move);
             }
 
             return (movesAtLevel.ToArray(), positionsAftermove);
+        }
+        public List<string> FindReachablePositions(int currentSearchDepth, int maxSearchDepth, bool isWhite)
+        {
+            List<string> positions = new();
+
+            BoardManager.WhiteToMove = isWhite;
+            BoardManager.UpdateAttackedPositions(!isWhite);
+            Move[] possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
+            if (currentSearchDepth == maxSearchDepth) {
+                foreach (var move in possibleMoves) {
+                    (int tempPiece, int tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
+                    string fen = BoardManager.GetCurrentFen();
+                    positions.Add(fen);
+                MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
+                }
+                return positions;
+            };
+
+            foreach (Move move in possibleMoves)
+            {
+                //BoardManager.UpdatePiecePositions(move);
+                (int tempPiece, int tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
+                string fen = BoardManager.GetCurrentFen();
+                positions.Add(fen);
+
+                List<string> futurePositions = FindReachablePositions(currentSearchDepth + 1, maxSearchDepth, !isWhite);
+                positions.AddRange(futurePositions);
+                MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
+                //BoardManager.UndoPiecePositions(move);
+            }
+
+            return positions;
         }
     }
 }
