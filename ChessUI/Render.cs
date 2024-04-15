@@ -42,6 +42,16 @@ namespace ChessUI
             int pieceAtPosition = board[index];
             string img = GetSquarePieceImg(pieceAtPosition);
             SetButtonImg(buttons[index], img, index.ToString());
+            bool isFileOdd = (index % 8) % 2 == 1;
+            bool isRankOdd = (index / 8) % 2 == 1;
+            if (isRankOdd ^ isFileOdd)
+            {
+                buttons[index].Background = Brushes.Beige;
+            }
+            else
+            {
+                buttons[index].Background = Brushes.SaddleBrown;
+            }
         }
 
 

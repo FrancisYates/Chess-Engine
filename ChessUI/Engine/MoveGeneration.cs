@@ -516,9 +516,8 @@ namespace ChessUI.Engine
 
         private static bool IsSquareAttackedByOpponent(int squareIndex, bool isOpponentWhite)
         {
-            int attackedIndicator = isOpponentWhite ? 2 : 1;
-            int positionAndIndicator = BoardManager.AttackPositionBoard[squareIndex] & attackedIndicator;
-            return positionAndIndicator == attackedIndicator;
+            ulong attackedIndicator = (isOpponentWhite ? BoardManager.WhiteBitboards.ControlledPositions : BoardManager.BlackBitboards.ControlledPositions) >> squareIndex & 0b_1ul;
+            return attackedIndicator > 0;
         }
 
         private static bool IsCheckCreatedInDirection(int kingPosition, Move move)

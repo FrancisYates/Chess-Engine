@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO.Packaging;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using ChessUI.Enums;
@@ -17,14 +18,11 @@ namespace ChessUI.Engine
         public static int FullMoves { get; set; }
         public static int[] Board => _board;
         public static int EnPesantSquare { get; set; } = -1;
-        public static int[] AttackPositionBoard { get; set; } = new int[64];
-        static readonly int[] directionOffsets = { 8, -8, -1, 1, 7, 9, -9, -7 };
+        static readonly int[] directionOffsets = [8, -8, -1, 1, 7, 9, -9, -7];
 
-        public static ulong WhitePawnBitboard { get; set; }
-        public static ulong BlackPawnBitboard { get; set; }
-
-        public static List<int> WhitePiecePositions { get; set; } = new List<int>();
-        public static List<int> BlackPiecePositions { get; set; } = new List<int>();
+        public static Bitboards WhiteBitboards { get; set; } = new();
+        public static Bitboards BlackBitboards { get; set; } = new();
+        
 
         public static int GetCastilingRights()
         {
@@ -122,25 +120,44 @@ namespace ChessUI.Engine
                         bool isPawn = pieceNumber == 1 || pieceNumber == 9;
                         index = 8 * rank + file;
                         Board[index] = pieceNumber;
+                        Bitboards bitboards;
                         if (Piece.IsPieceWhite(pieceNumber))
                         {
-                            if (isPawn) {
-                                WhitePawnBitboard |= 0b_1uL << index;
-                            }
-                            WhitePiecePositions.Add(index);
+                            bitboards = WhiteBitboards;
                         }
-                        else {
-                            if (isPawn) {
-                                BlackPawnBitboard |= 0b_1uL << index;
-                            }
-                            BlackPiecePositions.Add(index);
+                        else
+                        {
+                            bitboards = BlackBitboards;
                         }
+                        var pieceType = Piece.GetPieceType(pieceNumber);
+                        ref ulong bitboard = ref GetBitboard(ref bitboards, pieceType);
+                        bitboard |= 0b_1uL << index;
                         file++;
                     }
                 }
             }
         }
 
+        public static ref ulong GetBitboard(ref Bitboards bitboards, PieceType pieceType)
+        {
+            switch (pieceType)
+            {
+                case PieceType.Pawn:
+                    return ref bitboards.Pawns;
+                case PieceType.Rook:
+                    return ref bitboards.Rooks;
+                case PieceType.Knight:
+                    return ref bitboards.Knights;
+                case PieceType.Bishop:
+                    return ref bitboards.Bishops;
+                case PieceType.Queen:
+                    return ref bitboards.Queens;
+                case PieceType.King:
+                    return ref bitboards.Kings;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
         public static void LoadBoardFromFile(string saveFile)
         {
             string[] FENSplit = GetFEN(saveFile);
@@ -212,61 +229,6 @@ namespace ChessUI.Engine
             }
         }
 
-        private static void UpdatePiecePositions(Move move)
-        {
-            int piece = Board[move.sourceSquare];
-            if (Piece.IsPieceWhite(piece))
-            {
-                WhitePiecePositions.Remove(move.sourceSquare);
-                WhitePiecePositions.Add(move.targetSquare);
-            }
-            else
-            {
-                BlackPiecePositions.Remove(move.sourceSquare);
-                BlackPiecePositions.Add(move.targetSquare);
-            }
-        }
-
-        private static void UndoPiecePositions(Move move)
-        {
-            int piece = Board[move.sourceSquare];
-            if (Piece.IsPieceWhite(piece))
-            {
-                WhitePiecePositions.Remove(move.targetSquare);
-                WhitePiecePositions.Add(move.sourceSquare);
-            }
-            else
-            {
-                BlackPiecePositions.Remove(move.targetSquare);
-                BlackPiecePositions.Add(move.sourceSquare);
-            }
-        }
-
-        private static void AddPiecePosition(int position, int piece)
-        {
-            if (Piece.IsPieceWhite(piece))
-            {
-                WhitePiecePositions.Add(position);
-            }
-            else
-            {
-                BlackPiecePositions.Add(position);
-            }
-        }
-
-        private static void RemovePiecePosition(int position, int piece)
-        {
-            //int piece = board[position];
-            if (Piece.IsPieceWhite(piece))
-            {
-                WhitePiecePositions.Remove(position);
-            }
-            else
-            {
-                BlackPiecePositions.Remove(position);
-            }
-        }
-
         private static void SetupCastleRights(string castleRightsString)
         {
             CastleingRights = 0;
@@ -293,7 +255,6 @@ namespace ChessUI.Engine
             WhiteToMove = !WhiteToMove;
         }
 
-
         public static int GetKingPosition(bool whiteKing)
         {
             for (int position = 0; position < 64; position++)
@@ -312,13 +273,11 @@ namespace ChessUI.Engine
 
         public static void UpdateAttackedPositions(bool whiteMoves)
         {
-            ResetAttackedSquares(whiteMoves);
+            ResetAttackedBitBoards();
 
             for (int sourceSquare = 0; sourceSquare < 64; sourceSquare++)
             {
                 int pieceAtPosition = Board[sourceSquare];
-
-                if (pieceAtPosition == 0 || Piece.IsPieceWhite(pieceAtPosition) != whiteMoves) continue;
 
                 if (Piece.IsType(pieceAtPosition, PieceType.Pawn))
                 {
@@ -342,13 +301,10 @@ namespace ChessUI.Engine
             }
         }
 
-        private static void ResetAttackedSquares(bool resetWhite)
+        private static void ResetAttackedBitBoards()
         {
-            int resetMask = resetWhite ? 1 : 2;
-            for (int i = 0; i < 64; i++)
-            {
-                AttackPositionBoard[i] = AttackPositionBoard[i] & resetMask;
-            }
+            WhiteBitboards.ControlledPositions &= 0b_0ul;
+            BlackBitboards.ControlledPositions &= 0b_0ul;
         }
 
         private static void UpdateSlidingAttacked(int sourceSquare, int piece)
@@ -357,15 +313,13 @@ namespace ChessUI.Engine
             int endIdx = Piece.IsType(piece, PieceType.Rook) ? 4 : 8;
 
             int[][] numSquaresInDirection = MoveGeneration.numSquaresInDirection;
-            int attackIndicator = Piece.IsPieceWhite(piece) ? 2 : 1;
             for (int directionIdx = startIdx; directionIdx < endIdx; directionIdx++)
             {
                 for (int i = 1; i <= numSquaresInDirection[sourceSquare][directionIdx]; i++)
                 {
                     int targetSquare = sourceSquare + directionOffsets[directionIdx] * i;
                     int pieceAtTarget = Board[targetSquare];
-
-                    AttackPositionBoard[targetSquare] = AttackPositionBoard[targetSquare] | attackIndicator;
+                    AddPieceToMask((ulong)piece, targetSquare);
 
                     if (pieceAtTarget != 0)
                     {
@@ -377,18 +331,12 @@ namespace ChessUI.Engine
 
         private static void UpdatePawnAttacked(int sourceSquare, int piece)
         {
+            int[] attackOffsets = LookUps.pawnAttackOffset[(piece & 8) >> 3, sourceSquare];
 
-            int[] attackOffsets = LookUps.pawnAttackOffset[Piece.IsPieceWhite(piece) ? 1 : 0, sourceSquare];
-
-            int attackIndicator = Piece.IsPieceWhite(piece) ? 2 : 1;
             foreach (int offset in attackOffsets)
             {
                 int targetSquare = sourceSquare + offset;
-                if (targetSquare < 0 || targetSquare > 63)
-                {
-                    continue;
-                }
-                AttackPositionBoard[targetSquare] = AttackPositionBoard[targetSquare] | attackIndicator;
+                AddPieceToMask((ulong)piece, targetSquare);
             }
         }
 
@@ -396,31 +344,34 @@ namespace ChessUI.Engine
         {
             int[] offsets = LookUps.knightOffset[sourceSquare];
 
-            int attackIndicator = Piece.IsPieceWhite(piece) ? 2 : 1;
             for (int i = 0; i < offsets.Length; i++)
             {
                 int targetSquare = sourceSquare + offsets[i];
-                if (targetSquare < 0 || targetSquare > 63)
-                {
-                    continue;
-                }
-                AttackPositionBoard[targetSquare] = AttackPositionBoard[targetSquare] | attackIndicator;
+                AddPieceToMask((ulong)piece, targetSquare);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        private static void AddPieceToMask(ulong piece, int targetSquare)
+        {
+            ulong whiteMask = ((piece & 8) >> 3) << targetSquare;
+            WhiteBitboards.ControlledPositions |= whiteMask;
+            ulong blackMask = ((piece ^ 8) >> 3) << targetSquare;
+            BlackBitboards.ControlledPositions |= blackMask;
         }
 
         private static void UpdateKingAttacked(int sourceSquare, int piece)
         {
             int[] offsets = LookUps.kingOffset[sourceSquare];
-            int attackIndicator = Piece.IsPieceWhite(piece) ? 2 : 1;
 
             for (int i = 0; i < offsets.Length; i++)
             {
                 int targetSquare = sourceSquare + offsets[i];
-                if (targetSquare < 0 || targetSquare > 63)
+                /*if (targetSquare < 0 || targetSquare > 63)
                 {
                     continue;
-                }
-                AttackPositionBoard[targetSquare] = AttackPositionBoard[targetSquare] | attackIndicator;
+                }*/
+                AddPieceToMask((ulong)piece, targetSquare);
             }
         }
 

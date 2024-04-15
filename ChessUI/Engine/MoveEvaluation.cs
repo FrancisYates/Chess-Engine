@@ -48,15 +48,8 @@ namespace ChessUI.Engine
 
         private static int ControlledSquares()
         {
-            int whiteControlled = 0;
-            int blackControlled = 0;
-
-            for (int i = 0; i < 64; i++)
-            {
-                int position = BoardManager.AttackPositionBoard[i];
-                whiteControlled += (position & 2) / 2;
-                blackControlled += position & 1;
-            }
+            int whiteControlled = BitOperations.PopCount(BoardManager.WhiteBitboards.ControlledPositions);;
+            int blackControlled = BitOperations.PopCount(BoardManager.BlackBitboards.ControlledPositions); ;
 
             return whiteControlled - blackControlled;
         }

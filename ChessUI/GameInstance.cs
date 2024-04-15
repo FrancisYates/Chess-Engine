@@ -23,7 +23,7 @@ namespace ChessUI
 
             //aiPlayer.CreateBookTree();
             MoveGeneration.CalculateDirections();
-            BoardManager.LoadBoard("startPosition.txt");
+            BoardManager.LoadBoardFromFile("startPosition.txt");
             
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
