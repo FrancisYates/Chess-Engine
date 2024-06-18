@@ -25,8 +25,7 @@ namespace ChessUI
             MoveGeneration.CalculateDirections();
             BoardManager.LoadBoardFromFile("startPosition.txt");
             
-            BoardManager.UpdateAttackedPositions(true);
-            BoardManager.UpdateAttackedPositions(false);
+            BoardManager.UpdateAttackedPositions();
         }
 
         public void MakePlayerMove(Move move) {
@@ -39,7 +38,7 @@ namespace ChessUI
             Render.RemoveHighlightFromSquare(_window.Buttons, move.sourceSquare);
 
             BoardManager.UpdateMoveCount();
-            BoardManager.UpdateAttackedPositions(BoardManager.WhiteToMove);
+            BoardManager.UpdateAttackedPositions();
             OpponentMove();
 
         }
@@ -72,7 +71,7 @@ namespace ChessUI
 
             BoardManager.UpdateSideToMove();
             BoardManager.UpdateMoveCount();
-            BoardManager.UpdateAttackedPositions(!BoardManager.WhiteToMove);
+            BoardManager.UpdateAttackedPositions();
             return true;
         }
 
@@ -92,7 +91,7 @@ namespace ChessUI
 
             BoardManager.UpdateSideToMove();
             BoardManager.UpdateMoveCount();
-            BoardManager.UpdateAttackedPositions(!BoardManager.WhiteToMove);
+            BoardManager.UpdateAttackedPositions();
         }
     }
 }

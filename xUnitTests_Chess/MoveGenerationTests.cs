@@ -76,8 +76,7 @@ namespace xUnitTests_Chess
             BoardManager.ResetBoardToEmpty();
             BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
-            BoardManager.UpdateAttackedPositions(true);
-            BoardManager.UpdateAttackedPositions(false);
+            BoardManager.UpdateAttackedPositions();
 
             AIPlayer aiPlayer = new AIPlayer(timeControl);
             Move[] moves;
@@ -105,8 +104,7 @@ namespace xUnitTests_Chess
             BoardManager.ResetBoardToEmpty();
             BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
-            BoardManager.UpdateAttackedPositions(true);
-            BoardManager.UpdateAttackedPositions(false);
+            BoardManager.UpdateAttackedPositions();
 
             AIPlayer aiPlayer = new AIPlayer(timeControl);
             Move[] moves;
@@ -132,8 +130,7 @@ namespace xUnitTests_Chess
             BoardManager.ResetBoardToEmpty();
             BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
-            BoardManager.UpdateAttackedPositions(true);
-            BoardManager.UpdateAttackedPositions(false);
+            BoardManager.UpdateAttackedPositions();
 
             AIPlayer aiPlayer = new AIPlayer(timeControl);
             Move[] moves;

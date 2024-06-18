@@ -45,8 +45,7 @@ namespace ChessUI
             {
                 targetContents = StandardMove(move, isWhite, movedPiece, board);
             }
-            BoardManager.UpdateAttackedPositions(true);
-            BoardManager.UpdateAttackedPositions(false);
+            BoardManager.UpdateAttackedPositions();
             return (targetContents, validCastling);
         }
 
@@ -220,8 +219,7 @@ namespace ChessUI
                 return;
             }
             UndoStandardMove(move, isWhite, priorTargetContent, board);
-            BoardManager.UpdateAttackedPositions(true);
-            BoardManager.UpdateAttackedPositions(false);
+            BoardManager.UpdateAttackedPositions();
         }
 
         private static void UndoStandardMove(Move move, bool isWhite, int priorTargetContent, int[] board)

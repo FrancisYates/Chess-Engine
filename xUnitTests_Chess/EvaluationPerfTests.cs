@@ -45,8 +45,7 @@ namespace xUnitTests_Chess
             BoardManager.ResetBoardToEmpty();
             BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
-            BoardManager.UpdateAttackedPositions(true);
-            BoardManager.UpdateAttackedPositions(false);
+            BoardManager.UpdateAttackedPositions();
 
             AIPlayer aiPlayer = new(timeControl);
             var sw = Stopwatch.StartNew();
@@ -82,8 +81,7 @@ namespace xUnitTests_Chess
                 BoardManager.ResetBoardToEmpty();
                 BoardManager.LoadBoardFromFen(position);
                 MoveGeneration.CalculateDirections();
-                BoardManager.UpdateAttackedPositions(true);
-                BoardManager.UpdateAttackedPositions(false);
+                BoardManager.UpdateAttackedPositions();
 
                 var evaluation = MoveEvaluation.EvaluateBoard(BoardManager.Board);
             }

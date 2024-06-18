@@ -10,11 +10,11 @@ namespace ChessUI.Engine
     {
         public static int[][] numSquaresInDirection = new int[64][];
 
-        private static Bitboards FriendlyBitboards { get; set; }
-        private static Bitboards OpponentBitboards { get; set; }
+        private static Bitboards FriendlyBitboards { get; set; } = new();
+        private static Bitboards OpponentBitboards { get; set; } = new();
         private static List<Move> GenerateMoves(bool whiteMoves, bool generateOnlyCaptures)
         {
-            List<Move> moves = new();
+            List<Move> moves = new(32);
 
             moves.AddRange(GeneratePawnMoves(whiteMoves, generateOnlyCaptures));
 
@@ -31,18 +31,20 @@ namespace ChessUI.Engine
             return moves;
         }
 
-        public static IEnumerable<int> GetPoistionsFromBitboard(ulong bitboard)
+        public static List<int> GetPoistionsFromBitboard(ulong bitboard)
         {
-            var lut = LookUps.SetByteIndexes.Value;
-            var bytes = BitConverter.GetBytes(bitboard);
-            foreach (var (b, i) in bytes.Select((b, i) => (b, i)))
+            Span<int[]> lut = LookUps.SetByteIndexes.Value;
+            Span<byte> bytes = BitConverter.GetBytes(bitboard);
+            List<int> results = new(8);
+            for (int i = 0; i < 8; i++)
             {
-                var setIndecies = lut[b];
-                foreach (var index in setIndecies)
+                Span<int> setIndecies = lut[bytes[i]];
+                for (int j = 0; j < setIndecies.Length; j++)
                 {
-                    yield return index - 1 + i * 8;
+                    results.Add(setIndecies[j] - 1 + i * 8);
                 }
             }
+            return results;
         }
 
         public static Move[] GenerateStrictLegalMoves(bool whiteMoves, bool generateOnlyCaptures = false)
