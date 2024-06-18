@@ -177,7 +177,7 @@ namespace ChessUI.Engine
 
             foreach (Move move in captureMoves)
             {
-                (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
+                (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
                 (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, maxDepth);
                 score = -score;
                 exploredMoves += additionalMoves;
@@ -225,7 +225,7 @@ namespace ChessUI.Engine
             Move[] possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
             if (currentSearchDepth == maxSearchDepth) {
                 foreach (var move in possibleMoves) {
-                    (int tempPiece, int tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
+                    (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
                     string fen = BoardManager.GetCurrentFen();
                     positions.Add(fen);
                 MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
@@ -236,7 +236,7 @@ namespace ChessUI.Engine
             foreach (Move move in possibleMoves)
             {
                 //BoardManager.UpdatePiecePositions(move);
-                (int tempPiece, int tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
+                (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
                 string fen = BoardManager.GetCurrentFen();
                 positions.Add(fen);
 

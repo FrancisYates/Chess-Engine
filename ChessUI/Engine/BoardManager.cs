@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO.Packaging;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 using ChessUI.Enums;
 
 namespace ChessUI.Engine
@@ -12,23 +10,31 @@ namespace ChessUI.Engine
     public static class BoardManager
     {
         private readonly static int[] _board = new int[64];
-        public static int CastleingRights { get; set; }
+        public static CastlingRights CastleingRights { get; set; }
         public static bool WhiteToMove { get; set; }
         public static int HalfMoves { get; set; }
         public static int FullMoves { get; set; }
         public static int[] Board => _board;
         public static int EnPesantSquare { get; set; } = -1;
+        public static ulong EnPesantBitBoard => EnPesantSquare == -1 ? 0ul : 1ul << EnPesantSquare;
         static readonly int[] directionOffsets = [8, -8, -1, 1, 7, 9, -9, -7];
 
-        public static Bitboards WhiteBitboards { get; set; } = new();
-        public static Bitboards BlackBitboards { get; set; } = new();
+        public static Bitboards WhiteBitboards { get; set; } = new() { 
+            PawnHomeRank = 0b1111111100000000,
+            FinalRank = 0b1111111100000000000000000000000000000000000000000000000000000000
+        };
+        public static Bitboards BlackBitboards { get; set; } = new()
+        {
+            PawnHomeRank = 0b11111111000000000000000000000000000000000000000000000000,
+            FinalRank = 0b11111111
+        };
         
 
-        public static int GetCastilingRights()
+        public static CastlingRights GetCastilingRights()
         {
             return CastleingRights;
         }
-        public static void SetCastilingRights(int rights)
+        public static void SetCastilingRights(CastlingRights rights)
         {
             CastleingRights = rights;
         }
@@ -37,25 +43,25 @@ namespace ChessUI.Engine
         {
             int rook = Board[7];
             bool validRook = rook == 13;
-            return validRook && (CastleingRights & 8) == 8;
+            return validRook && CastleingRights.HasFlag(CastlingRights.WhiteQueenSide);
         }
         public static bool CanWhiteCastleQS()
         {
             int rook = Board[0];
             bool validRook = rook == 13;
-            return validRook && (CastleingRights & 4) == 4;
+            return validRook && CastleingRights.HasFlag(CastlingRights.WhiteQueenSide);
         }
         public static bool CanBlackCastleKS()
         {
             int rook = Board[63];
             bool validRook = rook == 5;
-            return validRook && (CastleingRights & 2) == 2;
+            return validRook && CastleingRights.HasFlag(CastlingRights.BlackKingSide);
         }
         public static bool CanBlackCastleQS()
         {
             int rook = Board[56];
             bool validRook = rook == 5;
-            return validRook && (CastleingRights & 1) == 1;
+            return validRook && CastleingRights.HasFlag(CastlingRights.BlackQueenSide);
         }
 
         public static void UpdateMoveCount()
@@ -132,6 +138,7 @@ namespace ChessUI.Engine
                         var pieceType = Piece.GetPieceType(pieceNumber);
                         ref ulong bitboard = ref GetBitboard(ref bitboards, pieceType);
                         bitboard |= 0b_1uL << index;
+                        bitboards.AllPieces |= 0b_1uL << index;
                         file++;
                     }
                 }
@@ -227,6 +234,16 @@ namespace ChessUI.Engine
             {
                 Board[i] = 0;
             }
+            WhiteBitboards = new()
+            {
+                PawnHomeRank = 0b1111111100000000,
+                FinalRank = 0b1111111100000000000000000000000000000000000000000000000000000000
+            };
+            BlackBitboards = new()
+            {
+                PawnHomeRank = 0b11111111000000000000000000000000000000000000000000000000,
+                FinalRank = 0b11111111
+            };
         }
 
         private static void SetupCastleRights(string castleRightsString)
@@ -234,19 +251,19 @@ namespace ChessUI.Engine
             CastleingRights = 0;
             if (castleRightsString.Contains("K"))
             {
-                CastleingRights |= 8;
+                CastleingRights |= CastlingRights.WhiteKingSide;
             }
             if (castleRightsString.Contains("Q"))
             {
-                CastleingRights |= 4;
+                CastleingRights |= CastlingRights.WhiteQueenSide;
             }
             if (castleRightsString.Contains("k"))
             {
-                CastleingRights |= 2;
+                CastleingRights |= CastlingRights.BlackKingSide;
             }
             if (castleRightsString.Contains("q"))
             {
-                CastleingRights |= 1;
+                CastleingRights |= CastlingRights.BlackQueenSide;
             }
         }
 
@@ -584,10 +601,10 @@ namespace ChessUI.Engine
             sb.Append(WhiteToMove? " w" : " b");
 
             sb.Append(" ");
-            if ((CastleingRights & 8) == 0) sb.Append('K');
-            if((CastleingRights & 4) == 0) sb.Append('Q');
-            if((CastleingRights & 2) == 0) sb.Append('k');
-            if((CastleingRights & 1) == 0) sb.Append('q');
+            if (CastleingRights.HasFlag(CastlingRights.WhiteKingSide)) sb.Append('K');
+            if(CastleingRights.HasFlag(CastlingRights.WhiteQueenSide)) sb.Append('Q');
+            if(CastleingRights.HasFlag(CastlingRights.BlackKingSide)) sb.Append('k');
+            if(CastleingRights.HasFlag(CastlingRights.BlackQueenSide)) sb.Append('q');
 
             if(EnPesantSquare >= 0) {
                 int x = EnPesantSquare % 8;

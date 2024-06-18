@@ -1,11 +1,9 @@
-﻿using System;
+﻿using ChessUI.Enums;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace ChessUI.Engine
 {
@@ -72,7 +70,7 @@ namespace ChessUI.Engine
             return node;
         }
         private Node GenerateChild(Move move, Node parent, int currentDepth, bool maximising, Node? previousSearch = null, CancellationToken token = default) {
-            (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
+            (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
             Node child = GenerateMoveTree(currentDepth + 1,maximising, token);
             child.move = move;
             child.parent = parent;
@@ -143,7 +141,7 @@ namespace ChessUI.Engine
         }
 
         private Node GenerateChild(Move move, Node parent, int currentDepth, int alpha, int beta, bool maximising, Node? previousSearch = null, CancellationToken token = default) {
-            (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
+            (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
             Node child = GenerateMoveTree(currentDepth + 1, alpha, beta, maximising, token);            
             child.move = move;
             child.parent = parent;
@@ -235,7 +233,7 @@ namespace ChessUI.Engine
             return root;
         }
         private Node GenerateChildID(Move move, Node parent, int currentDepth, int alpha, int beta, bool maximising, Node previousSearch, CancellationToken token = default) {
-            (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
+            (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
             Node child;
             if (previousSearch.children.Count > 0) {
                 child = GenerateMoveTreeID(currentDepth + 1, alpha, beta, maximising, previousSearch, token);
@@ -273,7 +271,7 @@ namespace ChessUI.Engine
             captureMoves = MoveEvaluation.MoveOrdering(captureMoves);
 
             foreach (Move move in captureMoves) {
-                (int target, int castle) = MoveManager.MakeMove(move, BoardManager.Board);
+                (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
                 (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, token);
                 score = -score;
                 exploredMoves += additionalMoves;

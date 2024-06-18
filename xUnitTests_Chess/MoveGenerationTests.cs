@@ -74,7 +74,7 @@ namespace xUnitTests_Chess
         public void AI_FindMovesToDepth_TestCount(bool isWhite, string boardFile, int maxPly, long expectedResult)
         {
             BoardManager.ResetBoardToEmpty();
-            BoardManager.LoadBoard(BoardDirectory + boardFile);
+            BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
@@ -103,7 +103,7 @@ namespace xUnitTests_Chess
         public void AI_FindMovesToDepth_TestPerf(bool isWhite, string boardFile, int maxPly, long expectedResult)
         {
             BoardManager.ResetBoardToEmpty();
-            BoardManager.LoadBoard(BoardDirectory + boardFile);
+            BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);
@@ -130,7 +130,7 @@ namespace xUnitTests_Chess
         public void SpecialTesting(bool isWhite, string boardFile, int maxPly, int expectedResult)
         {
             BoardManager.ResetBoardToEmpty();
-            BoardManager.LoadBoard(BoardDirectory + boardFile);
+            BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
             MoveGeneration.CalculateDirections();
             BoardManager.UpdateAttackedPositions(true);
             BoardManager.UpdateAttackedPositions(false);

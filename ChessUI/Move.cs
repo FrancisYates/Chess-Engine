@@ -2,7 +2,7 @@
 
 namespace ChessUI
 {
-    public struct Move
+    public record struct Move
     {
         public int sourceSquare;
         public int targetSquare;

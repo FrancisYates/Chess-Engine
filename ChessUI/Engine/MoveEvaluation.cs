@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Numerics;
 using ChessUI.Enums;
 
 namespace ChessUI.Engine
@@ -50,7 +49,7 @@ namespace ChessUI.Engine
         {
             int whiteControlled = BitOperations.PopCount(BoardManager.WhiteBitboards.ControlledPositions);;
             int blackControlled = BitOperations.PopCount(BoardManager.BlackBitboards.ControlledPositions); ;
-
+            
             return whiteControlled - blackControlled;
         }
         private static int EvaluatePawnStructure(int[] board) {

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using ChessUI.Enums;
 
 namespace ChessUI.Engine
@@ -7,110 +9,197 @@ namespace ChessUI.Engine
     public static class MoveGeneration
     {
         public static int[][] numSquaresInDirection = new int[64][];
-        private static readonly short[] directionOffsets = { 8, -8, -1, 1, 7, 9, -9, -7 };
-        private readonly static List<Move> moves = new List<Move>();
 
-        private static void GenerateMoves(bool whiteMoves, bool generateOnlyCaptures)
+        private static Bitboards FriendlyBitboards { get; set; }
+        private static Bitboards OpponentBitboards { get; set; }
+        private static List<Move> GenerateMoves(bool whiteMoves, bool generateOnlyCaptures)
         {
-            moves.Clear();
-            int[] board = BoardManager.Board;
-            int toMoveColour = whiteMoves ? 8 : 0;
-            //List<int> piecePositions = whiteMoves ? BoardManager.whitePiecePositions : BoardManager.blackPiecePositions;
-            //PERF Store Piece position rather than looping
-            for (int sourceSquare = 0; sourceSquare < 64; sourceSquare++)
-            //foreach (int sourceSquare in piecePositions)
-            {
-                int pieceAtPosition = board[sourceSquare];
+            List<Move> moves = new();
 
-                if (pieceAtPosition == 0 || !Piece.IsPieceColour(pieceAtPosition, toMoveColour))
+            moves.AddRange(GeneratePawnMoves(whiteMoves, generateOnlyCaptures));
+
+            moves.AddRange(GenerateKnightMoves(generateOnlyCaptures));
+
+            moves.AddRange(GenerateKingMoves(generateOnlyCaptures, whiteMoves));
+
+            moves.AddRange(GenerateRookMoves(generateOnlyCaptures));
+
+            moves.AddRange(GenerateBishopMoves(generateOnlyCaptures));
+
+            moves.AddRange(GenerateQueenMoves(generateOnlyCaptures));
+
+            return moves;
+        }
+
+        public static IEnumerable<int> GetPoistionsFromBitboard(ulong bitboard)
+        {
+            var lut = LookUps.SetByteIndexes.Value;
+            var bytes = BitConverter.GetBytes(bitboard);
+            foreach (var (b, i) in bytes.Select((b, i) => (b, i)))
+            {
+                var setIndecies = lut[b];
+                foreach (var index in setIndecies)
                 {
-                    continue;
-                }
-                switch (Piece.GetPieceType(pieceAtPosition))
-                {
-                    case PieceType.Pawn:
-                        GeneratePawnMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                        break;
-                    case PieceType.Bishop:
-                    case PieceType.Queen:
-                    case PieceType.Rook:
-                        GenerateSlidingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                        break;
-                    case PieceType.Knight:
-                        GenerateKnightMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                        break;
-                    case PieceType.King:
-                        GenerateKingMoves(sourceSquare, pieceAtPosition, board, generateOnlyCaptures);
-                        break;
+                    yield return index - 1 + i * 8;
                 }
             }
         }
-
 
         public static Move[] GenerateStrictLegalMoves(bool whiteMoves, bool generateOnlyCaptures = false)
         {
-            GenerateMoves(whiteMoves, generateOnlyCaptures);
-            RemoveIllegalMoves(whiteMoves);
+            FriendlyBitboards = whiteMoves ? BoardManager.WhiteBitboards : BoardManager.BlackBitboards;
+            OpponentBitboards = whiteMoves ? BoardManager.BlackBitboards : BoardManager.WhiteBitboards;
+            var moves = GenerateMoves(whiteMoves, generateOnlyCaptures);
+            RemoveIllegalMoves(moves, whiteMoves);
             return moves.ToArray();
         }
 
-        private static void GenerateSlidingMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
+        private static List<Move> GenerateRookMoves(bool generateOnlyCaptures)
         {
-            int startIdx = Piece.IsType(piece, PieceType.Bishop) ? 4 : 0;
-            int endIdx = Piece.IsType(piece, PieceType.Rook) ? 4 : 8;
-
-            for (int directionIdx = startIdx; directionIdx < endIdx; directionIdx++)
+            List<Move> moves = new();
+            var positions = GetPoistionsFromBitboard(FriendlyBitboards.Rooks);
+            foreach (var position in positions)
             {
-                for (int i = 1; i <= numSquaresInDirection[sourceSquare][directionIdx]; i++)
-                {
-                    int targetSquare = sourceSquare + i * directionOffsets[directionIdx];
-                    int pieceAtTarget = board[targetSquare];
+                ulong potentialBlockers = (FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) & ~(1ul << position);
+                ulong blockers = potentialBlockers & LookUps.rookOccupancyBitboards[position];
 
-                    if (pieceAtTarget != 0)
+                ulong movesMask = LookUps.RookMoveDict[(position, blockers)] & ~FriendlyBitboards.AllPieces;
+                var captureTargets = GetPoistionsFromBitboard(movesMask & OpponentBitboards.AllPieces);
+                foreach (var target in captureTargets)
+                {
+                    moves.Add(new(position, target, MoveType.capture));
+                }
+                if (generateOnlyCaptures) return moves;
+
+                var moveTargets = GetPoistionsFromBitboard(movesMask & ~OpponentBitboards.AllPieces);
+                foreach (var target in moveTargets)
+                {
+                    moves.Add(new(position, target));
+                }
+            }
+            return moves;
+        }
+
+        private static List<Move> GenerateBishopMoves(bool generateOnlyCaptures)
+        {
+            List<Move> moves = new();
+            var bishopPositions = GetPoistionsFromBitboard(FriendlyBitboards.Bishops);
+
+            foreach (var position in bishopPositions)
+            {
+                ulong potentialBlockers = (FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) & ~(1ul << position);
+                ulong blockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[position];
+
+                ulong movesMask = LookUps.BishopMoveDict[(position, blockers)] & ~FriendlyBitboards.AllPieces;
+                var captureTargets = GetPoistionsFromBitboard(movesMask & OpponentBitboards.AllPieces);
+                foreach (var target in captureTargets)
+                {
+                    moves.Add(new(position, target, MoveType.capture));
+                }
+                if (generateOnlyCaptures) continue;
+
+                var moveTargets = GetPoistionsFromBitboard(movesMask & ~OpponentBitboards.AllPieces);
+                foreach (var target in moveTargets)
+                {
+                    moves.Add(new(position, target));
+                }
+            }
+
+            return moves;
+        }
+
+        private static List<Move> GenerateQueenMoves(bool generateOnlyCaptures)
+        {
+            List<Move> moves = new();
+            var queenPositions = GetPoistionsFromBitboard(FriendlyBitboards.Queens);
+
+            foreach (var position in queenPositions)
+            {
+                ulong potentialBlockers = (FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) & ~(1ul << position);
+                ulong rookBlockers = potentialBlockers & LookUps.rookOccupancyBitboards[position];
+                ulong bishopBlockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[position];
+
+                ulong rookMask = LookUps.RookMoveDict[(position, rookBlockers)];
+                ulong bishopMask = LookUps.BishopMoveDict[(position, bishopBlockers)];
+                ulong movesMask = (rookMask | bishopMask) & ~FriendlyBitboards.AllPieces;
+                var captureTargets = GetPoistionsFromBitboard(movesMask & OpponentBitboards.AllPieces);
+                foreach (var target in captureTargets)
+                {
+                    moves.Add(new(position, target, MoveType.capture));
+                }
+                if (generateOnlyCaptures) continue;
+
+                var moveTargets = GetPoistionsFromBitboard(movesMask & ~OpponentBitboards.AllPieces);
+                foreach (var target in moveTargets)
+                {
+                    moves.Add(new(position, target));
+                }
+            }
+
+            return moves;
+        }
+
+        private static List<Move> GeneratePawnMoves(bool isWhite, bool generateOnlyCaptures)
+        {
+            List<Move> moves = [];
+            var pawnPositions = GetPoistionsFromBitboard(FriendlyBitboards.Pawns);
+            foreach (var position in pawnPositions)
+            {
+                ulong attackBitBoard = isWhite ? LookUps.whitePawnAttackBitBoard[position] : LookUps.blackPawnAttackBitBoard[position];
+                int moveDirection = isWhite ? 1 : -1;
+                int targetSquare;
+
+                if ((attackBitBoard & OpponentBitboards.AllPieces) > 0)
+                {
+                    moves.AddRange(GetPawnCaptureMoves(isWhite, position));
+                }
+                ulong epTarget = attackBitBoard & BoardManager.EnPesantBitBoard;
+                if (epTarget > 0)
+                {
+                    moves.Add(new Move(position, GetPoistionsFromBitboard(epTarget).First(), MoveType.enPesant));
+                }
+                if (generateOnlyCaptures) return moves;
+                targetSquare = position + 8 * moveDirection;
+                if ((((FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) >> targetSquare) & 1) == 0)
+                {
+                    addNonCaptureMoves(position, targetSquare);
+                    if (((1ul << position) & FriendlyBitboards.PawnHomeRank) > 0)
                     {
-                        if (Piece.IsSameColour(piece, pieceAtTarget))
+                        targetSquare = position + 16 * moveDirection;
+                        if ((((FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) >> targetSquare) & 1) == 0)
                         {
-                            break;
-                        }
-                        else
-                        {
-                            moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture));
-                            break;
+                            addNonCaptureMoves(position, targetSquare, MoveType.doublePawnMove);
                         }
                     }
-                    if (!generateOnlyCaptures) { moves.Add(new Move(sourceSquare, targetSquare)); }
+                }
+            }
+            return moves;
+            void addNonCaptureMoves(int position, int targetSquare, MoveType moveType = MoveType.move)
+            {
+                if ((FriendlyBitboards.FinalRank & (1ul << targetSquare)) > 0)
+                {
+                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.bishop));
+                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.rook));
+                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.knight));
+                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.queen));
+                }
+                else
+                {
+                    moves.Add(new Move(position, targetSquare, moveType));
                 }
             }
         }
 
-        private static void GeneratePawnMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
+        private static List<Move> GetPawnCaptureMoves(bool isWhite, int sourceSquare)
         {
-            bool isWhite = Piece.IsPieceColour(piece, 8); // check if piece is white. Enum is available but may be slower 
-            int moveDirection = isWhite ? 1 : -1;
-
+            List<Move> moves = new();
             int[] attackOffsets = LookUps.pawnAttackOffset[isWhite ? 1 : 0, sourceSquare];
-            bool enPesantPossible = BoardManager.EnPesantSquare != -1;
             foreach (int offset in attackOffsets)
             {
                 int targetSquare = sourceSquare + offset;
-                if (targetSquare < 0 || targetSquare > 63)
+                if (((OpponentBitboards.AllPieces >> targetSquare) & 1) == 1)
                 {
-                    continue;
-                }
-                int pieceAtTarget = board[targetSquare];
-
-                if (enPesantPossible && targetSquare == BoardManager.EnPesantSquare)
-                {
-                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.enPesant));
-                    continue;
-                }
-                if (pieceAtTarget == 0)
-                {
-                    continue;
-                }
-                if (!Piece.IsSameColour(pieceAtTarget, piece))
-                {
-                    if (Piece.IsAtFinalRank(isWhite, targetSquare))
+                    if ((FriendlyBitboards.FinalRank & (1ul << targetSquare)) > 0)
                     {
                         moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.bishop));
                         moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.rook));
@@ -119,140 +208,94 @@ namespace ChessUI.Engine
                         continue;
                     }
                     moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture));
-                    continue;
                 }
             }
 
-            if (generateOnlyCaptures) { return; }
-
-            int forwardMoves = Piece.HasPawnMoved(isWhite, sourceSquare) ? 1 : 2;
-            for (int i = 1; i <= forwardMoves; i++)
-            {
-                int targetSquare = sourceSquare + 8 * i * moveDirection;
-                if (targetSquare < 0 || targetSquare > 63)
-                {
-                    continue;
-                }
-                int pieceAtTarget = board[targetSquare];
-
-                if (pieceAtTarget != 0)
-                {
-                    break;
-                }
-                if (Piece.IsAtFinalRank(isWhite, targetSquare))
-                {
-                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.bishop));
-                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.rook));
-                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.knight));
-                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.promotion, PromotionPiece.queen));
-                    continue;
-                }
-                if (i == 2)
-                {
-                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.doublePawnMove));
-                    continue;
-                }
-                moves.Add(new Move(sourceSquare, targetSquare));
-            }
+            return moves;
         }
 
-        private static void GenerateKnightMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
+        private static List<Move> GenerateKnightMoves(bool generateOnlyCaptures)
         {
-            int[] offsets = LookUps.knightOffset[sourceSquare];
-            for (int i = 0; i < offsets.Length; i++)
+            List<Move> moves = new();
+            var knightPositions = GetPoistionsFromBitboard(FriendlyBitboards.Knights);
+            foreach (var position in knightPositions)
             {
-                int targetSquare = sourceSquare + offsets[i];
-                if (targetSquare < 0 || targetSquare > 63)
+                ulong captureMoveMask = LookUps.knightMoveBitboards[position] & OpponentBitboards.AllPieces;
+                var candidateMoves = GetPoistionsFromBitboard(captureMoveMask);
+                foreach (var target in candidateMoves)
                 {
-                    continue;
+                    moves.Add(new Move(position, target, MoveType.capture));
                 }
-                int targetPiece = board[targetSquare];
+                if (generateOnlyCaptures) continue;
 
-                if (targetPiece == 0)
+                ulong nonCaptureMoveMask = LookUps.knightMoveBitboards[position] &
+                ~(FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces);
+                candidateMoves = GetPoistionsFromBitboard(nonCaptureMoveMask);
+                foreach (var target in candidateMoves)
                 {
-                    if (generateOnlyCaptures) continue;
-                    moves.Add(new Move(sourceSquare, targetSquare));
-                }
-                else if (!Piece.IsSameColour(piece, targetPiece))
-                {
-                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture));
+                    moves.Add(new Move(position, target));
                 }
             }
+            return moves;
         }
 
-        private static void GenerateKingMoves(int sourceSquare, int piece, int[] board, bool generateOnlyCaptures)
+        private static List<Move> GenerateKingMoves(bool generateOnlyCaptures, bool isWhite)
         {
-            int[] offsets = LookUps.kingOffset[sourceSquare];
-
-            for (int i = 0; i < offsets.Length; i++)
+            List<Move> moves = new();
+            var kingPositions = GetPoistionsFromBitboard(FriendlyBitboards.Kings);
+            foreach (var position in kingPositions)
             {
-                int targetSquare = sourceSquare + offsets[i];
-                int targetPiece = board[targetSquare];
-
-                if (targetPiece == 0)
+                ulong allMoves = LookUps.kingMoveBitboards[position] &
+                    ~(FriendlyBitboards.AllPieces | OpponentBitboards.ControlledPositions);
+                ulong captureMoves = allMoves & OpponentBitboards.AllPieces;
+                var moveTargets = GetPoistionsFromBitboard(captureMoves);
+                foreach (var target in moveTargets)
                 {
-                    if (generateOnlyCaptures) continue;
-                    moves.Add(new Move(sourceSquare, targetSquare));
+                    moves.Add(new(position, target, MoveType.capture));
                 }
-                else if (!Piece.IsSameColour(piece, targetPiece))
+                if (generateOnlyCaptures) continue;
+
+                ulong nonCaptureMoves = allMoves & ~OpponentBitboards.AllPieces;
+                moveTargets = GetPoistionsFromBitboard(nonCaptureMoves);
+                foreach (var target in moveTargets)
                 {
-                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture));
+                    moves.Add(new(position, target));
+                }
+                if ((OpponentBitboards.ControlledPositions & FriendlyBitboards.Kings) > 0) return moves;
+                if (CanCastleKingSide(isWhite))
+                {
+                    moves.Add(new Move(position, position + 2, MoveType.castle));
+                }
+                if (CanCastleQueenSide(isWhite))
+                {
+                    moves.Add(new Move(position, position - 2, MoveType.castle));
                 }
             }
-
-            if (generateOnlyCaptures) { return; }
-
-            bool isWhite = Piece.IsPieceWhite(piece);
-
-            if (CanCastleKingSide(isWhite, sourceSquare, board))
-            {
-                moves.Add(new Move(sourceSquare, sourceSquare + 2, MoveType.castle));
-            }
-            if (CanCastleQueenSide(isWhite, sourceSquare, board))
-            {
-                moves.Add(new Move(sourceSquare, sourceSquare - 2, MoveType.castle));
-            }
+            return moves;
         }
 
-        public static bool CanCastleKingSide(bool isWhite, int sourceSquare, int[] board)
+        public static bool CanCastleKingSide(bool isWhite)
         {
-            bool castleingAvailable = isWhite ? BoardManager.CanWhiteCastleKS() : BoardManager.CanBlackCastleKS();
+            CastlingRights rights = isWhite ? CastlingRights.WhiteKingSide : CastlingRights.BlackKingSide;
+            bool castleingAvailable = BoardManager.CastleingRights.HasFlag(rights);
+            if (!castleingAvailable) return false;
 
-            if (IsSquareAttackedByOpponent(sourceSquare, !isWhite))
-            {
-                return false;
-            }
-            if (castleingAvailable)
-            {
-                int target1 = sourceSquare + 1;
-                int target2 = sourceSquare + 2;
-                bool isBlocked = board[target1] != 0 || board[target2] != 0;
-                bool isControlled = IsSquareAttackedByOpponent(target1, !isWhite) || IsSquareAttackedByOpponent(target2, !isWhite);
-                return !isBlocked && !isControlled;
-            }
-
-            return false;
+            ulong path = isWhite ? LookUps.whiteKingSideCastleKingPath : LookUps.blackKingSideCastleKingPath;
+            ulong blockers = path & (OpponentBitboards.ControlledPositions | OpponentBitboards.AllPieces | FriendlyBitboards.AllPieces);
+            return blockers == 0;
         }
 
-        public static bool CanCastleQueenSide(bool isWhite, int sourceSquare, int[] board)
+        public static bool CanCastleQueenSide(bool isWhite)
         {
-            bool castleingAvailable = isWhite ? BoardManager.CanWhiteCastleQS() : BoardManager.CanBlackCastleQS();
+            CastlingRights rights = isWhite ? CastlingRights.WhiteQueenSide : CastlingRights.BlackQueenSide;
+            bool castleingAvailable = BoardManager.CastleingRights.HasFlag(rights);
+            if (!castleingAvailable) return false;
 
-            if (IsSquareAttackedByOpponent(sourceSquare, !isWhite))
-            {
-                return false;
-            }
-            if (castleingAvailable)
-            {
-                int target1 = sourceSquare - 1;
-                int target2 = sourceSquare - 2;
-                int target3 = sourceSquare - 3;
-                bool isBlocked = board[target1] != 0 || board[target2] != 0 || board[target3] != 0;
-                bool isControlled = IsSquareAttackedByOpponent(target1, !isWhite) || IsSquareAttackedByOpponent(target2, !isWhite);
-                return !isBlocked && !isControlled;
-            }
+            ulong kingPath = isWhite ? LookUps.whiteQueenSideCastleKingPath : LookUps.blackQueenSideCastleKingPath;
+            ulong fullPath = isWhite ? LookUps.whiteQueenSideCastlePath : LookUps.blackQueenSideCastlePath;
+            ulong blockers = (fullPath & (OpponentBitboards.AllPieces | FriendlyBitboards.AllPieces)) | (kingPath & OpponentBitboards.ControlledPositions);
 
-            return false;
+            return blockers == 0;
         }
 
         public static void CalculateDirections()
@@ -283,15 +326,16 @@ namespace ChessUI.Engine
 
         }
 
-        private static void RemoveIllegalMoves(bool whiteMoves)
+        private static void RemoveIllegalMoves(List<Move> moves, bool whiteMoves)
         {
-            List<Move> illegalMoves = new List<Move>();
-            int kingPosition = BoardManager.GetKingPosition(whiteMoves);
-            if (kingPosition == -1)
+            List<Move> illegalMoves = new();
+            int? kingPositionN = GetPoistionsFromBitboard(FriendlyBitboards.Kings).FirstOrDefault();
+            if (kingPositionN is null)
             {
                 moves.Clear();
                 return;
             }
+            int kingPosition = kingPositionN.Value;
             foreach (Move move in moves)
             {
                 if (DoesMoveCauseCheck(kingPosition, move))
@@ -308,102 +352,101 @@ namespace ChessUI.Engine
 
         private static bool DoesKingMoveCauseCheck(Move move)
         {
-            int king = BoardManager.Board[move.sourceSquare];
-            bool isOpponentWhite = !Piece.IsPieceWhite(king);
+            if (((1ul << move.targetSquare) & OpponentBitboards.ControlledPositions) > 0) return true;
 
-            if (IsSquareAttackedByOpponent(move.targetSquare, isOpponentWhite))
+            if (((1ul << move.sourceSquare) & OpponentBitboards.ControlledPositions) > 0)
             {
+                ulong[] checkingMasks = FindCheckingPieces(move.sourceSquare);
+                ulong allCheckingPieces = checkingMasks[0] | checkingMasks[1] | checkingMasks[2] | checkingMasks[3];
+                int numChecingPieces = GetPoistionsFromBitboard(allCheckingPieces).Count();
+                if (numChecingPieces == 1)
+                {
+                    int checkingPiecePosition = GetPoistionsFromBitboard(allCheckingPieces).First();
+                    if (move.targetSquare == checkingPiecePosition) return false;
+                    if (((1ul << checkingPiecePosition) & OpponentBitboards.SlidingPieces) == 0) return false;
+
+                    int kingToMove = LookUps.directionIndex[move.sourceSquare, move.targetSquare];
+                    int checkToKing = LookUps.directionIndex[checkingPiecePosition, move.sourceSquare];
+
+                    return kingToMove == checkToKing;
+                }
+
+                var checkingPiecePositions = GetPoistionsFromBitboard(allCheckingPieces & OpponentBitboards.SlidingPieces);
+                foreach (int checkingPosition in checkingPiecePositions)
+                {
+                    int kingToMove = LookUps.directionIndex[move.sourceSquare, move.targetSquare];
+                    int checkToKing = LookUps.directionIndex[checkingPosition, move.sourceSquare];
+
+                    if (kingToMove == checkToKing) return true;
+                }
                 return true;
-            }
-            if (IsSquareAttackedByOpponent(move.sourceSquare, isOpponentWhite))
-            {
-                List<int> checkingPieces = BoardManager.FindCheckingPieces(move.sourceSquare, king);
-                if (checkingPieces.Count == 1)
-                {
-                    int checkingPiecePosition = checkingPieces[0];
-                    int checkingPiece = BoardManager.Board[checkingPiecePosition];
-                    if (move.targetSquare == checkingPiecePosition)
-                    {
-                        return false;
-                    }
-                    if (Piece.IsSlidingPiece(checkingPiece))
-                    {
-                        int kingToMove = LookUps.directionIndex[move.sourceSquare, move.targetSquare];
-                        int checkToKing = LookUps.directionIndex[checkingPiecePosition, move.sourceSquare];
-
-                        if (checkToKing == -1)
-                        {
-                            return false;
-                        }
-                        return kingToMove == checkToKing;
-                    }
-                    return false;
-                }
-
-                foreach (int checkingPosition in checkingPieces)
-                {
-                    int checkingPiece = BoardManager.Board[checkingPosition];
-                    if (Piece.IsSlidingPiece(checkingPiece))
-                    {
-                        int kingToMove = LookUps.directionIndex[move.sourceSquare, move.targetSquare];
-                        int checkToKing = LookUps.directionIndex[checkingPosition, move.sourceSquare];
-
-                        if (checkToKing == -1)
-                        {
-                            return false;
-                        }
-                        if (kingToMove == checkToKing)
-                        {
-                            return true;
-                        }
-                    }
-                }
             }
             return false;
 
         }
+        public static ulong[] FindCheckingPieces(int kingPosition)
+        {
+            var slidingChecks = FindCheckingSlidingPiece(kingPosition);
+            ulong knightChecks = FindCheckingKnight(kingPosition);
+            ulong pawns = FindCheckingPawn(kingPosition);
 
-        private static bool IsCheckBlocked(int kingPosition, Move move)
+            return [pawns, knightChecks, slidingChecks.rookChecks, slidingChecks.bishopChecks];
+        }
+        private static ulong FindCheckingPawn(int sourceSquare)
+        {
+            ulong attackBitBoard = OpponentBitboards.FinalRank == 255 ? LookUps.whitePawnAttackBitBoard[sourceSquare] : LookUps.blackPawnAttackBitBoard[sourceSquare];
+            return attackBitBoard & OpponentBitboards.Pawns;
+        }
+
+        private static (ulong rookChecks, ulong bishopChecks) FindCheckingSlidingPiece(int sourceSquare)
+        {
+            ulong allPieceMask = FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces;
+            ulong rookBlockers = LookUps.rookOccupancyBitboards[sourceSquare] & allPieceMask;
+            ulong rookCheckersMask = LookUps.RookMoveDict[(sourceSquare, rookBlockers)] & (OpponentBitboards.Rooks | OpponentBitboards.Queens);
+
+            ulong bishopBlockers = LookUps.bishopOccupancyBitBoards[sourceSquare] & allPieceMask;
+            ulong bishopCheckersMask = LookUps.BishopMoveDict[(sourceSquare, bishopBlockers)] & (OpponentBitboards.Bishops | OpponentBitboards.Queens);
+            return (rookCheckersMask, bishopCheckersMask);
+        }
+        private static ulong FindCheckingKnight(int sourceSquare)
+        {
+            return LookUps.knightMoveBitboards[sourceSquare] & OpponentBitboards.Knights;
+        }
+
+        private static bool IsKingPutInCheck(int kingPosition, Move move)
         {
             int king = BoardManager.Board[kingPosition];
 
-            List<int> checkingPieces = BoardManager.FindCheckingPieces(kingPosition, king);
+            ulong[] checkingMasks = FindCheckingPieces(kingPosition);
+            ulong allCheckingPieces = checkingMasks[0] | checkingMasks[1] | checkingMasks[2] | checkingMasks[3];
+            BitOperations.PopCount(allCheckingPieces);
+            ulong numChecingPieces = System.Runtime.Intrinsics.X86.Popcnt.X64.PopCount(allCheckingPieces);
+            if (numChecingPieces > 1) return true;
 
-            if (checkingPieces.Count > 1)
+            if (allCheckingPieces == 0)
             {
-                return true;
+                return IsSlidingCheckCreated(move, kingPosition);
             }
 
-            if (checkingPieces.Count == 0)
+            int piecePosition = GetPoistionsFromBitboard(allCheckingPieces).First();
+            if (((1ul << piecePosition) & OpponentBitboards.SlidingPieces) > 0)
             {
-                //TODO This should never happen, but it does
-                return IsCheckCreatedInDirection(kingPosition, move);
-            }
-
-            int piecePosition = checkingPieces[0];
-            int checkingPiece = BoardManager.Board[piecePosition];
-            if (Piece.IsSlidingPiece(checkingPiece))
-            {
-                if (IsPieceInDirection(kingPosition, move.targetSquare, piecePosition))
+                if (!IsPieceInDirection(kingPosition, move.targetSquare, piecePosition)) return true;
+                if (move.targetSquare == piecePosition)
                 {
-                    if (move.targetSquare == piecePosition)
-                    {
-                        return IsCheckCreatedInDirection(kingPosition, move);
-                    }
-                    if (IsCheckBlocked(kingPosition, move.targetSquare, piecePosition))
-                    {
-                        return IsCheckCreatedInDirection(kingPosition, move);
-                    }
-                    return true;
+                    return IsSlidingCheckCreated(move, kingPosition);
+                }
+                if (IsCheckBlocked(kingPosition, move.targetSquare, piecePosition))
+                {
+                    return IsSlidingCheckCreated(move, kingPosition);
                 }
                 return true;
+                
             }
             else
             {
-                if (IsCheckCreatedInDirection(kingPosition, move))
-                {
-                    return true;
-                }
+                if (IsSlidingCheckCreated(move, kingPosition)) return true;
+
                 if (move.IsType(MoveType.enPesant))
                 {
                     int captureOffset = !Piece.IsPieceWhite(king) ? 8 : -8;
@@ -415,97 +458,44 @@ namespace ChessUI.Engine
 
         private static bool DoesMoveCauseCheck(int kingPosition, Move move)
         {
-            int king = BoardManager.Board[kingPosition];
-            bool isOpponentWhite = !Piece.IsPieceWhite(king);
-            int movedPiece = BoardManager.Board[move.sourceSquare];
-
-            if (Piece.IsType(movedPiece, PieceType.King))
+            if (kingPosition == move.sourceSquare)
             {
                 return DoesKingMoveCauseCheck(move);
             }
 
-            if (IsSquareAttackedByOpponent(kingPosition, isOpponentWhite))
+            if (move.IsType(MoveType.enPesant)) return DoesEnPesantCreatesCheck(kingPosition, move);
+
+            if ((((1ul << kingPosition) | (1ul << move.sourceSquare)) & OpponentBitboards.ControlledPositions) > 0)
             {
-                return IsCheckBlocked(kingPosition, move);
+                return IsKingPutInCheck(kingPosition, move);
             }
-            else
-            {
-                if (move.IsType(MoveType.enPesant)) return DoesEnPesantCreatesCheck(kingPosition, move);
-                if (IsSquareAttackedByOpponent(move.sourceSquare, isOpponentWhite)) return IsCheckCreatedInDirection(kingPosition, move);
-                return false;
-            }
+            return false;
         }
 
         private static bool DoesEnPesantCreatesCheck(int kingPosition, Move move)
         {
-            int king = BoardManager.Board[kingPosition];
+            ulong moveMask = LookUps.queenMoves[kingPosition];
+            if ((moveMask & OpponentBitboards.SlidingPieces) == 0) return false;
 
-            int capturedOffest = move.targetSquare % 8 - move.sourceSquare % 8;
-            int capturedPosition = move.sourceSquare + capturedOffest;
+            int deltaX = (move.targetSquare % 8) - (move.sourceSquare % 8);
 
-            int sideColour = Piece.IsPieceWhite(king) ? 8 : 0;
-            int directionToKing = LookUps.directionIndex[move.sourceSquare, kingPosition];
-            if (directionToKing == -1)
-            {
-                return false;
-            }
-            int maxOffset = numSquaresInDirection[move.sourceSquare][directionToKing];
-            for (int i = 0; i < maxOffset; i++)
-            {
-                int targetSquare = move.sourceSquare + (i + 1) * directionOffsets[directionToKing];
-                int pieceAtTarget = BoardManager.Board[targetSquare];
+            int enPesantPosition = move.sourceSquare + deltaX;
 
-                if (pieceAtTarget == 0) { continue; }
+            ulong potentialBlockers = (FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces);
+            potentialBlockers ^= 1ul << move.sourceSquare;
+            potentialBlockers ^= 1ul << move.targetSquare;
+            potentialBlockers ^= 1ul << enPesantPosition;
 
-                if (targetSquare == capturedPosition) { continue; }
+            ulong rookBlockers = potentialBlockers & LookUps.rookOccupancyBitboards[kingPosition];
+            ulong bishopBlockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[kingPosition];
 
-                if (targetSquare == kingPosition)
-                {
-                    break;
-                }
-                return false;
-            }
+            ulong rookMask = LookUps.RookMoveDict[(kingPosition, rookBlockers)];
+            ulong bishopMask = LookUps.BishopMoveDict[(kingPosition, bishopBlockers)];
 
-            int directionIdx = LookUps.directionIndex[kingPosition, move.sourceSquare];
-            if (directionIdx == -1)
-            {
-                return false;
-            }
+            ulong rookCheckMask = rookMask & (OpponentBitboards.Rooks | OpponentBitboards.Queens);
+            ulong bishopCheckMask = bishopMask & (OpponentBitboards.Bishops | OpponentBitboards.Queens);
 
-            maxOffset = numSquaresInDirection[move.sourceSquare][directionIdx];
-            for (int i = 0; i < maxOffset; i++)
-            {
-                int targetSquare = move.sourceSquare + (i + 1) * directionOffsets[directionIdx];
-
-                if (targetSquare == capturedPosition)
-                {
-                    continue;
-                }
-
-                int pieceAtTarget = BoardManager.Board[targetSquare];
-
-                if (pieceAtTarget == 0) { continue; }
-
-                if (Piece.IsSameColour(sideColour, pieceAtTarget))
-                {
-                    break;
-                }
-
-                if (pieceAtTarget != 0)
-                {
-                    if (Piece.IsSlidingPiece(pieceAtTarget))
-                    {
-                        if (directionIdx < 4)
-                        {
-                            return Piece.IsType(pieceAtTarget, PieceType.Rook) || Piece.IsType(pieceAtTarget, PieceType.Queen);
-                        }
-                        return Piece.IsType(pieceAtTarget, PieceType.Bishop) || Piece.IsType(pieceAtTarget, PieceType.Queen);
-                    }
-                    return false;
-                }
-            }
-
-            return false;
+            return (bishopCheckMask | rookCheckMask) > 0;
         }
 
         private static bool IsCheckBlocked(int kingPosition, int moveTarget, int checkingPiecePosition)
@@ -520,63 +510,37 @@ namespace ChessUI.Engine
             return attackedIndicator > 0;
         }
 
-        private static bool IsCheckCreatedInDirection(int kingPosition, Move move)
+        private static bool IsSlidingCheckCreated(Move move, int kingPosition)
         {
-            int xDelta = move.sourceSquare % 8 - kingPosition % 8;
-            int yDelta = move.sourceSquare / 8 - kingPosition / 8;
+            ulong potentialBlockers = (FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) & ~(1ul << move.sourceSquare);
+            ulong rookBlockers = potentialBlockers & LookUps.rookOccupancyBitboards[move.sourceSquare];
+            ulong bishopBlockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[move.sourceSquare];
 
-            if (xDelta != 0 && yDelta != 0 && Math.Abs(xDelta) != Math.Abs(yDelta))
-            {
-                return false;
-            }
+            ulong rookMask = LookUps.RookMoveDict[(move.sourceSquare, rookBlockers)];
+            ulong bishopMask = LookUps.BishopMoveDict[(move.sourceSquare, bishopBlockers)];
+            ulong movesMask = (rookMask | bishopMask) & ~FriendlyBitboards.AllPieces;
 
-            if (!IsPathToKingExist(kingPosition, move.sourceSquare))
-            {
-                return false;
-            }
+            ulong checkMask = movesMask &
+                (OpponentBitboards.SlidingPieces | FriendlyBitboards.Kings) &
+                LookUps.queenMoves[kingPosition] &
+                ~ (1ul << move.targetSquare);
 
-            //PERF create default to discard pieces not in line with king
-            int directionFromKing = LookUps.directionIndex[kingPosition, move.sourceSquare];
-            int directionToMove = LookUps.directionIndex[move.sourceSquare, move.targetSquare];
-            if (directionToMove == directionFromKing)
-            {
-                return false;
-            }
-            int directionToKing = LookUps.directionIndex[move.sourceSquare, kingPosition];
-            if (directionToMove == directionToKing)
-            {
-                return false;
-            }
+            if(checkMask == 0) return false;
 
-            int king = BoardManager.Board[kingPosition];
-            int sideColour = Piece.IsPieceWhite(king) ? 8 : 0;
-            return BoardManager.IsSlidingPieceInDirection(move.sourceSquare, directionFromKing, sideColour);
-        }
+            potentialBlockers = (FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) & ~(1ul << kingPosition);
+            potentialBlockers |= (1ul << move.targetSquare);
+            potentialBlockers ^= (1ul << move.sourceSquare);
+            rookBlockers = potentialBlockers & LookUps.rookOccupancyBitboards[kingPosition];
+            rookMask = LookUps.RookMoveDict[(kingPosition, rookBlockers)];
 
-        private static bool IsPathToKingExist(int kingPosition, int movedPiecePosition)
-        {
-            short[] directionOffsets = { 8, -8, -1, 1, 7, 9, -9, -7 };
+            ulong rookCheckMask = checkMask & (OpponentBitboards.Rooks | OpponentBitboards.Queens);
+            if (rookCheckMask > 0 && (rookMask & rookCheckMask) > 0) return true;
 
-            int directionIdx = LookUps.directionIndex[movedPiecePosition, kingPosition];
-            if (directionIdx == -1)
-            {
-                return false;
-            }
+            bishopBlockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[kingPosition];
+            bishopMask = LookUps.BishopMoveDict[(kingPosition, bishopBlockers)];
+            ulong bishopCheckMask = checkMask & (OpponentBitboards.Bishops | OpponentBitboards.Queens);
 
-            int maxOffset = numSquaresInDirection[movedPiecePosition][directionIdx];
-            for (int i = 0; i < maxOffset; i++)
-            {
-                int targetSquare = movedPiecePosition + (i + 1) * directionOffsets[directionIdx];
-                int pieceAtTarget = BoardManager.Board[targetSquare];
-
-                if (pieceAtTarget == 0) { continue; }
-
-                if (targetSquare == kingPosition) { return true; }
-
-                return false;
-            }
-
-            return false;
+            return bishopCheckMask > 0 && (bishopMask & bishopCheckMask) > 0;
         }
 
         private static bool IsPieceInDirection(int kingPosition, int moveTargetPosition, int checkPiecePosition)
@@ -587,5 +551,4 @@ namespace ChessUI.Engine
             return kingToCheck != -1 && kingToMoved == kingToCheck;
         }
     }
-
 }

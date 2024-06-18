@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ChessUI.Engine
+﻿namespace ChessUI.Engine
 {
     public class Bitboards
     {
+        public ulong SlidingPieces => Rooks | Bishops | Queens;
         public ulong Pawns;
         public ulong Rooks;
         public ulong Knights;
@@ -15,5 +10,8 @@ namespace ChessUI.Engine
         public ulong Queens;
         public ulong Kings;
         public ulong ControlledPositions;
+        public ulong AllPieces;
+        public ulong FinalRank;
+        public ulong PawnHomeRank;
     }
 }
