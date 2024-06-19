@@ -61,7 +61,7 @@ namespace ChessUI.Engine
 
         private static List<Move> GenerateRookMoves(bool generateOnlyCaptures)
         {
-            List<Move> moves = new();
+            List<Move> moves = new(8);
             var positions = FriendlyPositions.Rooks;
             foreach (var position in positions)
             {
@@ -87,7 +87,7 @@ namespace ChessUI.Engine
 
         private static List<Move> GenerateBishopMoves(bool generateOnlyCaptures)
         {
-            List<Move> moves = new();
+            List<Move> moves = new(8);
             var positions = FriendlyPositions.Bishops;
 
             foreach (var position in positions)
@@ -115,7 +115,7 @@ namespace ChessUI.Engine
 
         private static List<Move> GenerateQueenMoves(bool generateOnlyCaptures)
         {
-            List<Move> moves = new();
+            List<Move> moves = new(16);
             var positions = FriendlyPositions.Queens;
 
             foreach (var position in positions)
@@ -146,7 +146,7 @@ namespace ChessUI.Engine
 
         private static List<Move> GeneratePawnMoves(bool isWhite, bool generateOnlyCaptures)
         {
-            List<Move> moves = [];
+            List<Move> moves = new(8);
             var pawnPositions = FriendlyPositions.Pawns;
             foreach (var position in pawnPositions)
             {
@@ -221,7 +221,7 @@ namespace ChessUI.Engine
 
         private static List<Move> GenerateKnightMoves(bool generateOnlyCaptures)
         {
-            List<Move> moves = new();
+            List<Move> moves = new(8);
             var positions = FriendlyPositions.Knights;
             foreach (var position in positions)
             {
@@ -246,7 +246,7 @@ namespace ChessUI.Engine
 
         private static List<Move> GenerateKingMoves(bool generateOnlyCaptures, bool isWhite)
         {
-            List<Move> moves = new();
+            List<Move> moves = new(8);
             var position = FriendlyPositions.King;
             if(position == -1) return moves;
                 ulong allMoves = LookUps.kingMoveBitboards[position] &
