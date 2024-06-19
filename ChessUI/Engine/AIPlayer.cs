@@ -4,7 +4,6 @@ using System.Linq;
 using System.IO;
 using System.Reflection;
 using System.Threading;
-using System.Diagnostics;
 using ChessUI.Enums;
 
 namespace ChessUI.Engine
@@ -45,12 +44,12 @@ namespace ChessUI.Engine
         public Move? MakeRandomMove()
         {
             bool isWhite = BoardManager.WhiteToMove;
-            Move[] moves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
+            List<Move> moves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
 
             Random random = new Random();
-            int randomIndex = random.Next(0, moves.Length - 1);
+            int randomIndex = random.Next(0, moves.Count - 1);
 
-            if (moves.Length == 0)
+            if (moves.Count == 0)
             {
                 return null;
             }
@@ -189,13 +188,13 @@ namespace ChessUI.Engine
             return (alpha, exploredMoves);
         }
 
-        public (Move[], Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, List<Move> prevMoves, bool isWhite)
+        public (List<Move>, Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, List<Move> prevMoves, bool isWhite)
         {
             Dictionary<Move, int> positionsAftermove = new Dictionary<Move, int>();
 
             BoardManager.WhiteToMove = isWhite;
-            BoardManager.UpdateAttackedPositions(!isWhite);
-            Move[] possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
+            BoardManager.UpdateAttackedPositions();
+            List<Move> possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
             if (currentSearchDepth == maxSearchDepth) return (possibleMoves, positionsAftermove);
 
             List<Move> movesAtLevel = new List<Move>();
@@ -203,26 +202,28 @@ namespace ChessUI.Engine
             {
                 //BoardManager.UpdatePiecePositions(move);
                 (int tempPiece, int tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
+                (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
 
                 if (currentSearchDepth == 1) prevMoves = new List<Move>();
 
                 prevMoves.Add(move);
-                (Move[] furtherMoves, Dictionary<Move, int> xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, prevMoves, !isWhite);
+                (List<Move> furtherMoves, Dictionary<Move, int> xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, prevMoves, !isWhite);
+                positionsAftermove.Add(move, furtherMoves.Count);
                 movesAtLevel = movesAtLevel.Concat(furtherMoves).ToList();
                 prevMoves.Remove(move);
                 MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
                 //BoardManager.UndoPiecePositions(move);
             }
 
-            return (movesAtLevel.ToArray(), positionsAftermove);
+            return (movesAtLevel, positionsAftermove);
         }
         public List<string> FindReachablePositions(int currentSearchDepth, int maxSearchDepth, bool isWhite)
         {
             List<string> positions = new();
 
             BoardManager.WhiteToMove = isWhite;
-            BoardManager.UpdateAttackedPositions(!isWhite);
-            Move[] possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
+            BoardManager.UpdateAttackedPositions();
+            List<Move> possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
             if (currentSearchDepth == maxSearchDepth) {
                 foreach (var move in possibleMoves) {
                     (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);

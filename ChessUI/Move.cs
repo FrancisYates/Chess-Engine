@@ -73,6 +73,7 @@ namespace ChessUI
                     PromotionPiece.knight => "n",
                     PromotionPiece.rook => "r",
                     PromotionPiece.bishop => "b",
+                    _ => throw new System.Exception()
                 };
             }
             return finalString;

@@ -27,7 +27,7 @@ namespace ChessUI
 
         public static bool IsMoveValid( ref Move proposedMove)
         {
-            Move[] moves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove);
+            List<Move> moves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove);
             foreach (Move move in moves)
             {
                 if (proposedMove.sourceSquare == move.sourceSquare && proposedMove.targetSquare == move.targetSquare) 

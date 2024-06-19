@@ -48,7 +48,7 @@ namespace ChessUI.Engine
             return results;
         }
 
-        public static Move[] GenerateStrictLegalMoves(bool whiteMoves, bool generateOnlyCaptures = false)
+        public static List<Move> GenerateStrictLegalMoves(bool whiteMoves, bool generateOnlyCaptures = false)
         {
             FriendlyBitboards = whiteMoves ? BoardManager.WhiteBitboards : BoardManager.BlackBitboards;
             OpponentBitboards = whiteMoves ? BoardManager.BlackBitboards : BoardManager.WhiteBitboards;
@@ -56,7 +56,7 @@ namespace ChessUI.Engine
             FriendlyPositions = whiteMoves ? BoardManager.WhitePiecePositions : BoardManager.BlackPiecePositions;
             var moves = GenerateMoves(whiteMoves, generateOnlyCaptures);
             RemoveIllegalMoves(moves, whiteMoves);
-            return moves.ToArray();
+            return moves;
         }
 
         private static List<Move> GenerateRookMoves(bool generateOnlyCaptures)
