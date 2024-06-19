@@ -12,6 +12,7 @@ namespace ChessUI.Engine
 
         private static Bitboards FriendlyBitboards { get; set; } = new();
         private static Bitboards OpponentBitboards { get; set; } = new();
+        private static PiecePositions FriendlyPositions { get; set; } = new();
         private static List<Move> GenerateMoves(bool whiteMoves, bool generateOnlyCaptures)
         {
             List<Move> moves = new(32);
@@ -51,6 +52,8 @@ namespace ChessUI.Engine
         {
             FriendlyBitboards = whiteMoves ? BoardManager.WhiteBitboards : BoardManager.BlackBitboards;
             OpponentBitboards = whiteMoves ? BoardManager.BlackBitboards : BoardManager.WhiteBitboards;
+
+            FriendlyPositions = whiteMoves ? BoardManager.WhitePiecePositions : BoardManager.BlackPiecePositions;
             var moves = GenerateMoves(whiteMoves, generateOnlyCaptures);
             RemoveIllegalMoves(moves, whiteMoves);
             return moves.ToArray();
@@ -59,7 +62,7 @@ namespace ChessUI.Engine
         private static List<Move> GenerateRookMoves(bool generateOnlyCaptures)
         {
             List<Move> moves = new();
-            var positions = GetPoistionsFromBitboard(FriendlyBitboards.Rooks);
+            var positions = FriendlyPositions.Rooks;
             foreach (var position in positions)
             {
                 ulong potentialBlockers = (FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) & ~(1ul << position);
@@ -85,9 +88,9 @@ namespace ChessUI.Engine
         private static List<Move> GenerateBishopMoves(bool generateOnlyCaptures)
         {
             List<Move> moves = new();
-            var bishopPositions = GetPoistionsFromBitboard(FriendlyBitboards.Bishops);
+            var positions = FriendlyPositions.Bishops;
 
-            foreach (var position in bishopPositions)
+            foreach (var position in positions)
             {
                 ulong potentialBlockers = (FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) & ~(1ul << position);
                 ulong blockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[position];
@@ -113,9 +116,9 @@ namespace ChessUI.Engine
         private static List<Move> GenerateQueenMoves(bool generateOnlyCaptures)
         {
             List<Move> moves = new();
-            var queenPositions = GetPoistionsFromBitboard(FriendlyBitboards.Queens);
+            var positions = FriendlyPositions.Queens;
 
-            foreach (var position in queenPositions)
+            foreach (var position in positions)
             {
                 ulong potentialBlockers = (FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) & ~(1ul << position);
                 ulong rookBlockers = potentialBlockers & LookUps.rookOccupancyBitboards[position];
@@ -144,7 +147,7 @@ namespace ChessUI.Engine
         private static List<Move> GeneratePawnMoves(bool isWhite, bool generateOnlyCaptures)
         {
             List<Move> moves = [];
-            var pawnPositions = GetPoistionsFromBitboard(FriendlyBitboards.Pawns);
+            var pawnPositions = FriendlyPositions.Pawns;
             foreach (var position in pawnPositions)
             {
                 ulong attackBitBoard = isWhite ? LookUps.whitePawnAttackBitBoard[position] : LookUps.blackPawnAttackBitBoard[position];
@@ -219,8 +222,8 @@ namespace ChessUI.Engine
         private static List<Move> GenerateKnightMoves(bool generateOnlyCaptures)
         {
             List<Move> moves = new();
-            var knightPositions = GetPoistionsFromBitboard(FriendlyBitboards.Knights);
-            foreach (var position in knightPositions)
+            var positions = FriendlyPositions.Knights;
+            foreach (var position in positions)
             {
                 ulong captureMoveMask = LookUps.knightMoveBitboards[position] & OpponentBitboards.AllPieces;
                 var candidateMoves = GetPoistionsFromBitboard(captureMoveMask);
@@ -244,9 +247,8 @@ namespace ChessUI.Engine
         private static List<Move> GenerateKingMoves(bool generateOnlyCaptures, bool isWhite)
         {
             List<Move> moves = new();
-            var kingPositions = GetPoistionsFromBitboard(FriendlyBitboards.Kings);
-            foreach (var position in kingPositions)
-            {
+            var position = FriendlyPositions.King;
+            if(position == -1) return moves;
                 ulong allMoves = LookUps.kingMoveBitboards[position] &
                     ~(FriendlyBitboards.AllPieces | OpponentBitboards.ControlledPositions);
                 ulong captureMoves = allMoves & OpponentBitboards.AllPieces;
@@ -255,7 +257,7 @@ namespace ChessUI.Engine
                 {
                     moves.Add(new(position, target, MoveType.capture));
                 }
-                if (generateOnlyCaptures) continue;
+            if (generateOnlyCaptures) return moves;
 
                 ulong nonCaptureMoves = allMoves & ~OpponentBitboards.AllPieces;
                 moveTargets = GetPoistionsFromBitboard(nonCaptureMoves);
@@ -272,7 +274,6 @@ namespace ChessUI.Engine
                 {
                     moves.Add(new Move(position, position - 2, MoveType.castle));
                 }
-            }
             return moves;
         }
 

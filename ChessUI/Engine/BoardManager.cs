@@ -29,8 +29,10 @@ namespace ChessUI.Engine
             FinalRank = 0b11111111
         };
 
+        public static PiecePositions WhitePiecePositions { get; set; } = new();
+        public static PiecePositions BlackPiecePositions { get; set; } = new();
 
-               public static CastlingRights GetCastilingRights()
+        public static CastlingRights GetCastilingRights()
         {
             return CastleingRights;
         }
@@ -98,50 +100,68 @@ namespace ChessUI.Engine
                 {
                     file = 0;
                     rank--;
+                    continue;
                 }
-                else
+                if (char.IsDigit(asciiValue))
                 {
-                    if (char.IsDigit(asciiValue))
-                    {
-                        file += (int)char.GetNumericValue(asciiValue);
-                    }
-                    else
-                    {
-                        int pieceNumber = asciiValue switch
-                        {
-                            'P' => 9,
-                            'p' => 1,
-                            'R' => 13,
-                            'r' => 5,
-                            'N' => 10,
-                            'n' => 2,
-                            'B' => 14,
-                            'b' => 6,
-                            'K' => 11,
-                            'k' => 3,
-                            'Q' => 15,
-                            'q' => 7,
-                            _ => 0
-                        };
-                        bool isPawn = pieceNumber == 1 || pieceNumber == 9;
-                        index = 8 * rank + file;
-                        Board[index] = pieceNumber;
-                        Bitboards bitboards;
-                        if (Piece.IsPieceWhite(pieceNumber))
-                        {
-                            bitboards = WhiteBitboards;
-                        }
-                        else
-                        {
-                            bitboards = BlackBitboards;
-                        }
-                        var pieceType = Piece.GetPieceType(pieceNumber);
-                        ref ulong bitboard = ref GetBitboard(ref bitboards, pieceType);
-                        bitboard |= 0b_1uL << index;
-                        bitboards.AllPieces |= 0b_1uL << index;
-                        file++;
-                    }
+                    file += (int)char.GetNumericValue(asciiValue);
+                    continue;
                 }
+
+                int pieceNumber = asciiValue switch
+                {
+                    'P' => 9,
+                    'p' => 1,
+                    'R' => 13,
+                    'r' => 5,
+                    'N' => 10,
+                    'n' => 2,
+                    'B' => 14,
+                    'b' => 6,
+                    'K' => 11,
+                    'k' => 3,
+                    'Q' => 15,
+                    'q' => 7,
+                    _ => 0
+                };
+                index = 8 * rank + file;
+                Board[index] = pieceNumber;
+
+                Bitboards bitboards = Piece.IsPieceWhite(pieceNumber)? WhiteBitboards : BlackBitboards;
+                var pieceType = Piece.GetPieceType(pieceNumber);
+                ref ulong bitboard = ref GetBitboard(ref bitboards, pieceType);
+                bitboard |= 0b_1uL << index;
+                bitboards.AllPieces |= 0b_1uL << index;
+
+                AddPositionToPieceList(index, pieceType, Piece.IsPieceWhite(pieceNumber));
+
+                file++;
+            }
+        }
+
+        private static void AddPositionToPieceList(int position, PieceType type, bool isWhite)
+        {
+            PiecePositions positions = isWhite ? WhitePiecePositions : BlackPiecePositions;
+            switch (type)
+            {
+                case PieceType.Pawn:
+                    positions.Pawns.Add(position); 
+                    break;
+                case PieceType.Rook:
+                    positions.Rooks.Add(position); 
+                    break;
+                case PieceType.Knight:
+                    positions.Knights.Add(position); 
+                    break;
+                case PieceType.Bishop:
+                    positions.Bishops.Add(position); 
+                    break;
+                case PieceType.Queen:
+                    positions.Queens.Add(position); 
+                    break;
+                case PieceType.King:
+                    positions.King = position; 
+                    break;
             }
         }
 
@@ -244,6 +264,9 @@ namespace ChessUI.Engine
                 PawnHomeRank = 0b11111111000000000000000000000000000000000000000000000000,
                 FinalRank = 0b11111111
             };
+
+            WhitePiecePositions = new();
+            BlackPiecePositions = new();
         }
 
         private static void SetupCastleRights(string castleRightsString)
@@ -297,22 +320,27 @@ namespace ChessUI.Engine
         {
             ulong potentialBlockers = (WhiteBitboards.AllPieces | BlackBitboards.AllPieces);
             ulong actualBlockers;
-            ulong validMoves;
 
-            var whitePositions = MoveGeneration.GetPoistionsFromBitboard(WhiteBitboards.Rooks | WhiteBitboards.Queens);
-            foreach (var position in whitePositions)
+            foreach (var position in WhitePiecePositions.Rooks)
             {
                 actualBlockers = potentialBlockers & LookUps.rookOccupancyBitboards[position];
-                validMoves = LookUps.RookMoveDict[(position, actualBlockers)];
-                WhiteBitboards.ControlledPositions |= validMoves;
+                WhiteBitboards.ControlledPositions |= LookUps.RookMoveDict[(position, actualBlockers)];
+            }
+            foreach (var position in WhitePiecePositions.Queens)
+            {
+                actualBlockers = potentialBlockers & LookUps.rookOccupancyBitboards[position];
+                WhiteBitboards.ControlledPositions |= LookUps.RookMoveDict[(position, actualBlockers)];
             }
 
-            var blackPositions = MoveGeneration.GetPoistionsFromBitboard(BlackBitboards.Rooks | BlackBitboards.Queens);
-            foreach (var position in blackPositions)
+            foreach (var position in BlackPiecePositions.Rooks)
             {
                 actualBlockers = potentialBlockers & LookUps.rookOccupancyBitboards[position];
-                validMoves = LookUps.RookMoveDict[(position, actualBlockers)];
-                BlackBitboards.ControlledPositions |= validMoves;
+                BlackBitboards.ControlledPositions |= LookUps.RookMoveDict[(position, actualBlockers)];
+            }
+            foreach (var position in BlackPiecePositions.Queens)
+            {
+                actualBlockers = potentialBlockers & LookUps.rookOccupancyBitboards[position];
+                BlackBitboards.ControlledPositions |= LookUps.RookMoveDict[(position, actualBlockers)];
             }
         }
 
@@ -320,34 +348,37 @@ namespace ChessUI.Engine
         {
             ulong potentialBlockers = (WhiteBitboards.AllPieces | BlackBitboards.AllPieces);
             ulong actualBlockers;
-            ulong validMoves;
-            var whitePositions = MoveGeneration.GetPoistionsFromBitboard(WhiteBitboards.Bishops | WhiteBitboards.Queens);
-            foreach (var position in whitePositions)
+            foreach (var position in WhitePiecePositions.Bishops)
             {
                 actualBlockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[position];
-                validMoves = LookUps.BishopMoveDict[(position, actualBlockers)];
-                WhiteBitboards.ControlledPositions |= validMoves;
+                WhiteBitboards.ControlledPositions |= LookUps.BishopMoveDict[(position, actualBlockers)]; ;
+            }
+            foreach (var position in WhitePiecePositions.Queens)
+            {
+                actualBlockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[position];
+                WhiteBitboards.ControlledPositions |= LookUps.BishopMoveDict[(position, actualBlockers)];
             }
 
-            var blackPositions = MoveGeneration.GetPoistionsFromBitboard(BlackBitboards.Bishops | BlackBitboards.Queens);
-            foreach (var position in blackPositions)
+            foreach (var position in BlackPiecePositions.Bishops)
             {
                 actualBlockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[position];
-                validMoves = LookUps.BishopMoveDict[(position, actualBlockers)];
-                BlackBitboards.ControlledPositions |= validMoves;
+                BlackBitboards.ControlledPositions |= LookUps.BishopMoveDict[(position, actualBlockers)]; ;
+            }
+            foreach (var position in BlackPiecePositions.Queens)
+            {
+                actualBlockers = potentialBlockers & LookUps.bishopOccupancyBitBoards[position];
+                BlackBitboards.ControlledPositions |= LookUps.BishopMoveDict[(position, actualBlockers)]; ;
             }
         }
 
         private static void UpdatePawnAttacked()
         {
-            var whitePawnPositions = MoveGeneration.GetPoistionsFromBitboard(WhiteBitboards.Pawns);
-            foreach (var position in whitePawnPositions)
+            foreach (var position in WhitePiecePositions.Pawns)
             {
                 WhiteBitboards.ControlledPositions |= LookUps.whitePawnAttackBitBoard[position];
             }
 
-            var blackPawnPositions = MoveGeneration.GetPoistionsFromBitboard(BlackBitboards.Pawns);
-            foreach (var position in blackPawnPositions)
+            foreach (var position in BlackPiecePositions.Pawns)
             {
                 BlackBitboards.ControlledPositions |= LookUps.blackPawnAttackBitBoard[position];
             }
@@ -355,227 +386,27 @@ namespace ChessUI.Engine
 
         private static void UpdateKnightAttacked()
         {
-            var whiteKnightPositions = MoveGeneration.GetPoistionsFromBitboard(WhiteBitboards.Knights);
-            foreach (var position in whiteKnightPositions)
+            foreach (var position in WhitePiecePositions.Knights)
             {
                 WhiteBitboards.ControlledPositions |= LookUps.knightMoveBitboards[position];
             }
 
-            var blackKnightPositions = MoveGeneration.GetPoistionsFromBitboard(BlackBitboards.Knights);
-            foreach (var position in blackKnightPositions)
+            foreach (var position in BlackPiecePositions.Knights)
             {
                 BlackBitboards.ControlledPositions |= LookUps.knightMoveBitboards[position];
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        private static void AddPieceToMask(ulong piece, int targetSquare)
-        {
-            ulong whiteMask = ((piece & 8) >> 3) << targetSquare;
-            WhiteBitboards.ControlledPositions |= whiteMask;
-            ulong blackMask = ((piece ^ 8) >> 3) << targetSquare;
-            BlackBitboards.ControlledPositions |= blackMask;
-        }
-
         private static void UpdateKingAttacked()
         {
-            var whitePositions = MoveGeneration.GetPoistionsFromBitboard(WhiteBitboards.Kings);
-            foreach (var position in whitePositions)
-            {
-                WhiteBitboards.ControlledPositions |= LookUps.kingMoveBitboards[position];
-            }
+            WhiteBitboards.ControlledPositions |= LookUps.kingMoveBitboards[WhitePiecePositions.King];
 
-            var blackPositions = MoveGeneration.GetPoistionsFromBitboard(BlackBitboards.Kings);
-            foreach (var position in blackPositions)
-            {
-                BlackBitboards.ControlledPositions |= LookUps.kingMoveBitboards[position];
-            }
+            BlackBitboards.ControlledPositions |= LookUps.kingMoveBitboards[BlackPiecePositions.King];
         }
 
-        public static List<int> FindCheckingPieces(int kingPosition, int king)
-        {
-            List<int> checkingPieces = new();
-
-            List<int> slidingPieces = FindCheckingSlidingPiece(kingPosition, king, Board);
-            foreach (int piece in slidingPieces)
-            {
-                checkingPieces.Add(piece);
-            }
-
-            List<int> knights = FindCheckingKnight(kingPosition, king, Board);
-            foreach (int piece in knights)
-            {
-                checkingPieces.Add(piece);
-            }
-
-            List<int> pawns = FindCheckingPawn(kingPosition, king, Board);
-            foreach (int piece in pawns)
-            {
-                checkingPieces.Add(piece);
-            }
-            return checkingPieces;
-        }
-
-        public static bool IsSlidingPieceInDirection(int sourceSquare, int direction, int sideColour)
-        {
-            int maxOffset = MoveGeneration.numSquaresInDirection[sourceSquare][direction];
-            for (int i = 0; i < maxOffset; i++)
-            {
-                int targetSquare = sourceSquare + (i + 1) * directionOffsets[direction];
-                int pieceAtTarget = Board[targetSquare];
-
-                if (pieceAtTarget == 0) { continue; }
-                if (Piece.IsSameColour(sideColour, pieceAtTarget)) return false;
-                if (!Piece.IsSlidingPiece(pieceAtTarget)) return false;
-
-                var type = direction < 4 ? PieceType.Rook : PieceType.Bishop;
-                return Piece.IsType(pieceAtTarget, type) || Piece.IsType(pieceAtTarget, PieceType.Queen);
-            }
-
-            return false;
-        }
-
-        private static List<int> FindCheckingSlidingPiece(int sourceSquare, int piece, int[] board)
-        {
-            List<int> pieces = new();
-
-            for (int directionIdx = 0; directionIdx < 8; directionIdx++)
-            {
-                int maxOffset = MoveGeneration.numSquaresInDirection[sourceSquare][directionIdx];
-                for (int i = 0; i < maxOffset; i++)
-                {
-                    int targetSquare = sourceSquare + (i + 1) * directionOffsets[directionIdx];
-                    int pieceAtTarget = board[targetSquare];
-
-                    if (pieceAtTarget == 0) { continue; }
-                    if (Piece.IsSameColour(piece, pieceAtTarget)) break;
-
-                    var type = directionIdx < 4 ? PieceType.Bishop : PieceType.Rook;
-                    if (Piece.IsSlidingPiece(pieceAtTarget) && !Piece.IsType(pieceAtTarget, type))
-                    {
-                        pieces.Add(targetSquare);
-                        break;
-                    }
-                    break;
-                }
-            }
-
-            return pieces;
-        }
-
-        private static List<int> FindCheckingKnight(int sourceSquare, int piece, int[] board)
-        {
-            List<int> offsets = new() { 15, 17, 10, -6, -15, -17, -10, 6 };
-            removeInvalidOffset();
-            List<int> pieces = new();
-
-            for (int i = 0; i < offsets.Count; i++)
-            {
-                int targetSquare = sourceSquare + offsets[i];
-                if (targetSquare < 0 || targetSquare > 63) continue;
-
-                int targetPiece = board[targetSquare];
-                if (Piece.IsSameColour(piece, targetPiece)) continue;
-
-                if (Piece.IsType(targetPiece, PieceType.Knight)) pieces.Add(targetSquare);
-            }
-
-            return pieces;
-
-            void removeInvalidOffset()
-            {
-                int xPos = sourceSquare % 8;
-                int yPos = sourceSquare / 8;
-
-                if (xPos < 2 || xPos > 5)
-                {
-                    switch (xPos)
-                    {
-                        case 0:
-                            offsets.Remove(6);
-                            offsets.Remove(15);
-                            offsets.Remove(-10);
-                            offsets.Remove(-17);
-                            break;
-                        case 1:
-                            offsets.Remove(6);
-                            offsets.Remove(-10);
-                            break;
-                        case 6:
-                            offsets.Remove(10);
-                            offsets.Remove(-6);
-                            break;
-                        case 7:
-                            offsets.Remove(-6);
-                            offsets.Remove(-15);
-                            offsets.Remove(10);
-                            offsets.Remove(17);
-                            break;
-                    }
-                }
-                if (yPos < 2 || yPos > 5)
-                {
-                    switch (yPos)
-                    {
-                        case 0:
-                            offsets.Remove(-6);
-                            offsets.Remove(-15);
-                            offsets.Remove(-10);
-                            offsets.Remove(-17);
-                            break;
-                        case 1:
-                            offsets.Remove(-15);
-                            offsets.Remove(-17);
-                            break;
-                        case 6:
-                            offsets.Remove(15);
-                            offsets.Remove(17);
-                            break;
-                        case 7:
-                            offsets.Remove(6);
-                            offsets.Remove(15);
-                            offsets.Remove(10);
-                            offsets.Remove(17);
-                            break;
-                    }
-                }
-            }
-        }
-
-        private static List<int> FindCheckingPawn(int sourceSquare, int piece, int[] board)
-        {
-            int rank = sourceSquare / 8;
-            int file = sourceSquare % 8;
-            bool opponentIsWhite = !Piece.IsPieceWhite(piece);
-            List<int> pieces = new();
-
-            if (opponentIsWhite && rank <= 1 || !opponentIsWhite && rank >= 6) return pieces;
-
-            int[] attackOffsets = file switch
-            {
-                0 when opponentIsWhite => new[] { -7 },
-                0 => new[] { 9 },
-                7 when opponentIsWhite => new[] { -9 },
-                7 => new[] { 7 },
-                _ when opponentIsWhite => new[] { -9, -7 },
-                _ => new[] { 9, 7 },
-            };
-
-            for (int i = 0; i < attackOffsets.Length; i++)
-            {
-                int targetSquare = sourceSquare + attackOffsets[i];
-                int targetPiece = board[targetSquare];
-                if (targetPiece == 0) continue;
-                if (Piece.IsSameColour(piece, targetPiece)) continue;
-                if (Piece.IsType(targetPiece, PieceType.Pawn)) pieces.Add(targetSquare);
-            }
-
-            return pieces;
-        }
-
-        static string[] letterLookup = { "a", "b", "c", "d", "e", "f", "g", "h" };
         public static string GetCurrentFen()
         {
+            string[] letterLookup = { "a", "b", "c", "d", "e", "f", "g", "h" };
             var sb = new StringBuilder();
             int emptySpace = 0;
             for (int i = 0; i < 64; i++)
