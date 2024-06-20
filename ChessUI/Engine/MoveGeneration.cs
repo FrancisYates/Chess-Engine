@@ -34,18 +34,14 @@ namespace ChessUI.Engine
 
         public static List<int> GetPoistionsFromBitboard(ulong bitboard)
         {
-            Span<int[]> lut = LookUps.SetByteIndexes.Value;
-            Span<byte> bytes = BitConverter.GetBytes(bitboard);
-            List<int> results = new(8);
-            for (int i = 0; i < 8; i++)
+            List<int> positions = new(8);
+            while (bitboard != 0)
             {
-                Span<int> setIndecies = lut[bytes[i]];
-                for (int j = 0; j < setIndecies.Length; j++)
-                {
-                    results.Add(setIndecies[j] - 1 + i * 8);
-                }
+                int leastSignificantPosition = BitOperations.TrailingZeroCount(bitboard);
+                positions.Add(leastSignificantPosition);
+                bitboard &= bitboard - 1;
             }
-            return results;
+            return positions;
         }
 
         public static List<Move> GenerateStrictLegalMoves(bool whiteMoves, bool generateOnlyCaptures = false)
@@ -249,31 +245,31 @@ namespace ChessUI.Engine
             List<Move> moves = new(8);
             var position = FriendlyPositions.King;
             if(position == -1) return moves;
-                ulong allMoves = LookUps.kingMoveBitboards[position] &
-                    ~(FriendlyBitboards.AllPieces | OpponentBitboards.ControlledPositions);
-                ulong captureMoves = allMoves & OpponentBitboards.AllPieces;
-                var moveTargets = GetPoistionsFromBitboard(captureMoves);
-                foreach (var target in moveTargets)
-                {
-                    moves.Add(new(position, target, MoveType.capture));
-                }
+            ulong allMoves = LookUps.kingMoveBitboards[position] &
+                ~(FriendlyBitboards.AllPieces | OpponentBitboards.ControlledPositions);
+            ulong captureMoves = allMoves & OpponentBitboards.AllPieces;
+            var moveTargets = GetPoistionsFromBitboard(captureMoves);
+            foreach (var target in moveTargets)
+            {
+                moves.Add(new(position, target, MoveType.capture));
+            }
             if (generateOnlyCaptures) return moves;
 
-                ulong nonCaptureMoves = allMoves & ~OpponentBitboards.AllPieces;
-                moveTargets = GetPoistionsFromBitboard(nonCaptureMoves);
-                foreach (var target in moveTargets)
-                {
-                    moves.Add(new(position, target));
-                }
-                if ((OpponentBitboards.ControlledPositions & FriendlyBitboards.Kings) > 0) return moves;
-                if (CanCastleKingSide(isWhite))
-                {
-                    moves.Add(new Move(position, position + 2, MoveType.castle));
-                }
-                if (CanCastleQueenSide(isWhite))
-                {
-                    moves.Add(new Move(position, position - 2, MoveType.castle));
-                }
+            ulong nonCaptureMoves = allMoves & ~OpponentBitboards.AllPieces;
+            moveTargets = GetPoistionsFromBitboard(nonCaptureMoves);
+            foreach (var target in moveTargets)
+            {
+                moves.Add(new(position, target));
+            }
+            if ((OpponentBitboards.ControlledPositions & FriendlyBitboards.Kings) > 0) return moves;
+            if (CanCastleKingSide(isWhite))
+            {
+                moves.Add(new Move(position, position + 2, MoveType.castle));
+            }
+            if (CanCastleQueenSide(isWhite))
+            {
+                moves.Add(new Move(position, position - 2, MoveType.castle));
+            }
             return moves;
         }
 
