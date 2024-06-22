@@ -17,12 +17,11 @@ namespace ChessUI
         public GameInstance(GameWindow window, ThinkTimeCalculator thinkTimer)
         {
             _window = window;
-            aiPlayer = new AIPlayer(thinkTimer) {
-                MaxSearchDepth = 8
+            aiPlayer = new AIPlayer(thinkTimer, MoveSelectionType.ExhaustiveSearch, isWhite:false) {
+                MaxSearchDepth = 4,
             };
 
             //aiPlayer.CreateBookTree();
-            MoveGeneration.CalculateDirections();
             BoardManager.LoadBoardFromFile("startPosition.txt");
             
             BoardManager.UpdateAttackedPositions();
@@ -40,7 +39,7 @@ namespace ChessUI
             BoardManager.UpdateMoveCount();
             BoardManager.UpdateAttackedPositions();
             OpponentMove();
-
+            Render.UpdateBoard(_window.Buttons, BoardManager.Board);
         }
         private void OpponentMove()
         {

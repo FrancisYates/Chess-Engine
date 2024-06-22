@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChessUI.Engine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -33,6 +34,14 @@ namespace ChessUI
                 }
 
                 bitBoard >>= 1;
+            }
+            Debug.WriteLine($"Rendering bitboard {bb.ToString()}");
+        }
+        public static void RenderPiecePositions(List<Button> buttons, List<int> positions, SolidColorBrush brushColour) {
+            StringBuilder bb = new();
+            foreach (var pos in positions)
+            {
+                buttons[pos].Background = brushColour;
             }
             Debug.WriteLine($"Rendering bitboard {bb.ToString()}");
         }

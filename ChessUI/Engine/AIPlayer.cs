@@ -46,7 +46,7 @@ namespace ChessUI.Engine
             bool isWhite = BoardManager.WhiteToMove;
             List<Move> moves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
 
-            Random random = new Random();
+            Random random = new();
             int randomIndex = random.Next(0, moves.Count - 1);
 
             if (moves.Count == 0)
@@ -71,13 +71,12 @@ namespace ChessUI.Engine
         {
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = "ChessUI.MoveBook.txt";
-            List<string> games = new List<string>();
-            string[] y = assembly.GetManifestResourceNames();
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-            using (StreamReader reader = new StreamReader(stream))
+            List<string> games = new();
+            using (Stream stream = assembly.GetManifestResourceStream(resourceName) ?? throw new NullReferenceException())
+            using (StreamReader reader = new(stream))
             {
                 if (stream is null) return;
-                while (!reader.EndOfStream) { games.Add(reader.ReadLine()); }
+                while (!reader.EndOfStream) { games.Add(reader.ReadLine() ?? ""); }
             }
 
             for (int i = 0; i < games.Count; i++)
@@ -102,9 +101,9 @@ namespace ChessUI.Engine
 
         public Move? MakeBookMove()
         {
-            int posibleBookMoves = bookMoveTree.children.Count();
+            int posibleBookMoves = bookMoveTree.children.Count;
             if (posibleBookMoves == 0) { return null; }
-            Random rnd = new Random();
+            Random rnd = new ();
             int randomIdx = rnd.Next(posibleBookMoves - 1);
             string selectedMove = bookMoveTree.children[randomIdx].rootMove;
             bookMoveTree = bookMoveTree.GetChild(selectedMove);
@@ -119,30 +118,22 @@ namespace ChessUI.Engine
 
             return new Move(source, target);
 
-            int ToNumber(char letter)
+            static int ToNumber(char letter)
             {
-                switch (letter)
+                return letter switch
                 {
-                    case 'a':
-                        return 0;
-                    case 'b':
-                        return 1;
-                    case 'c':
-                        return 2;
-                    case 'd':
-                        return 3;
-                    case 'e':
-                        return 4;
-                    case 'f':
-                        return 5;
-                    case 'g':
-                        return 6;
-                    case 'h':
-                        return 7;
+                    'a' => 0,
+                    'b' => 1,
+                    'c' => 2,
+                    'd' => 3,
+                    'e' => 4,
+                    'f' => 5,
+                    'g' => 6,
+                    'h' => 7,
+                    _ => 0,
+                };
                 }
-                return 0;
             }
-        }
 
         public void UpdateBookPosition(Move move)
         {
@@ -177,7 +168,7 @@ namespace ChessUI.Engine
             foreach (Move move in captureMoves)
             {
                 (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
-                (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, maxDepth);
+                (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, maxDepth, token);
                 score = -score;
                 exploredMoves += additionalMoves;
                 MoveManager.UndoMove(move, target, castle, BoardManager.Board);
@@ -188,16 +179,16 @@ namespace ChessUI.Engine
             return (alpha, exploredMoves);
         }
 
-        public (List<Move>, Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, List<Move> prevMoves, bool isWhite)
+        public (int, Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, List<Move> prevMoves, bool isWhite)
         {
-            Dictionary<Move, int> positionsAftermove = new Dictionary<Move, int>();
+            Dictionary<Move, int> positionsAftermove = new();
 
             BoardManager.WhiteToMove = isWhite;
             BoardManager.UpdateAttackedPositions();
             List<Move> possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
             if (currentSearchDepth == maxSearchDepth) return (possibleMoves, positionsAftermove);
 
-            List<Move> movesAtLevel = new List<Move>();
+            int movesAtLevel = 0;
             foreach (Move move in possibleMoves)
             {
                 //BoardManager.UpdatePiecePositions(move);
@@ -207,8 +198,8 @@ namespace ChessUI.Engine
                 if (currentSearchDepth == 1) prevMoves = new List<Move>();
 
                 prevMoves.Add(move);
-                (List<Move> furtherMoves, Dictionary<Move, int> xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, prevMoves, !isWhite);
-                positionsAftermove.Add(move, furtherMoves.Count);
+                (int furtherMoves, Dictionary<Move, int> xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, prevMoves, !isWhite);
+                positionsAftermove.Add(move, furtherMoves);
                 movesAtLevel = movesAtLevel.Concat(furtherMoves).ToList();
                 prevMoves.Remove(move);
                 MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);

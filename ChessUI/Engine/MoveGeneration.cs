@@ -8,8 +8,6 @@ namespace ChessUI.Engine
 {
     public static class MoveGeneration
     {
-        public static int[][] numSquaresInDirection = new int[64][];
-
         private static Bitboards FriendlyBitboards { get; set; } = new();
         private static Bitboards OpponentBitboards { get; set; } = new();
         private static PiecePositions FriendlyPositions { get; set; } = new();
@@ -297,34 +295,6 @@ namespace ChessUI.Engine
             return blockers == 0;
         }
 
-        public static void CalculateDirections()
-        {
-            for (int file = 0; file < 8; file++)
-            {
-                for (int rank = 0; rank < 8; rank++)
-                {
-                    int distanceUp = 7 - rank;
-                    int distanceDown = rank;
-                    int distanceRight = 7 - file;
-                    int distanceLeft = file;
-
-                    int squareIndex = rank * 8 + file;
-
-                    numSquaresInDirection[squareIndex] = new int[]{
-                    distanceUp,
-                    distanceDown,
-                    distanceLeft,
-                    distanceRight,
-                    Math.Min(distanceLeft, distanceUp),
-                    Math.Min(distanceRight, distanceUp),
-                    Math.Min(distanceLeft, distanceDown),
-                    Math.Min(distanceRight, distanceDown)
-                    };
-                }
-            }
-
-        }
-
         private static void RemoveIllegalMoves(List<Move> moves, bool whiteMoves)
         {
             List<Move> illegalMoves = new();
@@ -355,9 +325,10 @@ namespace ChessUI.Engine
 
             if (((1ul << move.sourceSquare) & OpponentBitboards.ControlledPositions) > 0)
             {
+                if (((1ul << move.targetSquare) & OpponentBitboards.ControlledPositions) > 0) return true;
                 ulong[] checkingMasks = FindCheckingPieces(move.sourceSquare);
                 ulong allCheckingPieces = checkingMasks[0] | checkingMasks[1] | checkingMasks[2] | checkingMasks[3];
-                int numChecingPieces = GetPoistionsFromBitboard(allCheckingPieces).Count();
+                ulong numChecingPieces = System.Runtime.Intrinsics.X86.Popcnt.X64.PopCount(allCheckingPieces);
                 if (numChecingPieces == 1)
                 {
                     int checkingPiecePosition = GetPoistionsFromBitboard(allCheckingPieces).First();
@@ -378,18 +349,17 @@ namespace ChessUI.Engine
 
                     if (kingToMove == checkToKing) return true;
                 }
-                return true;
             }
             return false;
 
         }
         public static ulong[] FindCheckingPieces(int kingPosition)
         {
-            var slidingChecks = FindCheckingSlidingPiece(kingPosition);
+            var (rookChecks, bishopChecks) = FindCheckingSlidingPiece(kingPosition);
             ulong knightChecks = FindCheckingKnight(kingPosition);
             ulong pawns = FindCheckingPawn(kingPosition);
 
-            return [pawns, knightChecks, slidingChecks.rookChecks, slidingChecks.bishopChecks];
+            return [pawns, knightChecks, rookChecks, bishopChecks];
         }
         private static ulong FindCheckingPawn(int sourceSquare)
         {

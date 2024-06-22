@@ -17,7 +17,6 @@ namespace ChessUI.Engine
         public static int[] Board => _board;
         public static int EnPesantSquare { get; set; } = -1;
         public static ulong EnPesantBitBoard => EnPesantSquare == -1 ? 0ul : 1ul << EnPesantSquare;
-        static readonly int[] directionOffsets = [8, -8, -1, 1, 7, 9, -9, -7];
 
         public static Bitboards WhiteBitboards { get; set; } = new() { 
             PawnHomeRank = 0b1111111100000000,
@@ -272,19 +271,19 @@ namespace ChessUI.Engine
         private static void SetupCastleRights(string castleRightsString)
         {
             CastleingRights = 0;
-            if (castleRightsString.Contains("K"))
+            if (castleRightsString.Contains('K'))
             {
                 CastleingRights |= CastlingRights.WhiteKingSide;
             }
-            if (castleRightsString.Contains("Q"))
+            if (castleRightsString.Contains('Q'))
             {
                 CastleingRights |= CastlingRights.WhiteQueenSide;
             }
-            if (castleRightsString.Contains("k"))
+            if (castleRightsString.Contains('k'))
             {
                 CastleingRights |= CastlingRights.BlackKingSide;
             }
-            if (castleRightsString.Contains("q"))
+            if (castleRightsString.Contains('q'))
             {
                 CastleingRights |= CastlingRights.BlackQueenSide;
             }
@@ -431,7 +430,7 @@ namespace ChessUI.Engine
 
             sb.Append(WhiteToMove? " w" : " b");
 
-            sb.Append(" ");
+            sb.Append(' ');
             if (CastleingRights.HasFlag(CastlingRights.WhiteKingSide)) sb.Append('K');
             if(CastleingRights.HasFlag(CastlingRights.WhiteQueenSide)) sb.Append('Q');
             if(CastleingRights.HasFlag(CastlingRights.BlackKingSide)) sb.Append('k');
