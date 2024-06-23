@@ -67,8 +67,15 @@ namespace ChessUI.Engine
 
         public static void UpdateMoveCount()
         {
-            FullMoves += HalfMoves;
-            HalfMoves = (HalfMoves + 1) % 2;
+            if (HalfMoves == 1)
+            {
+                HalfMoves = 0;
+                FullMoves++;
+            }
+            else
+            {
+                HalfMoves = 1;
+            }
         }
 
         private static string[] GetFEN(string saveFile)
@@ -226,7 +233,7 @@ namespace ChessUI.Engine
                 }
             }
             HalfMoves = int.Parse(FENSplit[4]);
-            FullMoves = int.Parse(FENSplit[4]);
+            FullMoves = int.Parse(FENSplit[5]);
         }
         private static int GetSquareFromNotation(string positionNotation)
         {
@@ -398,9 +405,14 @@ namespace ChessUI.Engine
 
         private static void UpdateKingAttacked()
         {
-            WhiteBitboards.ControlledPositions |= LookUps.kingMoveBitboards[WhitePiecePositions.King];
-
-            BlackBitboards.ControlledPositions |= LookUps.kingMoveBitboards[BlackPiecePositions.King];
+            if (WhitePiecePositions.King != -1)
+            {
+                WhiteBitboards.ControlledPositions |= LookUps.kingMoveBitboards[WhitePiecePositions.King];
+            }
+            if (BlackPiecePositions.King != -1)
+            {
+                BlackBitboards.ControlledPositions |= LookUps.kingMoveBitboards[BlackPiecePositions.King];
+            }
         }
 
         public static string GetCurrentFen()
@@ -408,24 +420,29 @@ namespace ChessUI.Engine
             string[] letterLookup = { "a", "b", "c", "d", "e", "f", "g", "h" };
             var sb = new StringBuilder();
             int emptySpace = 0;
-            for (int i = 0; i < 64; i++)
+            for (int i = 7; i >= 0; i--)
             {
-                int contents = Board[i];
-                if (contents == 0)
+                for (int j = 0; j < 8; j++)
                 {
-                    emptySpace++;
+                    int index = i*8 + j;
+                    int contents = Board[index];
+                    if (contents == 0)
+                    {
+                        emptySpace++;
+                    }
+                    else
+                    {
+                        if (emptySpace > 0)
+                        {
+                            sb.Append(emptySpace);
+                            emptySpace = 0;
+                        }
+                        sb.Append(Piece.GetPieceCharacterRepresentation(contents));
+                    }
                 }
-                else
-                {
-                    sb.Append(Piece.GetPieceCharacterRepresentation(contents));
-                }
-
-                if((i + 1) % 8 == 0)
-                {
-                    if(emptySpace > 0) sb.Append(emptySpace);
-                    emptySpace = 0;
-                    sb.Append('/');
-                }
+                if (emptySpace > 0) sb.Append(emptySpace);
+                emptySpace = 0;
+                if(i > 0) sb.Append('/');
             }
 
             sb.Append(WhiteToMove? " w" : " b");

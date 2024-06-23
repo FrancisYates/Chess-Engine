@@ -161,11 +161,10 @@ namespace ChessUI.Engine
         public Move? MakeItterativeDeepeningMove(int maxTimeMS) {
             var sw = Stopwatch.StartNew();
             PositionsEvaluated = 0;
-            maxTimeMS = int.MaxValue;
             Debug.WriteLine($"Making ID MiniMax move with max think time of {maxTimeMS}ms");
             int maxIdDepth = MaxSearchDepth;
             MaxSearchDepth = 1;
-            CancellationTokenSource tokenSource = new (maxTimeMS);
+            CancellationTokenSource tokenSource = new (Math.Max(maxTimeMS-10, 0));
             var sw1 = Stopwatch.StartNew();
             Node previousSearch = GenerateMoveTree(0, negativeInfinity, positiveInfinity, BoardManager.WhiteToMove);
             sw1.Stop();

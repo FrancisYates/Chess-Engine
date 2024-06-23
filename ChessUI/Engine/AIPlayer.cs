@@ -13,10 +13,26 @@ namespace ChessUI.Engine
         // Very high/low numbers which are not at risk over over/under flow.
         // Used
         public BookNode bookMoveTree = new();
+        public Action<string> OnMoveChosen;
         private readonly ThinkTimeCalculator _timeCalculator;
-        public MoveSelectionType MoveSelectionType { get; init; }
-        public int MaxSearchDepth { get; set; } = 3;
+        public MoveSelectionType MoveSelectionType { get; set; }
+        public int MaxSearchDepth { get; set; } = 5;
+        public int ThinkTimeMs { get; set; }
+        public bool IsThinking { get; set; }
+        private CancellationTokenSource SearchTokenSource { get; set; }
+
         private readonly Search _search;
+        Random random = new();
+        public AIPlayer(MoveSelectionType moveSelectionType = MoveSelectionType.ItterativeDeepening, bool isWhite = true)
+        {
+            MoveSelectionType = moveSelectionType;
+            _timeCalculator = new();
+            _search = new()
+            {
+                MaxSearchDepth = MaxSearchDepth,
+                IsWhiteMove = isWhite
+            };
+        }
         public AIPlayer(ThinkTimeCalculator timeCalculator, MoveSelectionType moveSelectionType = MoveSelectionType.ItterativeDeepening, bool isWhite = true)
         {
             MoveSelectionType = moveSelectionType;
@@ -31,14 +47,16 @@ namespace ChessUI.Engine
         {
             _search.MaxSearchDepth = MaxSearchDepth;
             _search.IsWhiteMove = BoardManager.WhiteToMove;
-            return MoveSelectionType switch
+            var move =  MoveSelectionType switch
             {
                 MoveSelectionType.Random => MakeRandomMove(),
                 MoveSelectionType.Minimax => _search.MiniMaxSearch(),
-                MoveSelectionType.ItterativeDeepening => _search.MakeItterativeDeepeningMove(_timeCalculator.GetThinkTimeMs()),
+                MoveSelectionType.ItterativeDeepening => _search.MakeItterativeDeepeningMove(ThinkTimeMs),
                 MoveSelectionType.ExhaustiveSearch => _search.ExhaustiveSearch(),
                 _ => throw new NotImplementedException($"MoveSelectionType is {MoveSelectionType}"),
             };
+            OnMoveChosen?.Invoke(move.ToString() ?? "0000");
+            return move;
         }
 
         public Move? MakeRandomMove()
@@ -46,13 +64,12 @@ namespace ChessUI.Engine
             bool isWhite = BoardManager.WhiteToMove;
             List<Move> moves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
 
-            Random random = new();
-            int randomIndex = random.Next(0, moves.Count - 1);
 
             if (moves.Count == 0)
             {
                 return null;
             }
+            int randomIndex = random.Next(0, moves.Count - 1);
             return moves[randomIndex];
         }
 
@@ -186,13 +203,12 @@ namespace ChessUI.Engine
             BoardManager.WhiteToMove = isWhite;
             BoardManager.UpdateAttackedPositions();
             List<Move> possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
-            if (currentSearchDepth == maxSearchDepth) return (possibleMoves, positionsAftermove);
+            if (currentSearchDepth == maxSearchDepth) return (possibleMoves.Count, positionsAftermove);
 
             int movesAtLevel = 0;
             foreach (Move move in possibleMoves)
             {
                 //BoardManager.UpdatePiecePositions(move);
-                (int tempPiece, int tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
                 (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
 
                 if (currentSearchDepth == 1) prevMoves = new List<Move>();
@@ -200,7 +216,7 @@ namespace ChessUI.Engine
                 prevMoves.Add(move);
                 (int furtherMoves, Dictionary<Move, int> xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, prevMoves, !isWhite);
                 positionsAftermove.Add(move, furtherMoves);
-                movesAtLevel = movesAtLevel.Concat(furtherMoves).ToList();
+                movesAtLevel += furtherMoves;
                 prevMoves.Remove(move);
                 MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
                 //BoardManager.UndoPiecePositions(move);
@@ -239,6 +255,16 @@ namespace ChessUI.Engine
             }
 
             return positions;
+        }
+
+        internal void Stop()
+        {
+            SearchTokenSource.Cancel();
+        }
+
+        internal void StartNewGame()
+        {
+            throw new NotImplementedException();
         }
     }
 }

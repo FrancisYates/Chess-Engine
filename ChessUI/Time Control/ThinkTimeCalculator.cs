@@ -9,11 +9,15 @@ namespace ChessUI
         public bool UseMaxThinkTime { get; set; } = false;
         public bool UseFixedThinkTime { get; set; } = false;
         public int FixedThinkTime { get; set; }
-        public int WhiteTimeRemaining { get; set; }
-        public int BlackTimeRemaining { get; set; }
+        public int WhiteTimeRemaining { get; set; } = 300_000;
+        public int BlackTimeRemaining { get; set; } = 300_000;
         public int WhiteIncrement { get; set; }
         public int BlackIncrement { get; set; }
-        public int MaxThinkTime { get; init; }
+        public int MaxThinkTime { get; init; } = 15_000;
+        public ThinkTimeCalculator(int? maxThinkTime = null) : this(new(), maxThinkTime) { 
+        
+        }
+
         public ThinkTimeCalculator(TimeControlOptions options, int? maxThinkTime = null)
         {
             UseMaxThinkTime = maxThinkTime is not null;

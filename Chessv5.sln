@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessUI", "ChessUI\ChessUI.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xUnitTests_Chess", "xUnitTests_Chess\xUnitTests_Chess.csproj", "{8E24E198-E045-4B32-AC0F-2A951CB2B7DB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCIHead", "UCIHead\UCIHead.csproj", "{CBA027C1-6B02-4852-9913-01F1FB91A6AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
