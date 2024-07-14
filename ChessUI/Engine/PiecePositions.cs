@@ -1,5 +1,4 @@
-﻿
-using ChessUI.Enums;
+﻿using ChessUI.Enums;
 using System.Collections.Generic;
 
 namespace ChessUI.Engine
@@ -12,6 +11,18 @@ namespace ChessUI.Engine
         public HashSet<int> Bishops { get; set; } = [];
         public HashSet<int> Queens { get; set; } = [];
         public int King { get; set; }
+
+        public IEnumerable<int> All => GetAll();
+
+        private IEnumerable<int> GetAll()
+        {
+            foreach (var piece in Pawns) yield return piece;
+            foreach (var piece in Rooks) yield return piece;
+            foreach (var piece in Knights) yield return piece;
+            foreach (var piece in Bishops) yield return piece;
+            foreach (var piece in Queens) yield return piece;
+            yield return King;
+        }
 
         public void Remove(PieceType type, int position)
         {

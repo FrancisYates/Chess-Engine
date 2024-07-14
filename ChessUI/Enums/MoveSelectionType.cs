@@ -2,9 +2,9 @@
 {
     public enum MoveSelectionType
     {
-        Random,
-        Minimax,
-        ItterativeDeepening,
-        ExhaustiveSearch,
+        Random = 0,
+        Minimax = 1,
+        ItterativeDeepening = 2,
+        ExhaustiveSearch = 3,
     }
 }

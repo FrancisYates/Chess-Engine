@@ -122,9 +122,13 @@ namespace ChessUI.Engine
 
         }
 
-        public static IEnumerable<Node> MoveOrderingID(Node previousEvaluation)
+        public static IEnumerable<Node> MoveOrderingID(Node previousEvaluation, bool isWhite)
         {
-            return previousEvaluation.children.OrderByDescending(n => n.evaluation);
+            if (isWhite)
+            {
+                return previousEvaluation.children.OrderByDescending(n => n.evaluation);
+            }
+            return previousEvaluation.children.OrderBy(n => n.evaluation);
         }
 
         private static IEnumerable<Move> CaptureOrdering(List<Move> captureMoves)
@@ -134,22 +138,22 @@ namespace ChessUI.Engine
             int idx = 0;
             foreach (Move move in captureMoves)
             {
-                int capturingPiece = board[move.sourceSquare];
+                int capturingPiece = board[move.SourceSquare];
                 int capturedPiece;
                 if (move.IsType(MoveType.enPesant))
                 {
                     if (Piece.IsPieceWhite(capturingPiece))
                     {
-                        capturedPiece = board[move.targetSquare - 8];
+                        capturedPiece = board[move.TargetSquare - 8];
                     }
                     else
                     {
-                        capturedPiece = board[move.targetSquare + 8];
+                        capturedPiece = board[move.TargetSquare + 8];
                     }
                 }
                 else
                 {
-                    capturedPiece = board[move.targetSquare];
+                    capturedPiece = board[move.TargetSquare];
                 }
                 int capturingValue = Piece.GetPieceValue(capturingPiece);
                 int capturedValue = Piece.GetPieceValue(capturedPiece);

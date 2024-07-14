@@ -32,11 +32,11 @@ namespace ChessUI
             UseFixedThinkTime = true;
             FixedThinkTime = fixedThinkTime;
         }
-        public int GetThinkTimeMs()
+        public int GetThinkTimeMs(bool isWhite, int fullMoves)
         {
             if (UseFixedThinkTime) return FixedThinkTime;
-            int time = BoardManager.WhiteToMove ? WhiteTimeRemaining : BlackTimeRemaining;
-            int increment = BoardManager.WhiteToMove ? WhiteIncrement : BlackIncrement;
+            int time = isWhite ? WhiteTimeRemaining : BlackTimeRemaining;
+            int increment = isWhite ? WhiteIncrement : BlackIncrement;
 
 
             int thinkTime;
@@ -47,7 +47,7 @@ namespace ChessUI
             }
             else
             {
-                thinkTime = time / (2 + Math.Max(30 - BoardManager.FullMoves, 0));
+                thinkTime = time / (2 + Math.Max(30 - fullMoves, 0));
                 thinkTime += (int)Math.Floor(increment * 0.2);
             }
 
@@ -58,9 +58,9 @@ namespace ChessUI
             return thinkTime;
         }
 
-        public void IncrementTime()
+        public void IncrementTime(bool isWhite)
         {
-            if (BoardManager.WhiteToMove)
+            if (isWhite)
             {
                 WhiteTimeRemaining += WhiteIncrement;
             }

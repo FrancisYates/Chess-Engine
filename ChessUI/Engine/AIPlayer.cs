@@ -55,7 +55,7 @@ namespace ChessUI.Engine
                 MoveSelectionType.ExhaustiveSearch => _search.ExhaustiveSearch(),
                 _ => throw new NotImplementedException($"MoveSelectionType is {MoveSelectionType}"),
             };
-            OnMoveChosen?.Invoke(move.ToString() ?? "0000");
+            OnMoveChosen?.Invoke(move?.ToString() ?? "0000");
             return move;
         }
 
@@ -196,7 +196,7 @@ namespace ChessUI.Engine
             return (alpha, exploredMoves);
         }
 
-        public (int, Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, List<Move> prevMoves, bool isWhite)
+        public (int, Dictionary<Move, int>) FindMovesToSearchDepth(int currentSearchDepth, int maxSearchDepth, bool isWhite)
         {
             Dictionary<Move, int> positionsAftermove = new();
 
@@ -208,18 +208,14 @@ namespace ChessUI.Engine
             int movesAtLevel = 0;
             foreach (Move move in possibleMoves)
             {
-                //BoardManager.UpdatePiecePositions(move);
                 (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
 
-                if (currentSearchDepth == 1) prevMoves = new List<Move>();
 
-                prevMoves.Add(move);
-                (int furtherMoves, Dictionary<Move, int> xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, prevMoves, !isWhite);
+                (int furtherMoves, Dictionary<Move, int> xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, !isWhite);
+
                 positionsAftermove.Add(move, furtherMoves);
                 movesAtLevel += furtherMoves;
-                prevMoves.Remove(move);
                 MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
-                //BoardManager.UndoPiecePositions(move);
             }
 
             return (movesAtLevel, positionsAftermove);

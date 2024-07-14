@@ -78,7 +78,7 @@ namespace ChessUI.Engine
             }
         }
 
-        private static string[] GetFEN(string saveFile)
+        private static string GetFEN(string saveFile)
         {
             string FEN;
             if (saveFile == "")
@@ -89,7 +89,7 @@ namespace ChessUI.Engine
             {
                 FEN = System.IO.File.ReadAllText(saveFile);
             }
-            return FEN.Split(' ');
+            return FEN;
         }
 
         private static void PopulateBoard(string boardFen)
@@ -193,22 +193,8 @@ namespace ChessUI.Engine
         }
         public static void LoadBoardFromFile(string saveFile)
         {
-            string[] FENSplit = GetFEN(saveFile);
-
-            PopulateBoard(FENSplit[0]);
-
-            WhiteToMove = FENSplit[1] == "w";
-            string castlingRightsString = FENSplit[2];
-            SetupCastleRights(castlingRightsString);
-
-            string enPesantString = FENSplit[3];
-            EnPesantSquare = -1;
-            if (enPesantString != "-")
-            {
-                EnPesantSquare = GetSquareFromNotation(enPesantString);
-            }
-            HalfMoves = int.Parse(FENSplit[4]);
-            FullMoves = int.Parse(FENSplit[4]);
+            string fen = GetFEN(saveFile);
+            LoadBoardFromFen(fen);
         }
         public static void LoadBoardFromFen(string fen)
         {
@@ -224,16 +210,11 @@ namespace ChessUI.Engine
             EnPesantSquare = -1;
             if (enPesantString != "-")
             {
-                try {
-
                 EnPesantSquare = GetSquareFromNotation(enPesantString);
-                } catch (Exception) {
-
-                    throw;
-                }
             }
             HalfMoves = int.Parse(FENSplit[4]);
             FullMoves = int.Parse(FENSplit[5]);
+            UpdateAttackedPositions();
         }
         private static int GetSquareFromNotation(string positionNotation)
         {
@@ -448,10 +429,17 @@ namespace ChessUI.Engine
             sb.Append(WhiteToMove? " w" : " b");
 
             sb.Append(' ');
-            if (CastleingRights.HasFlag(CastlingRights.WhiteKingSide)) sb.Append('K');
-            if(CastleingRights.HasFlag(CastlingRights.WhiteQueenSide)) sb.Append('Q');
-            if(CastleingRights.HasFlag(CastlingRights.BlackKingSide)) sb.Append('k');
-            if(CastleingRights.HasFlag(CastlingRights.BlackQueenSide)) sb.Append('q');
+            if((int)CastleingRights > 0)
+            {
+                if (CastleingRights.HasFlag(CastlingRights.WhiteKingSide)) sb.Append('K');
+                if (CastleingRights.HasFlag(CastlingRights.WhiteQueenSide)) sb.Append('Q');
+                if (CastleingRights.HasFlag(CastlingRights.BlackKingSide)) sb.Append('k');
+                if (CastleingRights.HasFlag(CastlingRights.BlackQueenSide)) sb.Append('q');
+            }
+            else
+            {
+                sb.Append('-');
+            }
 
             if(EnPesantSquare >= 0) {
                 int x = EnPesantSquare % 8;
@@ -467,6 +455,24 @@ namespace ChessUI.Engine
             sb.Append($" {FullMoves}");
 
             return sb.ToString();
+        }
+
+        internal static bool VerifyIntegrity()
+        {
+            ulong bb = 0;
+            foreach (var position in WhitePiecePositions.All)
+            {
+                bb |= 1ul << position;
+            }
+            if(bb != WhiteBitboards.AllPieces) return false;
+
+            bb = 0;
+            foreach (var position in BlackPiecePositions.All)
+            {
+                bb |= 1ul << position;
+            }
+            if (bb != BlackBitboards.AllPieces) return false;
+            return true;
         }
     }
 }
