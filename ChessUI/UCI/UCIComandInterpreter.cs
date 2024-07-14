@@ -7,7 +7,8 @@ namespace ChessUI.UCI
     public class UCIComandInterpreter
     {
         static readonly string[] positionLabels = new[] { "position", "fen", "moves" };
-        static readonly string[] goLabels = new[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo", "depth" };
+        static readonly string[] goLabels = new[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo", "depth", "perft" };
+        static readonly string[] optionLabels = new[] { "search-type" };
 
         private readonly ThinkTimeCalculator _timeCalculator = new();
         readonly AIPlayer player;
@@ -60,8 +61,20 @@ namespace ChessUI.UCI
                 case "d":
                     Console.WriteLine(GetFen());
                     break;
+                case "setoption":
+                    ProcessSetOptionCommand(message);
+                    break;
                 default:
                     throw new NotImplementedException("Unrecognised comand " + message);
+            }
+        }
+
+        private void ProcessSetOptionCommand(string message)
+        {
+            if (message.Contains("search-type"))
+            {
+                int search = TryGetLabelledValueInt(message, "search-type", optionLabels, 0);
+                player.MoveSelectionType = (Enums.MoveSelectionType)search;
             }
         }
 
@@ -82,6 +95,18 @@ namespace ChessUI.UCI
                 int depth = TryGetLabelledValueInt(message, "depth", goLabels, 0);
                 player.MaxSearchDepth = depth;
 
+            }
+            if (message.Contains("perft"))
+            {
+                int depth = TryGetLabelledValueInt(message, "perft", goLabels, 0);
+                player.MaxSearchDepth = depth;
+                var moves = player.FindMovesToSearchDepth(0, depth - 1, BoardManager.WhiteToMove);
+                
+                foreach ( var move in moves.Item2 )
+                {
+                    Respond($"{move.Key.ToString()}: {move.Value}");
+                }
+                return "";
             }
             if (message.Contains("movetime"))
             {
@@ -104,7 +129,7 @@ namespace ChessUI.UCI
                 player.ThinkTimeMs = thinkTime;
             }
 
-            return player.MakeMove().ToString() ?? "0000";
+            return player.MakeMove()?.ToString() ?? "0000";
         }
         public void ProcessPositionCommand(string message)
         {
