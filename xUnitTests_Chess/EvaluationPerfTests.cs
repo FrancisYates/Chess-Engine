@@ -76,11 +76,10 @@ namespace xUnitTests_Chess
         public void TestEvaluationSpeed(string positionFile) {
             var csv = File.ReadAllText(PositionDirectory + positionFile);
             var positions = csv.Split(',');
-            output.WriteLine($"{positions.Count()} total position");
+            output.WriteLine($"{positions.Length} total position");
             foreach (var position in positions) {
                 BoardManager.ResetBoardToEmpty();
                 BoardManager.LoadBoardFromFen(position);
-                MoveGeneration.CalculateDirections();
                 BoardManager.UpdateAttackedPositions();
 
                 var evaluation = MoveEvaluation.EvaluateBoard(BoardManager.Board);

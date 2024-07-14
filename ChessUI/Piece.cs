@@ -57,7 +57,7 @@ namespace ChessUI
                 int currentFile = currentPosition % 8;
                 return !(currentFile == 0 || currentFile == 7);
             }
-            return false;
+            return true;
         }
 
         public static bool IsOpponentInSquare(bool isWhite, int pieceInSquare)

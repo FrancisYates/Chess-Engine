@@ -2,11 +2,7 @@
 using ChessUI.Enums;
 using Serilog;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
+using System.Diagnostics;
 
 namespace ChessUI
 {
@@ -14,7 +10,7 @@ namespace ChessUI
     {
         readonly AIPlayer aiPlayer;
         private readonly GameWindow _window;
-        public GameInstance(GameWindow window, ThinkTimeCalculator thinkTimer)
+        public GameInstance(GameWindow window, ThinkTimeCalculator thinkTimer, string? gameFile = null)
         {
             _window = window;
             aiPlayer = new AIPlayer(thinkTimer, MoveSelectionType.ExhaustiveSearch, isWhite:false) {
@@ -22,7 +18,7 @@ namespace ChessUI
             };
 
             //aiPlayer.CreateBookTree();
-            BoardManager.LoadBoardFromFile("startPosition.txt");
+            BoardManager.LoadBoardFromFile(gameFile ?? "startPosition.txt");
             
             BoardManager.UpdateAttackedPositions();
         }
@@ -34,7 +30,7 @@ namespace ChessUI
 
             Render.UpdateBoard(_window.Buttons, BoardManager.Board, move);
             //Render.HighlightSquare(_window.Buttons, selectedPosition);
-            Render.RemoveHighlightFromSquare(_window.Buttons, move.sourceSquare);
+            Render.RemoveHighlightFromSquare(_window.Buttons, move.SourceSquare);
 
             BoardManager.UpdateMoveCount();
             BoardManager.UpdateAttackedPositions();

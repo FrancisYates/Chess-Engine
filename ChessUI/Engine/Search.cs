@@ -20,7 +20,8 @@ namespace ChessUI.Engine
         public int QuiescenceMovesEvaluated { get; set; }
 
         #region Exhaustive Search
-        public Move? ExhaustiveSearch() {
+        public Move? ExhaustiveSearch()
+        {
             var sw = Stopwatch.StartNew();
             PositionsEvaluated = 0;
             Node root = GenerateMoveTree(0, IsWhiteMove);
@@ -29,9 +30,11 @@ namespace ChessUI.Engine
             return GetBestMove(root);
         }
         #endregion
-        private Node GenerateMoveTree(int currentSearchDepth, bool maximising, CancellationToken token = default) {
+        private Node GenerateMoveTree(int currentSearchDepth, bool maximising, CancellationToken token = default)
+        {
             var node = new Node();
-            if (currentSearchDepth == MaxSearchDepth) {
+            if (currentSearchDepth == MaxSearchDepth)
+            {
                 PositionsEvaluated++;
                 node.evaluation = MoveEvaluation.EvaluateBoard(BoardManager.Board);
                 (int eval, int movesExplored) = (0, 0);
@@ -44,8 +47,10 @@ namespace ChessUI.Engine
             if (maximising)
             {
                 node.evaluation = negativeInfinity;
-                foreach (Move move in possibleMoves) {
-                    if (token.IsCancellationRequested) {
+                foreach (Move move in possibleMoves)
+                {
+                    if (token.IsCancellationRequested)
+                    {
                         Debug.WriteLine("Token Cancelled");
                         break;
                     }
@@ -53,10 +58,14 @@ namespace ChessUI.Engine
                     child.move = move;
                     node.AddChild(child);
                 }
-            } else {
+            }
+            else
+            {
                 node.evaluation = positiveInfinity;
-                foreach (Move move in possibleMoves) {
-                    if (token.IsCancellationRequested) {
+                foreach (Move move in possibleMoves)
+                {
+                    if (token.IsCancellationRequested)
+                    {
                         Debug.WriteLine("Token Cancelled");
                         break;
                     }
@@ -80,7 +89,8 @@ namespace ChessUI.Engine
             return child;
         }
         #region MiniMax
-        public Move? MiniMaxSearch() {
+        public Move? MiniMaxSearch()
+        {
             var sw = Stopwatch.StartNew();
             PositionsEvaluated = 0;
             Node root = GenerateMoveTree(0, negativeInfinity, positiveInfinity, IsWhiteMove);
@@ -89,9 +99,11 @@ namespace ChessUI.Engine
             return GetBestMove(root);
         }
 
-        private Node GenerateMoveTree(int currentSearchDepth, int alpha, int beta, bool maximising, CancellationToken token = default) {
+        private Node GenerateMoveTree(int currentSearchDepth, int alpha, int beta, bool maximising, CancellationToken token = default)
+        {
             var node = new Node();
-            if (currentSearchDepth == MaxSearchDepth) {
+            if (currentSearchDepth == MaxSearchDepth)
+            {
                 PositionsEvaluated++;
                 node.evaluation = MoveEvaluation.EvaluateBoard(BoardManager.Board);
                 //(int eval, int movesExplored) = QuiescenceSearch(alpha, beta, maximising, 0);
@@ -101,10 +113,14 @@ namespace ChessUI.Engine
             }
             IEnumerable<Move> possibleMoves = MoveGeneration.GenerateStrictLegalMoves(maximising);
             possibleMoves = MoveEvaluation.MoveOrdering(possibleMoves);
-            if (maximising) {
+
+            if (maximising)
+            {
                 node.evaluation = negativeInfinity;
-                foreach (Move move in possibleMoves) {
-                    if (token.IsCancellationRequested) {
+                foreach (Move move in possibleMoves)
+                {
+                    if (token.IsCancellationRequested)
+                    {
                         Debug.WriteLine("Token Cancelled");
                         break;
                     }
@@ -114,10 +130,14 @@ namespace ChessUI.Engine
                     node.AddChild(child);
                     alpha = Math.Max(alpha, node.evaluation);
                 }
-            } else {
+            }
+            else
+            {
                 node.evaluation = positiveInfinity;
-                foreach (Move move in possibleMoves) {
-                    if (token.IsCancellationRequested) {
+                foreach (Move move in possibleMoves)
+                {
+                    if (token.IsCancellationRequested)
+                    {
                         Debug.WriteLine("Token Cancelled");
                         break;
                     }
@@ -131,7 +151,8 @@ namespace ChessUI.Engine
             return node;
         }
 
-        private Node GenerateChild(Move move, Node parent, int currentDepth, int alpha, int beta, bool maximising, Node? previousSearch = null, CancellationToken token = default) {
+        private Node GenerateChild(Move move, Node parent, int currentDepth, int alpha, int beta, bool maximising, CancellationToken token = default)
+        {
             (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
             if (Piece.IsType(target, PieceType.King))
             {
@@ -157,7 +178,8 @@ namespace ChessUI.Engine
 
         #region Itterative Deapening MiniMax
 
-        public Move? MakeItterativeDeepeningMove(int maxTimeMS) {
+        public Move? MakeItterativeDeepeningMove(int maxTimeMS)
+        {
             var sw = Stopwatch.StartNew();
             PositionsEvaluated = 0;
             Debug.WriteLine($"Making ID MiniMax move with max think time of {maxTimeMS}ms");
@@ -223,7 +245,7 @@ namespace ChessUI.Engine
                     alpha = Math.Max(alpha, root.evaluation);
                     if (root.evaluation >= beta) break;
                 }
-                }
+            }
             else
             {
                 root.evaluation = positiveInfinity;
@@ -242,8 +264,10 @@ namespace ChessUI.Engine
             }
             return root;
         }
-        private Node GenerateChildID(Move move, Node parent, int currentDepth, int alpha, int beta, bool maximising, Node previousSearch, CancellationToken token = default) {
+        private Node GenerateChildID(Move move, Node parent, int currentDepth, int alpha, int beta, bool maximising, Node previousSearch, CancellationToken token = default)
+        {
             (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
+
             Node child;
             if (previousSearch.children.Count > 0)
             {
@@ -263,7 +287,8 @@ namespace ChessUI.Engine
         #endregion
 
 
-        private (int, int) QuiescenceSearch(int alpha, int beta, bool maximising, int currentDepth, CancellationToken token = default) {
+        private (int, int) QuiescenceSearch(int alpha, int beta, bool maximising, int currentDepth, CancellationToken token = default)
+        {
             int exploredMoves = 1;
             int stand_pat = MoveEvaluation.EvaluateBoard(BoardManager.Board);
             if (stand_pat >= beta) return (beta, exploredMoves);
@@ -279,7 +304,8 @@ namespace ChessUI.Engine
             if (!captureMoves.Any()) return (alpha, exploredMoves);
             captureMoves = MoveEvaluation.MoveOrdering(captureMoves);
 
-            foreach (Move move in captureMoves) {
+            foreach (Move move in captureMoves)
+            {
                 (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
                 (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, token);
                 score = -score;
@@ -293,16 +319,21 @@ namespace ChessUI.Engine
             return (alpha, exploredMoves);
         }
 
-        private Move? GetBestMove(Node root) {
+        private Move? GetBestMove(Node root)
+        {
             List<Move> comperableMoves = new();
             int bestEval = IsWhiteMove ? negativeInfinity : positiveInfinity;
-            foreach (Node child in root.children) {
+            foreach (Node child in root.children)
+            {
                 bool isMoveBetter = IsWhiteMove ? child.evaluation > bestEval : child.evaluation < bestEval;
-                if (isMoveBetter) {
+                if (isMoveBetter)
+                {
                     comperableMoves.Clear();
                     comperableMoves.Add(child.move);
                     bestEval = child.evaluation;
-                }else if (child.evaluation == bestEval) {
+                }
+                else if (child.evaluation == bestEval)
+                {
                     comperableMoves.Add(child.move);
                 }
             }

@@ -16,7 +16,8 @@ namespace xUnitTests_Chess
 
         private string BoardDirectory => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\TestBoards\\"));
 
-        private ThinkTimeCalculator timeControl = new( new TimeControlOptions { 
+        private readonly ThinkTimeCalculator timeControl = new(new TimeControlOptions
+        {
                 WhiteInitialTimeMs = int.MaxValue,
                 BlackInitialTimeMs = int.MaxValue,
             },
@@ -73,17 +74,14 @@ namespace xUnitTests_Chess
         //[InlineData(true, "position6.txt", 6, 6923051137)]
         public void AI_FindMovesToDepth_TestCount(bool isWhite, string boardFile, int maxPly, long expectedResult)
         {
+            AIPlayer aiPlayer = new(timeControl);
             BoardManager.ResetBoardToEmpty();
             BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
-            MoveGeneration.CalculateDirections();
             BoardManager.UpdateAttackedPositions();
 
-            AIPlayer aiPlayer = new AIPlayer(timeControl);
-            List<Move> moves;
-            List<Move> prevMoves = new();
+            int numMoves;
             Dictionary<Move, int> positionsAftermove;
-            (moves, positionsAftermove) = aiPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
-            int numMoves = moves.Count;
+            (numMoves, positionsAftermove) = aiPlayer.FindMovesToSearchDepth(1, maxPly, isWhite);
 
             foreach (Move move in positionsAftermove.Keys)
             {
@@ -101,18 +99,17 @@ namespace xUnitTests_Chess
         [InlineData(true, "position6.txt", 5, 164075551)]
         public void AI_FindMovesToDepth_TestPerf(bool isWhite, string boardFile, int maxPly, long expectedResult)
         {
-            BoardManager.ResetBoardToEmpty();
+            AIPlayer aiPlayer = new(timeControl);
             BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
-            MoveGeneration.CalculateDirections();
+            int numMoves;
             BoardManager.UpdateAttackedPositions();
+            Dictionary<Move, int> positionsAftermove;
+            (numMoves, positionsAftermove) = aiPlayer.FindMovesToSearchDepth(1, maxPly, isWhite);
 
-            AIPlayer aiPlayer = new AIPlayer(timeControl);
-            List<Move> moves;
-            List<Move> prevMoves = new();
-            (moves, _) = aiPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
-            int numMoves = moves.Count;
-
-
+            foreach (Move move in positionsAftermove.Keys)
+            {
+                output.WriteLine($"{move}: {positionsAftermove[move]}");
+            }
             Assert.Equal(expectedResult, numMoves);
         }
 
@@ -127,17 +124,12 @@ namespace xUnitTests_Chess
         [InlineData(true, "special3.txt", 1, 33)]
         public void SpecialTesting(bool isWhite, string boardFile, int maxPly, int expectedResult)
         {
-            BoardManager.ResetBoardToEmpty();
+            AIPlayer aiPlayer = new (timeControl);
             BoardManager.LoadBoardFromFile(BoardDirectory + boardFile);
-            MoveGeneration.CalculateDirections();
+            int numMoves;
             BoardManager.UpdateAttackedPositions();
-
-            AIPlayer aiPlayer = new AIPlayer(timeControl);
-            List<Move> moves;
-            List<Move> prevMoves = new();
             Dictionary<Move, int> positionsAftermove;
-            (moves, positionsAftermove) = aiPlayer.FindMovesToSearchDepth(1, maxPly, prevMoves, isWhite);
-            int numMoves = moves.Count;
+            (numMoves, positionsAftermove) = aiPlayer.FindMovesToSearchDepth(1, maxPly, isWhite);
 
             foreach (Move move in positionsAftermove.Keys)
             {

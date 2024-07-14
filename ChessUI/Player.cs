@@ -30,9 +30,9 @@ namespace ChessUI
             List<Move> moves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove);
             foreach (Move move in moves)
             {
-                if (proposedMove.sourceSquare == move.sourceSquare && proposedMove.targetSquare == move.targetSquare) 
+                if (proposedMove.SourceSquare == move.SourceSquare && proposedMove.TargetSquare == move.TargetSquare) 
                 {
-                    proposedMove.moveFlag = move.moveFlag;
+                    proposedMove.MoveFlag = move.MoveFlag;
                     return true; 
                 }
             }
