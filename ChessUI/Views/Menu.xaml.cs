@@ -42,5 +42,13 @@ namespace ChessUI.Views
         {
             this.Close();
         }
+        private void DebugBtn_Click(object sender, RoutedEventArgs e)
+        {
+            GameWindow gameWindow = new(this);
+            gameWindow.Show();
+            DebugControls debugControls = new(gameWindow);
+            debugControls.Show();
+            this.Hide();
+        }
     }
 }

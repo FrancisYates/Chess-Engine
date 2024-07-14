@@ -28,6 +28,14 @@ namespace ChessUI
             _game = new GameInstance(this, new ThinkTimeCalculator(GameSetup.TimeControl));
             Render.UpdateBoard(buttons, BoardManager.Board);
         }
+        public GameWindow(Views.Menu menu, string gameFile)
+        {
+            InitializeComponent();
+            _menu = menu;
+            buttons = CreateButtonList();
+            _game = new GameInstance(this, new ThinkTimeCalculator(GameSetup.TimeControl), gameFile);
+            Render.UpdateBoard(buttons, BoardManager.Board);
+        }
         public void SetPromotion(MoveType selection, PromotionPiece piece) 
         { 
             promotionSelection = selection;
@@ -41,7 +49,7 @@ namespace ChessUI
             if (selectedPosition != -1)
             {
                 Render.RemoveHighlightFromSquare(buttons, selectedPosition);
-                var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.sourceSquare == selectedPosition);
+                var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.SourceSquare == selectedPosition);
                 Render.RemovePossibleMovesHighlight(Buttons, legalMoves);
             }
 
@@ -50,20 +58,20 @@ namespace ChessUI
                 selectedPosition = thisPosition;
                 pieceSelected = true;
                 Render.HighlightSquare(buttons, selectedPosition);
-                var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.sourceSquare == selectedPosition);
+                var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.SourceSquare == selectedPosition);
                 Render.HighlightPossibleMoves(Buttons, legalMoves);
             }
             if (!validSelection && pieceSelected)
             {
                 Move move = new(selectedPosition, thisPosition);
-                var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.sourceSquare == selectedPosition);
+                var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.SourceSquare == selectedPosition);
                 Render.RemovePossibleMovesHighlight(Buttons, legalMoves);
                 if (!Player.IsMoveValid(ref move)) return;
                 if (move.IsPromotion())
                 {
                     PromotionSelection selectionWin = new(this);
                     selectionWin.ShowDialog();
-                    move.moveFlag = ((int)promotionSelection | (int)promotionPiece);
+                    move.MoveFlag = ((int)promotionSelection | (int)promotionPiece);
                 }
 
                 _game.MakePlayerMove(move);
