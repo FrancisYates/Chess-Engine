@@ -8,41 +8,29 @@ namespace ChessUI.Engine
 {
     public static class MoveEvaluation
     {
+        const int pawnStructureValue = 10;
+        const int passedPawnValue = 50;
+        const int isolatedPawnValue = -20;
+
+        const int controlValue = 2;
+
+        const int kingMobilityValue = -3;
 
         public static int EvaluateBoard(int[] board)
         {
             int evaluation = 0;
 
-            evaluation += MaterialDifference(board);
+            evaluation += MaterialDifference();
             evaluation += ControlledSquares();
-            evaluation += EvaluatePawnStructure(board);
+            evaluation += EvaluatePawnStructure();
+            evaluation += EvaluateKingSafety();
 
             return evaluation;
         }
 
-        private static int MaterialDifference(int[] board)
+        private static int MaterialDifference()
         {
-            int whiteMaterial = 0;
-            int blackMaterial = 0;
-
-            for (int i = 0; i < 64; i++)
-            {
-                int piece = board[i];
-                if (piece == 0)
-                {
-                    continue;
-                }
-                if (Piece.IsPieceWhite(piece))
-                {
-                    whiteMaterial += Piece.GetPieceValue(piece);
-                }
-                else
-                {
-                    blackMaterial += Piece.GetPieceValue(piece);
-                }
-            }
-
-            return whiteMaterial - blackMaterial;
+            return BoardManager.WhitePiecePositions.TotalPieceValue - BoardManager.BlackPiecePositions.TotalPieceValue;
         }
 
         private static int ControlledSquares()
@@ -50,34 +38,61 @@ namespace ChessUI.Engine
             int whiteControlled = BitOperations.PopCount(BoardManager.WhiteBitboards.ControlledPositions);;
             int blackControlled = BitOperations.PopCount(BoardManager.BlackBitboards.ControlledPositions); ;
             
-            return whiteControlled - blackControlled;
+            return (whiteControlled - blackControlled) * controlValue;
         }
-        private static int EvaluatePawnStructure(int[] board) {
-            int whiteStructure = 0;
-            int blackStructure = 0;
-            for (int i = 0; i < 64; i++) {
-                int piece = board[i];
-                if(Piece.IsType(piece, PieceType.Pawn)) {
-                    int pieceSide = Piece.IsPieceWhite(piece) ? 1 : 0; //1 if white, 0 if black
-                    int[] attackOffsets = LookUps.pawnAttackOffset[pieceSide, i];
-                    var defended = attackOffsets.Count(offset => {
-                        var targetPiece = board[i+ offset];
-                        return Piece.IsType(targetPiece, PieceType.Pawn) && Piece.IsSameColour(targetPiece, piece);
-                        });
-                    whiteStructure += defended * pieceSide;
-                    blackStructure += defended * 1 - pieceSide;
-                }
+        private static int EvaluatePawnStructure()
+        {
+            int structure = 0;
+            ulong whitePawns = BoardManager.WhiteBitboards.Pawns;
+            ulong blackPawns = BoardManager.WhiteBitboards.Pawns;
+            foreach (var position in BoardManager.WhitePiecePositions.Pawns)
+            {
+                structure += BitOperations.PopCount(LookUps.whitePawnAttackBitBoard[position] & whitePawns) * pawnStructureValue;
+
+                bool isPassed = (LookUps.whitePassedPawnMasks[position] & blackPawns) == 0;
+                if (isPassed) structure += passedPawnValue;
+
+                bool isIsolated = (LookUps.isolatedPawnMasks[position] & blackPawns) == 0;
+                if(isIsolated) structure += isolatedPawnValue;
             }
 
-            return whiteStructure - blackStructure;
+            foreach (var position in BoardManager.BlackPiecePositions.Pawns)
+            {
+                structure -= BitOperations.PopCount(LookUps.blackPawnAttackBitBoard[position] & whitePawns) * pawnStructureValue;
+
+                bool isPassed = (LookUps.blackPassedPawnMasks[position] & whitePawns) == 0;
+                if (isPassed) structure -= passedPawnValue;
+
+                bool isIsolated = (LookUps.isolatedPawnMasks[position] & whitePawns) == 0;
+                if(isIsolated) structure -= isolatedPawnValue;
+            }
+
+            return structure;
+        }
+
+        private static int EvaluateKingSafety()
+        {
+            int evaluation = 0;
+            
+
+            int whiteKingPos = BoardManager.WhitePiecePositions.King;
+            int blackKingPos = BoardManager.BlackPiecePositions.King;
+
+            ulong blockers = BoardManager.WhiteBitboards.AllPieces & LookUps.queenMoves[whiteKingPos];
+            int whiteMobility = BitOperations.PopCount(LookUps.GetPosibleQueenMoves(whiteKingPos, blockers));
+            int blackMobility = BitOperations.PopCount(LookUps.GetPosibleQueenMoves(blackKingPos, blockers));
+
+            evaluation += (whiteMobility - blackMobility) * kingMobilityValue;
+
+            return evaluation;
         }
 
         public static IEnumerable<Move> MoveOrdering(IEnumerable<Move> unorderedMoves)
         {
-            List<Move> captureMoves = new();
-            List<Move> promotionCaptureMoves = new();
-            List<Move> promotionMoves = new();
-            List<Move> ordinaryMoves = new();
+            List<Move> captureMoves = new(8);
+            List<Move> promotionCaptureMoves = new(4);
+            List<Move> promotionMoves = new(4);
+            List<Move> ordinaryMoves = new(16);
 
             foreach (Move move in unorderedMoves)
             {
@@ -119,10 +134,9 @@ namespace ChessUI.Engine
             {
                 yield return move;
             }
-
         }
 
-        public static IEnumerable<Node> MoveOrderingID(Node previousEvaluation, bool isWhite)
+        public static IEnumerable<Node> MoveOrdering(Node previousEvaluation, bool isWhite)
         {
             if (isWhite)
             {

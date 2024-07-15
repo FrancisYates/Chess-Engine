@@ -15,7 +15,7 @@ namespace ChessUI.Engine
         public required bool IsWhiteMove { get; set; }
         public bool IsBlackMove => !IsWhiteMove;
         public required int MaxSearchDepth { get; set; }
-        public int MaxQuiescenceSearchDepth { get; set; } = 3;
+        public int MaxQuiescenceSearchDepth { get; set; } = 10;
         public int PositionsEvaluated { get; set; }
         public int QuiescenceMovesEvaluated { get; set; }
 
@@ -105,9 +105,8 @@ namespace ChessUI.Engine
             if (currentSearchDepth == MaxSearchDepth)
             {
                 PositionsEvaluated++;
-                node.evaluation = MoveEvaluation.EvaluateBoard(BoardManager.Board);
-                //(int eval, int movesExplored) = QuiescenceSearch(alpha, beta, maximising, 0);
-                (int eval, int movesExplored) = (0, 0);
+                (int eval, int movesExplored) = QuiescenceSearch(alpha, beta, maximising, 0, token);
+                node.evaluation = eval;
                 QuiescenceMovesEvaluated += movesExplored;
                 return node;
             }
@@ -228,7 +227,7 @@ namespace ChessUI.Engine
                 root.evaluation = maximising ? Math.Max(root.evaluation, eval) : Math.Min(root.evaluation, eval);
                 return root;
             }
-            IEnumerable<Node> orderedMoves = MoveEvaluation.MoveOrderingID(previousSearch, maximising);
+            IEnumerable<Node> orderedMoves = MoveEvaluation.MoveOrdering(previousSearch, maximising);
 
             if (maximising)
             {
@@ -299,7 +298,7 @@ namespace ChessUI.Engine
             if (alpha < stand_pat) alpha = stand_pat;
 
             if (token.IsCancellationRequested || currentDepth == MaxQuiescenceSearchDepth) return (alpha, exploredMoves);
-
+            
             IEnumerable<Move> captureMoves = MoveGeneration.GenerateStrictLegalMoves(maximising, generateOnlyCaptures: true);
             if (!captureMoves.Any()) return (alpha, exploredMoves);
             captureMoves = MoveEvaluation.MoveOrdering(captureMoves);

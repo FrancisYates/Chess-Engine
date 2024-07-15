@@ -1,11 +1,11 @@
-﻿using ChessUI.Enums;
+﻿using ChessUI.Engine;
+using ChessUI.Enums;
 using System;
 
 namespace ChessUI
 {
     public static class Piece
     {
-
         public static bool IsSameColour(int piece1, int piece2)
         {
             return (piece1 & 8) == (piece2 & 8);
@@ -69,32 +69,16 @@ namespace ChessUI
 
         public static int GetPieceValue(int piece)
         {
-
-            if (IsType(piece, PieceType.Pawn))
+            return GetPieceType(piece) switch
             {
-                return 100;
-            }
-            else if (IsType(piece, PieceType.Rook))
-            {
-                return 500;
-            }
-            else if (IsType(piece, PieceType.Bishop))
-            {
-                return 300;
-            }
-            else if (IsType(piece, PieceType.Knight))
-            {
-                return 300;
-            }
-            else if (IsType(piece, PieceType.King))
-            {
-                return 100000;
-            }
-            else if (IsType(piece, PieceType.Queen))
-            {
-                return 900;
-            }
-            return 0;
+                PieceType.Pawn => PieceValue.Pawn,
+                PieceType.Rook => PieceValue.Rook,
+                PieceType.Bishop => PieceValue.Bishop,
+                PieceType.Knight => PieceValue.Knight,
+                PieceType.Queen => PieceValue.Queen,
+                PieceType.King => PieceValue.King,
+                _ => 0
+            };
         }
 
         internal static char GetPieceCharacterRepresentation(int piece)

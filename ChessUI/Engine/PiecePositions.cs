@@ -12,7 +12,20 @@ namespace ChessUI.Engine
         public HashSet<int> Queens { get; set; } = [];
         public int King { get; set; }
 
+        public int TotalPieceValue => CalculatePieceValue();
         public IEnumerable<int> All => GetAll();
+
+        private int CalculatePieceValue()
+        {
+            int pieceValue = 0;
+            pieceValue += PieceValue.Queen * Queens.Count;
+            pieceValue += PieceValue.Pawn * Pawns.Count;
+            pieceValue += PieceValue.Rook * Rooks.Count;
+            pieceValue += PieceValue.Bishop * Bishops.Count;
+            pieceValue += PieceValue.Knight * Knights.Count;
+
+            return pieceValue;
+        }
 
         private IEnumerable<int> GetAll()
         {
