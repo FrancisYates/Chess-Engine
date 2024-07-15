@@ -83,5 +83,14 @@ namespace ChessUI.Views
             public List<string> BoardStates { get; set; } = [];
         }
 
+        private void EvaluatePositionBtn_Click(object sender, RoutedEventArgs e)
+        {
+            AIPlayer ai = new(isWhite: BoardManager.WhiteToMove)
+            {
+                MoveSelectionType = Enums.MoveSelectionType.Minimax,
+                MaxSearchDepth = 2
+            };
+            ai.MakeMove();
+        }
     }
 }

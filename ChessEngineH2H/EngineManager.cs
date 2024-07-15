@@ -44,19 +44,19 @@ namespace ChessEngineH2H
             if(black is not null) black.Kill();
             whitePlayer.ThinkTimeMs = options.ThinkTimeMs;
             blackPlayer.ThinkTimeMs = options.ThinkTimeMs;
-            //white = StartProcess(options.WhiteEnginePath);
-            //black = StartProcess(options.BlackEnginePath);
-            whiteCmd = new(new() { MaxSearchDepth = 3});
-            blackCmd = new(new() { MaxSearchDepth = 3 });
+            white = StartProcess(options.WhiteEnginePath);
+            black = StartProcess(options.BlackEnginePath);
+            //whiteCmd = new(new() { MaxSearchDepth = 3});
+            //blackCmd = new(new() { MaxSearchDepth = 3 });
 
-            whiteCmd.ReceiveCommand($"setoption search-type {(int)options.WhiteSelectionType}");
-            blackCmd.ReceiveCommand($"setoption search-type {(int)options.BlackSelectionType}");
-            whiteCmd.ReceiveCommand($"position startpos");
-            blackCmd.ReceiveCommand($"position startpos");
-            //white.StandardInput.WriteLine($"setoption search-type {(int) options.WhiteSelectionType}");
-            //black.StandardInput.WriteLine($"setoption search-type {(int) options.BlackSelectionType}");
-            //white.StandardInput.WriteLine("position startpos");
-            //black.StandardInput.WriteLine("position startpos");
+            //whiteCmd.ReceiveCommand($"setoption search-type {(int)options.WhiteSelectionType}");
+            //blackCmd.ReceiveCommand($"setoption search-type {(int)options.BlackSelectionType}");
+            //whiteCmd.ReceiveCommand($"position startpos");
+            //blackCmd.ReceiveCommand($"position startpos");
+            white.StandardInput.WriteLine($"setoption search-type {(int) options.WhiteSelectionType}");
+            black.StandardInput.WriteLine($"setoption search-type {(int) options.BlackSelectionType}");
+            white.StandardInput.WriteLine("position startpos");
+            black.StandardInput.WriteLine("position startpos");
             BoardManager.ResetBoardToEmpty();
             BoardManager.LoadBoardFromFile("startPosition.txt");
 
@@ -78,12 +78,12 @@ namespace ChessEngineH2H
             string fen = BoardManager.GetCurrentFen();
             if (whiteToMove)
             {
-                string bmove = await FindMove(whiteCmd, fen, moveTimeMs, whiteMaxDepth);
+                string bmove = await FindMove(white, fen, moveTimeMs, whiteMaxDepth);
                 move = bmove.Split(' ')[1];
             }
             else
             {
-                string bmove = await FindMove(blackCmd, fen, moveTimeMs, blackMaxDepth);
+                string bmove = await FindMove(black, fen, moveTimeMs, blackMaxDepth);
                 move = bmove.Split(' ')[1];
             }
             gameInfo.FullMoves = BoardManager.FullMoves;
@@ -93,7 +93,7 @@ namespace ChessEngineH2H
                 gameInfo.InProgress = false;
                 return gameInfo;
             }
-            if (gameInfo.FullMoves > 100)
+            if (gameInfo.FullMoves > 75)
             {
                 gameInfo.InProgress = false;
                 gameInfo.Outcome = GameOutcome.Draw;
@@ -105,7 +105,6 @@ namespace ChessEngineH2H
             gameInfo.Moves.Add(m);
             Debug.WriteLine(m.ToString());
             MoveManager.MakeMove(m, BoardManager.Board);
-            MoveManager.moveStack.Clear();
             BoardManager.UpdateSideToMove();
             BoardManager.UpdateMoveCount();
             //await SaveGameState(gameId, gameInfo);

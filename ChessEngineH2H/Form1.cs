@@ -11,7 +11,7 @@ namespace ChessEngineH2H
         private string whiteEnginePath = @"C:\Users\Jane\Documents\Chess Engines\Latest\UCIHead.exe";
         private string blackEnginePath = @"C:\Users\Jane\Documents\Chess Engines\Latest\UCIHead.exe";
         private MoveSelectionType whitesearchType = MoveSelectionType.ItterativeDeepening;
-        private MoveSelectionType blacksearchType = MoveSelectionType.Random;
+        private MoveSelectionType blacksearchType = MoveSelectionType.ItterativeDeepening;
         EngineManager engineManager = new();
         AIPlayer whitePlayer = new();
         AIPlayer blackPlayer = new(isWhite: false);
@@ -123,6 +123,7 @@ namespace ChessEngineH2H
                 string file = openFileDialog.FileName;
                 FileInfo fileInfo = new(file);
                 whiteEnginePath = fileInfo.FullName;
+                whiteEngineLabel.Text = fileInfo.Directory.Name;
                 Debug.WriteLine(whiteEnginePath);
             }
 
@@ -137,6 +138,7 @@ namespace ChessEngineH2H
                 string file = openFileDialog.FileName;
                 FileInfo fileInfo = new(file);
                 blackEnginePath = fileInfo.FullName;
+                blackEngineLabel.Text = fileInfo.Directory.Name;
                 Debug.WriteLine(blackEnginePath);
             }
         }

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChessUI.Views"
         mc:Ignorable="d"
-        Title="DebugControls" Height="250" Width="500">
+        Title="DebugControls" Height="350" Width="500">
     <Grid>
 
 
@@ -22,7 +22,9 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="30" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="20" />
             <RowDefinition Height="*" />
             <RowDefinition Height="30" />
         </Grid.RowDefinitions>
@@ -34,5 +36,8 @@
         <Label Grid.Column="1" Grid.Row="3" Name="MoveNumberLabel"></Label>
         <Label Grid.Column="3" Grid.Row="4" Name="NextMoveLabel"></Label>
         <TextBox Grid.Column="3" Grid.ColumnSpan="3" Grid.Row="3" Name="FenLabel"></TextBox>
+
+        <Button Grid.Column="2" Grid.Row="5" Name="EvaluatePositionBtn" Click="EvaluatePositionBtn_Click">Evaluate Position</Button>
+
     </Grid>
 </Window>

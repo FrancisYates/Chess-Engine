@@ -51,6 +51,8 @@
             DrawsCountLabel = new Label();
             BlackWinsCountLabel = new Label();
             ThinkTimeInput = new NumericUpDown();
+            whiteEngineLabel = new Label();
+            blackEngineLabel = new Label();
             ((System.ComponentModel.ISupportInitialize)NumGamesInput).BeginInit();
             ((System.ComponentModel.ISupportInitialize)ThinkTimeInput).BeginInit();
             SuspendLayout();
@@ -276,11 +278,31 @@
             ThinkTimeInput.TabIndex = 23;
             ThinkTimeInput.Value = new decimal(new int[] { 1000, 0, 0, 0 });
             // 
+            // whiteEngineLabel
+            // 
+            whiteEngineLabel.AutoSize = true;
+            whiteEngineLabel.Location = new Point(106, 103);
+            whiteEngineLabel.Name = "whiteEngineLabel";
+            whiteEngineLabel.Size = new Size(48, 20);
+            whiteEngineLabel.TabIndex = 24;
+            whiteEngineLabel.Text = "Latest";
+            // 
+            // blackEngineLabel
+            // 
+            blackEngineLabel.AutoSize = true;
+            blackEngineLabel.Location = new Point(339, 105);
+            blackEngineLabel.Name = "blackEngineLabel";
+            blackEngineLabel.Size = new Size(48, 20);
+            blackEngineLabel.TabIndex = 25;
+            blackEngineLabel.Text = "Latest";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(blackEngineLabel);
+            Controls.Add(whiteEngineLabel);
             Controls.Add(ThinkTimeInput);
             Controls.Add(BlackWinsCountLabel);
             Controls.Add(DrawsCountLabel);
@@ -338,5 +360,7 @@
         private Label DrawsCountLabel;
         private Label BlackWinsCountLabel;
         private NumericUpDown ThinkTimeInput;
+        private Label whiteEngineLabel;
+        private Label blackEngineLabel;
     }
 }
