@@ -68,7 +68,7 @@ namespace ChessUI.Engine
                 {
                     moves.Add(new(position, target, MoveType.capture));
                 }
-                if (generateOnlyCaptures) return moves;
+                if (generateOnlyCaptures) continue;
 
                 var moveTargets = GetPoistionsFromBitboard(movesMask & ~OpponentBitboards.AllPieces);
                 foreach (var target in moveTargets)
@@ -157,7 +157,7 @@ namespace ChessUI.Engine
                 {
                     moves.Add(new Move(position, GetPoistionsFromBitboard(epTarget).First(), MoveType.enPesant));
                 }
-                if (generateOnlyCaptures) return moves;
+                if (generateOnlyCaptures) continue;
                 targetSquare = position + 8 * moveDirection;
                 if ((((FriendlyBitboards.AllPieces | OpponentBitboards.AllPieces) >> targetSquare) & 1) == 0)
                 {
