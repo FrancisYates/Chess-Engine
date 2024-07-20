@@ -1,49 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace ChessUI
 {
-    public class BookNode
+    public record BookNode
     {
-        public string rootMove;
-        public BookNode parent;
-        public List<BookNode> children;
-
+        public string Move { get; set; }
+        public List<BookNode> Children { get; set; }
         public BookNode()
         {
-            children = new List<BookNode>();
+            Children = [];
+            Move = "0000";
         }
 
-        public BookNode(string move, BookNode parent)
+        public BookNode(string move)
         {
-            this.rootMove = move;
-            this.parent = parent;
-            children = new List<BookNode>();
+            this.Move = move;
+            Children = [];
         }
 
         public void AddChild(BookNode node)
         {
-            children.Add(node);
+            Children.Add(node);
         }
 
         public bool HasChild(string move)
         {
-            if(children.Count == 0) { return false; }
-            foreach(BookNode node in children)
+            if(Children.Count == 0) { return false; }
+            foreach(BookNode node in Children)
             {
-                if(node.rootMove == move) { return true; }
+                if(node.Move == move) { return true; }
             }
             return false;
         }
         public BookNode GetChild(string move)
         {
-            if (children.Count == 0) { return null; }
-            foreach (BookNode node in children)
+            if (Children.Count == 0) { return null; }
+            foreach (BookNode node in Children)
             {
-                if (node.rootMove == move) { return node; }
+                if (node.Move == move) { return node; }
             }
             return null;
         }

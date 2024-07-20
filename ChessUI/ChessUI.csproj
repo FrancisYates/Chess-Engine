@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="book.dat" />
     <None Remove="Images\bBishop.png" />
     <None Remove="Images\bKing.png" />
     <None Remove="Images\bKnight.png" />
@@ -24,7 +25,6 @@
     <None Remove="Images\wpawn.png" />
     <None Remove="Images\wQueen.png" />
     <None Remove="Images\wRook.png" />
-    <None Remove="MoveBook.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,7 +44,7 @@
     <Resource Include="Images\wpawn.png" />
     <Resource Include="Images\wQueen.png" />
     <Resource Include="Images\wRook.png" />
-    <EmbeddedResource Include="MoveBook.txt" />
+    <EmbeddedResource Include="book.dat" />
   </ItemGroup>
 
   <ItemGroup>

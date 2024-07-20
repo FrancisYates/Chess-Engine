@@ -5,13 +5,13 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using ChessUI.Enums;
+using System.Diagnostics;
 
 namespace ChessUI.Engine
 {
     public class AIPlayer
     {
-        // Very high/low numbers which are not at risk over over/under flow.
-        // Used
+        Dictionary<string, Move[]> bookMoveDict = new();
         public BookNode bookMoveTree = new();
         public Action<string> OnMoveChosen;
         private readonly ThinkTimeCalculator _timeCalculator;
@@ -23,8 +23,9 @@ namespace ChessUI.Engine
 
         private readonly Search _search;
         Random random = new();
-        public AIPlayer(MoveSelectionType moveSelectionType = MoveSelectionType.ItterativeDeepening, bool isWhite = true)
+        public AIPlayer(MoveSelectionType moveSelectionType = MoveSelectionType.ItterativeDeepening, bool isWhite = true, bool useBookMove = false)
         {
+            if (useBookMove) CreateBookTree();
             MoveSelectionType = moveSelectionType;
             _timeCalculator = new();
             _search = new()
@@ -33,8 +34,9 @@ namespace ChessUI.Engine
                 IsWhiteMove = isWhite
             };
         }
-        public AIPlayer(ThinkTimeCalculator timeCalculator, MoveSelectionType moveSelectionType = MoveSelectionType.ItterativeDeepening, bool isWhite = true)
+        public AIPlayer(ThinkTimeCalculator timeCalculator, MoveSelectionType moveSelectionType = MoveSelectionType.ItterativeDeepening, bool isWhite = true, bool useBookMove = false)
         {
+            if (useBookMove) CreateBookTree();
             MoveSelectionType = moveSelectionType;
             _timeCalculator = timeCalculator;
             _search = new() {
@@ -45,6 +47,8 @@ namespace ChessUI.Engine
 
         public Move? MakeMove()
         {
+            var bookMove = MakeBookMove();
+            if (bookMove is not null) return bookMove;
             _search.MaxSearchDepth = MaxSearchDepth;
             _search.IsWhiteMove = BoardManager.WhiteToMove;
             var move =  MoveSelectionType switch
@@ -83,87 +87,44 @@ namespace ChessUI.Engine
             }
             return count;
         }
-
-        public void CreateBookTree()
+        private void CreateBookTree()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "ChessUI.MoveBook.txt";
-            List<string> games = new();
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName) ?? throw new NullReferenceException())
-            using (StreamReader reader = new(stream))
-            {
-                if (stream is null) return;
-                while (!reader.EndOfStream) { games.Add(reader.ReadLine() ?? ""); }
-            }
+            var resourceName = "ChessUI.book.dat";
+            using Stream stream = assembly.GetManifestResourceStream(resourceName) ?? throw new NullReferenceException();
+            using StreamReader reader = new(stream);
+            Dictionary<string, Move[]> bookMoveDict = new();
 
-            for (int i = 0; i < games.Count; i++)
+            while (!reader.EndOfStream)
             {
-                BookNode node = bookMoveTree;
-                int idx = 0;
-                string[] gameMoves = games[i].Split(',');
-                foreach (string move in gameMoves)
-                {
-                    if (node.HasChild(gameMoves[idx]))
-                    {
-                        node = node.GetChild(gameMoves[idx]);
-                        idx++;
-                        continue;
-                    }
-                    node.AddChild(new BookNode(gameMoves[idx], node));
-                    node = node.GetChild(gameMoves[idx]);
-                    idx++;
-                }
+                string[] line = reader.ReadLine().Split(':');
+                string fen = line[0];
+                string[] moves = line[1].Split(",");
+                bookMoveDict[fen] = moves.Select(Move.Parse).ToArray();
             }
         }
 
         public Move? MakeBookMove()
         {
-            int posibleBookMoves = bookMoveTree.children.Count;
-            if (posibleBookMoves == 0) { return null; }
+            int halfMoves = BoardManager.HalfMoves;
+            int fullMoves = BoardManager.FullMoves;
+            BoardManager.HalfMoves = 0;
+            BoardManager.FullMoves = 0;
+            string fen = BoardManager.GetCurrentFen();
+            BoardManager.HalfMoves = halfMoves;
+            BoardManager.FullMoves = fullMoves;
+            if (!bookMoveDict.TryGetValue(fen, out Move[]? possibleMoves))
+            {
+                return null;
+            }
+            Debug.WriteLine($"Found {possibleMoves.Length} possible book moves");
+
             Random rnd = new ();
-            int randomIdx = rnd.Next(posibleBookMoves - 1);
-            string selectedMove = bookMoveTree.children[randomIdx].rootMove;
-            bookMoveTree = bookMoveTree.GetChild(selectedMove);
-
-            return LAN_ToMove(selectedMove);
+            int randomIdx = rnd.Next(possibleMoves.Length - 1);
+            return possibleMoves[randomIdx];
         }
 
-        private Move LAN_ToMove(string selectedMove)
-        {
-            int source = ToNumber(selectedMove[0]) + ((int)char.GetNumericValue(selectedMove[1]) - 1) * 8;
-            int target = ToNumber(selectedMove[2]) + ((int)char.GetNumericValue(selectedMove[3]) - 1) * 8;
 
-            return new Move(source, target);
-
-            static int ToNumber(char letter)
-            {
-                return letter switch
-                {
-                    'a' => 0,
-                    'b' => 1,
-                    'c' => 2,
-                    'd' => 3,
-                    'e' => 4,
-                    'f' => 5,
-                    'g' => 6,
-                    'h' => 7,
-                    _ => 0,
-                };
-                }
-            }
-
-        public void UpdateBookPosition(Move move)
-        {
-            string madeMove = move.ToString();
-            if (bookMoveTree.HasChild(madeMove))
-            {
-                bookMoveTree = bookMoveTree.GetChild(madeMove);
-            }
-            else
-            {
-                bookMoveTree = new BookNode();
-            }
-        }
 
         private (int, int) QuiescenceSearch(int alpha, int beta, bool maximising, int currentDepth, int maxDepth, CancellationToken token = default)
         {
@@ -203,7 +164,15 @@ namespace ChessUI.Engine
             BoardManager.WhiteToMove = isWhite;
             BoardManager.UpdateAttackedPositions();
             List<Move> possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
-            if (currentSearchDepth == maxSearchDepth) return (possibleMoves.Count, positionsAftermove);
+            if (currentSearchDepth == maxSearchDepth)
+            {
+                foreach (var move in possibleMoves)
+                {
+                    positionsAftermove.Add(move, 1);
+                }
+
+                return (possibleMoves.Count, positionsAftermove);
+            }
 
             int movesAtLevel = 0;
             foreach (Move move in possibleMoves)
@@ -239,7 +208,6 @@ namespace ChessUI.Engine
 
             foreach (Move move in possibleMoves)
             {
-                //BoardManager.UpdatePiecePositions(move);
                 (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
                 string fen = BoardManager.GetCurrentFen();
                 positions.Add(fen);
@@ -247,7 +215,6 @@ namespace ChessUI.Engine
                 List<string> futurePositions = FindReachablePositions(currentSearchDepth + 1, maxSearchDepth, !isWhite);
                 positions.AddRange(futurePositions);
                 MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
-                //BoardManager.UndoPiecePositions(move);
             }
 
             return positions;

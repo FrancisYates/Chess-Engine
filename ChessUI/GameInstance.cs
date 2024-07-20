@@ -26,7 +26,6 @@ namespace ChessUI
         public void MakePlayerMove(Move move) {
             Debug.WriteLine($"Making player move {move}");
             (_, _) = MoveManager.MakeMove(move, BoardManager.Board);
-            aiPlayer.UpdateBookPosition(move);
 
             Render.UpdateBoard(_window.Buttons, BoardManager.Board, move);
             //Render.HighlightSquare(_window.Buttons, selectedPosition);
