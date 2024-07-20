@@ -8,24 +8,74 @@ namespace ChessUI.Engine
 {
     public static class MoveEvaluation
     {
-        const int pawnStructureValue = 10;
-        const int passedPawnValue = 50;
-        const int isolatedPawnValue = -20;
+        const int pawnStructureValue = 5;
+        const int passedPawnValue = 30;
+        const int isolatedPawnValue = -10;
 
-        const int controlValue = 2;
+        const int controlValue = 1;
 
-        const int kingMobilityValue = -3;
+        const int kingMobilityValue = -2;
 
         public static int EvaluateBoard(int[] board)
         {
             int evaluation = 0;
-
             evaluation += MaterialDifference();
             evaluation += ControlledSquares();
             evaluation += EvaluatePawnStructure();
             evaluation += EvaluateKingSafety();
+            evaluation += EvaluatePieceSquareTables();
 
             return evaluation;
+        }
+
+        private static int EvaluatePieceSquareTables()
+        {
+            int eval = 0;
+            foreach (var position in BoardManager.WhitePiecePositions.Pawns)
+            {
+                eval += LookUps.pawnSquareTable[position];
+            }
+            foreach (var position in BoardManager.WhitePiecePositions.Rooks)
+            {
+                eval += LookUps.rookSquareTable[position];
+            }
+            foreach (var position in BoardManager.WhitePiecePositions.Knights)
+            {
+                eval += LookUps.knightSquareTable[position];
+            }
+            foreach (var position in BoardManager.WhitePiecePositions.Bishops)
+            {
+                eval += LookUps.bishopSquareTable[position];
+            }
+            foreach (var position in BoardManager.WhitePiecePositions.Queens)
+            {
+                eval += LookUps.queenSquareTable[position];
+            }
+            eval += LookUps.kingSquareTable[BoardManager.WhitePiecePositions.King];
+
+            foreach (var position in BoardManager.BlackPiecePositions.Pawns)
+            {
+                eval -= LookUps.pawnSquareTable[63-position];
+            }
+            foreach (var position in BoardManager.BlackPiecePositions.Rooks)
+            {
+                eval -= LookUps.rookSquareTable[63-position];
+            }
+            foreach (var position in BoardManager.BlackPiecePositions.Knights)
+            {
+                eval -= LookUps.knightSquareTable[position];
+            }
+            foreach (var position in BoardManager.BlackPiecePositions.Bishops)
+            {
+                eval -= LookUps.bishopSquareTable[position];
+            }
+            foreach (var position in BoardManager.BlackPiecePositions.Queens)
+            {
+                eval -= LookUps.queenSquareTable[position];
+            }
+            eval -= LookUps.kingSquareTable[63-BoardManager.BlackPiecePositions.King];
+
+            return eval;
         }
 
         private static int MaterialDifference()
@@ -72,17 +122,17 @@ namespace ChessUI.Engine
 
         private static int EvaluateKingSafety()
         {
-            int evaluation = 0;
-            
+            int evaluation = 0;            
 
             int whiteKingPos = BoardManager.WhitePiecePositions.King;
             int blackKingPos = BoardManager.BlackPiecePositions.King;
 
             ulong blockers = BoardManager.WhiteBitboards.AllPieces & LookUps.queenMoves[whiteKingPos];
             int whiteMobility = BitOperations.PopCount(LookUps.GetPosibleQueenMoves(whiteKingPos, blockers));
-            int blackMobility = BitOperations.PopCount(LookUps.GetPosibleQueenMoves(blackKingPos, blockers));
+            evaluation += whiteMobility * kingMobilityValue;
 
-            evaluation += (whiteMobility - blackMobility) * kingMobilityValue;
+            int blackMobility = BitOperations.PopCount(LookUps.GetPosibleQueenMoves(blackKingPos, blockers));
+            evaluation -= blackMobility * kingMobilityValue;
 
             return evaluation;
         }

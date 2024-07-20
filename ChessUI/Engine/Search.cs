@@ -93,9 +93,10 @@ namespace ChessUI.Engine
         {
             var sw = Stopwatch.StartNew();
             PositionsEvaluated = 0;
+            QuiescenceMovesEvaluated = 0;
             Node root = GenerateMoveTree(0, negativeInfinity, positiveInfinity, IsWhiteMove);
             sw.Stop();
-            Debug.WriteLine($"Evaluated {PositionsEvaluated} positions in {sw.ElapsedMilliseconds}ms");
+            Debug.WriteLine($"Evaluated {PositionsEvaluated} positions and {QuiescenceMovesEvaluated} Quiescence moves in {sw.ElapsedMilliseconds}ms");
             return GetBestMove(root);
         }
 
@@ -181,6 +182,7 @@ namespace ChessUI.Engine
         {
             var sw = Stopwatch.StartNew();
             PositionsEvaluated = 0;
+            QuiescenceMovesEvaluated = 0;
             Debug.WriteLine($"Making ID MiniMax move with max think time of {maxTimeMS}ms");
             int maxIdDepth = MaxSearchDepth;
             MaxSearchDepth = 1;
@@ -192,21 +194,21 @@ namespace ChessUI.Engine
 
             while (MaxSearchDepth < maxIdDepth)
             {
-                if (tokenSource.Token.IsCancellationRequested)
-                {
-                    Debug.WriteLine("ID Token Cancelled");
-                    break;
-                }
                 MaxSearchDepth++;
                 sw1 = Stopwatch.StartNew();
                 var nextSearch = GenerateMoveTreeID(0, negativeInfinity, positiveInfinity, BoardManager.WhiteToMove, currentSearch, tokenSource.Token);
                 sw1.Stop();
                 Debug.WriteLine($"Itteration {MaxSearchDepth} time taken {sw1.ElapsedMilliseconds}");
+                if (tokenSource.Token.IsCancellationRequested)
+                {
+                    Debug.WriteLine("ID Token Cancelled");
+                    break;
+                }
                 currentSearch = nextSearch;
             }
             MaxSearchDepth = maxIdDepth;
             sw.Stop();
-            Debug.WriteLine($"Evaluated {PositionsEvaluated} positions in {sw.ElapsedMilliseconds}ms");
+            Debug.WriteLine($"Evaluated {PositionsEvaluated} positions and {QuiescenceMovesEvaluated} Quiescence moves in {sw.ElapsedMilliseconds}ms");
             return GetBestMove(currentSearch);
         }
         private Node GenerateMoveTreeID(int currentSearchDepth,
@@ -236,7 +238,6 @@ namespace ChessUI.Engine
                 {
                     if (token.IsCancellationRequested)
                     {
-                        Debug.WriteLine("Token Cancelled");
                         break;
                     }
                     Node child = GenerateChildID(node.move, root, currentSearchDepth, alpha, beta, maximising, node, token);
@@ -252,7 +253,6 @@ namespace ChessUI.Engine
                 {
                     if (token.IsCancellationRequested)
                     {
-                        Debug.WriteLine("Token Cancelled");
                         break;
                     }
                     Node child = GenerateChildID(node.move, root, currentSearchDepth, alpha, beta, maximising, node, token);
