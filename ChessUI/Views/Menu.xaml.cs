@@ -48,7 +48,6 @@ namespace ChessUI.Views
             gameWindow.Show();
             DebugControls debugControls = new(gameWindow);
             debugControls.Show();
-            this.Hide();
         }
     }
 }

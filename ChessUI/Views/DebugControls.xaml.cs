@@ -1,4 +1,5 @@
 ﻿using ChessUI.Engine;
+using ChessUI.Enums;
 using Microsoft.Win32;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,10 +7,20 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Windows;
-using System.Windows.Media;
 
 namespace ChessUI.Views
 {
+
+    struct EngineSearchOption
+    {
+        public string Name { get; set; }
+        public MoveSelectionType Type{ get; set; }
+        public EngineSearchOption(string name, MoveSelectionType type)
+        {
+            Name = name;
+            Type = type;
+        }
+    }
     /// <summary>
     /// Interaction logic for DebugControls.xaml
     /// </summary>
@@ -22,7 +33,14 @@ namespace ChessUI.Views
         {
             InitializeComponent();
             GameWindow = window;
+            EvaluationType.ItemsSource = searchOptions;
         }
+
+        private static List<EngineSearchOption> searchOptions = [
+            new ("Exhaustive", MoveSelectionType.ExhaustiveSearch),
+            new ("Minimax", MoveSelectionType.Minimax),
+            new ("Itterative Deepening", MoveSelectionType.ItterativeDeepening),
+            ];
 
         private async void LoadFileBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -85,12 +103,14 @@ namespace ChessUI.Views
 
         private void EvaluatePositionBtn_Click(object sender, RoutedEventArgs e)
         {
+            EngineSearchOption? selected = (EngineSearchOption?)EvaluationType.SelectedItem;
             AIPlayer ai = new(isWhite: BoardManager.WhiteToMove)
             {
-                MoveSelectionType = Enums.MoveSelectionType.Minimax,
-                MaxSearchDepth = 2
+                MoveSelectionType = selected?.Type ?? MoveSelectionType.Minimax,
+                MaxSearchDepth = int.Parse(EvaluationDepth.Text)
             };
             ai.MakeMove();
+            Debug.WriteLine(MoveEvaluation.EvaluateBoard([]));
         }
     }
 }

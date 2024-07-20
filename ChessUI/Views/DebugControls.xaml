@@ -37,7 +37,9 @@
         <Label Grid.Column="3" Grid.Row="4" Name="NextMoveLabel"></Label>
         <TextBox Grid.Column="3" Grid.ColumnSpan="3" Grid.Row="3" Name="FenLabel"></TextBox>
 
-        <Button Grid.Column="2" Grid.Row="5" Name="EvaluatePositionBtn" Click="EvaluatePositionBtn_Click">Evaluate Position</Button>
+        <Button Grid.Column="1" Grid.Row="5" Name="EvaluatePositionBtn" Click="EvaluatePositionBtn_Click">Evaluate Position</Button>
+        <ComboBox Grid.Column="3" Grid.Row="5" Name="EvaluationType" DisplayMemberPath="Name"></ComboBox>
+        <TextBox Grid.Column="5" Grid.Row="5" Name="EvaluationDepth" Text="3"></TextBox>
 
     </Grid>
 </Window>

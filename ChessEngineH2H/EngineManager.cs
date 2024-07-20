@@ -19,6 +19,7 @@ namespace ChessEngineH2H
         Process black;
         UCIComandInterpreter whiteCmd;
         UCIComandInterpreter blackCmd;
+        EngineOptions _options = new();
         AIPlayer whitePlayer = new(MoveSelectionType.Random, true);
         AIPlayer blackPlayer = new(MoveSelectionType.Minimax, false) { MaxSearchDepth = 3 };
         GameInfo gameInfo;
@@ -40,7 +41,8 @@ namespace ChessEngineH2H
         }
         internal void StartGame(EngineOptions options)
         {
-            if(white is not null) white.Kill();
+            _options = options;
+            if (white is not null) white.Kill();
             if(black is not null) black.Kill();
             whitePlayer.ThinkTimeMs = options.ThinkTimeMs;
             blackPlayer.ThinkTimeMs = options.ThinkTimeMs;
@@ -76,24 +78,24 @@ namespace ChessEngineH2H
             const int moveTimeMs = 1000;
 
             string fen = BoardManager.GetCurrentFen();
-            if (whiteToMove)
+            if (BoardManager.WhiteToMove)
             {
-                string bmove = await FindMove(white, fen, moveTimeMs, whiteMaxDepth);
+                string bmove = await FindMove(white, fen, _options.ThinkTimeMs, whiteMaxDepth);
                 move = bmove.Split(' ')[1];
             }
             else
             {
-                string bmove = await FindMove(black, fen, moveTimeMs, blackMaxDepth);
+                string bmove = await FindMove(black, fen, _options.ThinkTimeMs, blackMaxDepth);
                 move = bmove.Split(' ')[1];
             }
             gameInfo.FullMoves = BoardManager.FullMoves;
             if (move == "0000")
             {
-                gameInfo.Outcome = whiteToMove ? GameOutcome.BlackWin : GameOutcome.WhiteWin;
+                gameInfo.Outcome = BoardManager.WhiteToMove ? GameOutcome.BlackWin : GameOutcome.WhiteWin;
                 gameInfo.InProgress = false;
                 return gameInfo;
             }
-            if (gameInfo.FullMoves > 75)
+            if (gameInfo.FullMoves > 100)
             {
                 gameInfo.InProgress = false;
                 gameInfo.Outcome = GameOutcome.Draw;

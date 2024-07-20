@@ -187,6 +187,7 @@ namespace ChessEngineH2H
                         break;
                 }
                 Debug.WriteLine($"Game Outcome: {info.Outcome}");
+                Debug.WriteLine($"Final Board: {info.BoardStates.Last()}");
                 await engineManager.SaveGameState(info.Id, info);
             }
         }
