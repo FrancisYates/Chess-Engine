@@ -17,7 +17,7 @@ namespace ChessUI
 
             PiecePositions friendlyPositions = isWhite ? BoardManager.WhitePiecePositions : BoardManager.BlackPiecePositions;
             PiecePositions opponentPositions = isWhite ? BoardManager.BlackPiecePositions : BoardManager.WhitePiecePositions;
-            friendlyPositions.Remove(Piece.GetPieceType(movedPiece), move.SourceSquare);
+            friendlyPositions.Remove(move.PieceType, move.SourceSquare);
             if (move.IsType(MoveType.promotion))
             {
                 PromotionMove(move, side, board, opponentPositions);
@@ -52,7 +52,7 @@ namespace ChessUI
             }
             else
             {
-                friendlyPositions.Add(Piece.GetPieceType(movedPiece), move.TargetSquare);
+                friendlyPositions.Add(move.PieceType, move.TargetSquare);
                 targetContents = StandardMove(move, isWhite, movedPiece, board);
             }
             BoardManager.UpdateAttackedPositions();
@@ -173,7 +173,7 @@ namespace ChessUI
             board[move.TargetSquare] = board[move.SourceSquare];
             board[move.SourceSquare] = 0;
 
-            if (Piece.IsType(movedPiece, PieceType.Rook))
+            if (move.PieceType == PieceType.Rook)
             {
                 if (!Piece.HasRookMoved(isWhite, move.SourceSquare))
                 {
@@ -184,7 +184,7 @@ namespace ChessUI
                     BoardManager.CastleingRights &= newCastleRights;
                 }
             }
-            else if (Piece.IsType(movedPiece, PieceType.King))
+            else if (move.PieceType == PieceType.King)
             {
                 CastlingRights castleingChange = (CastlingRights)(isWhite ? 0b_0011 : 0b_1100);
                 BoardManager.CastleingRights &= castleingChange;
@@ -205,7 +205,7 @@ namespace ChessUI
                 }
             }
             ulong movedMask = (0b_1ul << move.SourceSquare) | (0b_1ul << move.TargetSquare);
-            ApplyMaskToAppropriateBitboard(movedMask, ref movedBitBoards, Piece.GetPieceType(movedPiece));
+            ApplyMaskToAppropriateBitboard(movedMask, ref movedBitBoards, move.PieceType);
             if(target != 0)
             {
                 ulong targetMask = 0b_1ul << move.TargetSquare;
@@ -217,13 +217,12 @@ namespace ChessUI
         public static void UndoMove(Move move, int priorTargetContent, CastlingRights priorCastlingRights, int[] board)
         {
             int movedPiece = board[move.TargetSquare];
-            var movedPieceType = Piece.GetPieceType(movedPiece);
             bool isWhite = Piece.IsPieceWhite(movedPiece);
             int side = isWhite ? 8 : 0;
             BoardManager.CastleingRights = priorCastlingRights;
             PiecePositions friendlyPositions = side == 8 ? BoardManager.WhitePiecePositions : BoardManager.BlackPiecePositions;
             PiecePositions opponentPositions = side != 8 ? BoardManager.WhitePiecePositions : BoardManager.BlackPiecePositions;
-            friendlyPositions.Remove(movedPieceType, move.TargetSquare);
+            friendlyPositions.Remove(move.PieceType, move.TargetSquare);
 
             if (move.IsType(MoveType.promotion))
             {
@@ -261,7 +260,7 @@ namespace ChessUI
                 UndoCastle(move, side, board);
                 return;
             }
-            friendlyPositions.Add(movedPieceType, move.SourceSquare);
+            friendlyPositions.Add(move.PieceType, move.SourceSquare);
             UndoStandardMove(move, isWhite, priorTargetContent, board);
             BoardManager.UpdateAttackedPositions();
         }
@@ -274,10 +273,9 @@ namespace ChessUI
                 opponentPositions.Add(Piece.GetPieceType(priorTargetContent), move.TargetSquare);
             }
 
-            int movedPiece = board[move.TargetSquare];
             var movedBitBoards = isWhite ? BoardManager.WhiteBitboards : BoardManager.BlackBitboards;
             ulong movedMask = (0b_1ul << move.SourceSquare) | (0b_1ul << move.TargetSquare);
-            ApplyMaskToAppropriateBitboard(movedMask, ref movedBitBoards, Piece.GetPieceType(movedPiece));
+            ApplyMaskToAppropriateBitboard(movedMask, ref movedBitBoards, move.PieceType);
             if (priorTargetContent != 0)
             {
                 var targetBitBoards = isWhite ? BoardManager.BlackBitboards : BoardManager.WhiteBitboards;

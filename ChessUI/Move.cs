@@ -9,29 +9,33 @@ namespace ChessUI
         public int SourceSquare { get; set; }
         public int TargetSquare {get; set; }
         public int MoveFlag {get; set; }
+        public PieceType PieceType { get; set; }
 
         public Move()
         {
 
         }
-        public Move(int sourceSquare, int targetSquare) : this()
+        public Move(int sourceSquare, int targetSquare, PieceType pieceType) : this()
         {
             this.SourceSquare = sourceSquare;
             this.TargetSquare = targetSquare;
             this.MoveFlag = 0;
+            this.PieceType = pieceType;
         }
 
-        public Move(int sourceSquare, int targetSquare, MoveType moveType) : this()
+        public Move(int sourceSquare, int targetSquare, MoveType moveType, PieceType pieceType) : this()
         {
             this.SourceSquare = sourceSquare;
             this.TargetSquare = targetSquare;
             this.MoveFlag = (int)moveType;
+            this.PieceType = pieceType;
         }
-        public Move(int sourceSquare, int targetSquare, MoveType moveType, PromotionPiece piece) : this()
+        public Move(int sourceSquare, int targetSquare, MoveType moveType, PromotionPiece piece, PieceType pieceType) : this()
         {
             this.SourceSquare = sourceSquare;
             this.TargetSquare = targetSquare;
             this.MoveFlag = (int)moveType | (int)piece;
+            this.PieceType = pieceType;
         }
 
         public PromotionPiece GetPromotionType() => (PromotionPiece)(this.MoveFlag & 0b_0011_1110);
@@ -110,7 +114,8 @@ namespace ChessUI
             }
             int targetSquare = (chars[3] - '1') * 8 + index;
             MoveType moveType = MoveType.move;
-            if (Piece.IsType(BoardManager.Board[sourceSquare], PieceType.Pawn) &&
+            var pieceType = Piece.GetPieceType(BoardManager.Board[sourceSquare]);
+            if (pieceType == PieceType.Pawn &&
                 Math.Abs(sourceSquare - targetSquare) == 16)
             {
                 moveType = MoveType.doublePawnMove;
@@ -122,7 +127,7 @@ namespace ChessUI
                 moveType = MoveType.capture;
             }
 
-            Move move = new(sourceSquare, targetSquare, moveType);
+            Move move = new(sourceSquare, targetSquare, moveType, pieceType);
 
             if (chars.Length > 4)
             {
@@ -139,7 +144,7 @@ namespace ChessUI
                 {
                     moveType = MoveType.promotion | MoveType.capture;
                 }
-                move = new Move(sourceSquare, targetSquare, moveType, promotionPiece);
+                move = new Move(sourceSquare, targetSquare, moveType, promotionPiece, pieceType);
             }
 
             return move;

@@ -66,14 +66,14 @@ namespace ChessUI.Engine
                 var captureTargets = GetPoistionsFromBitboard(movesMask & OpponentBitboards.AllPieces);
                 foreach (var target in captureTargets)
                 {
-                    moves.Add(new(position, target, MoveType.capture));
+                    moves.Add(new(position, target, MoveType.capture, PieceType.Rook));
                 }
                 if (generateOnlyCaptures) continue;
 
                 var moveTargets = GetPoistionsFromBitboard(movesMask & ~OpponentBitboards.AllPieces);
                 foreach (var target in moveTargets)
                 {
-                    moves.Add(new(position, target));
+                    moves.Add(new(position, target, PieceType.Rook));
                 }
             }
             return moves;
@@ -93,14 +93,14 @@ namespace ChessUI.Engine
                 var captureTargets = GetPoistionsFromBitboard(movesMask & OpponentBitboards.AllPieces);
                 foreach (var target in captureTargets)
                 {
-                    moves.Add(new(position, target, MoveType.capture));
+                    moves.Add(new(position, target, MoveType.capture, PieceType.Bishop));
                 }
                 if (generateOnlyCaptures) continue;
 
                 var moveTargets = GetPoistionsFromBitboard(movesMask & ~OpponentBitboards.AllPieces);
                 foreach (var target in moveTargets)
                 {
-                    moves.Add(new(position, target));
+                    moves.Add(new(position, target, PieceType.Bishop));
                 }
             }
 
@@ -124,14 +124,14 @@ namespace ChessUI.Engine
                 var captureTargets = GetPoistionsFromBitboard(movesMask & OpponentBitboards.AllPieces);
                 foreach (var target in captureTargets)
                 {
-                    moves.Add(new(position, target, MoveType.capture));
+                    moves.Add(new(position, target, MoveType.capture, PieceType.Queen));
                 }
                 if (generateOnlyCaptures) continue;
 
                 var moveTargets = GetPoistionsFromBitboard(movesMask & ~OpponentBitboards.AllPieces);
                 foreach (var target in moveTargets)
                 {
-                    moves.Add(new(position, target));
+                    moves.Add(new(position, target, PieceType.Queen));
                 }
             }
 
@@ -155,7 +155,7 @@ namespace ChessUI.Engine
                 ulong epTarget = attackBitBoard & BoardManager.EnPesantBitBoard;
                 if (epTarget > 0)
                 {
-                    moves.Add(new Move(position, GetPoistionsFromBitboard(epTarget).First(), MoveType.enPesant));
+                    moves.Add(new Move(position, GetPoistionsFromBitboard(epTarget).First(), MoveType.enPesant, PieceType.Pawn));
                 }
                 if (generateOnlyCaptures) continue;
                 targetSquare = position + 8 * moveDirection;
@@ -177,14 +177,14 @@ namespace ChessUI.Engine
             {
                 if ((FriendlyBitboards.FinalRank & (1ul << targetSquare)) > 0)
                 {
-                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.bishop));
-                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.rook));
-                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.knight));
-                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.queen));
+                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.bishop, PieceType.Pawn));
+                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.rook, PieceType.Pawn));
+                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.knight, PieceType.Pawn));
+                    moves.Add(new Move(position, targetSquare, MoveType.promotion, PromotionPiece.queen, PieceType.Pawn));
                 }
                 else
                 {
-                    moves.Add(new Move(position, targetSquare, moveType));
+                    moves.Add(new Move(position, targetSquare, moveType, PieceType.Pawn));
                 }
             }
         }
@@ -200,13 +200,13 @@ namespace ChessUI.Engine
                 {
                     if ((FriendlyBitboards.FinalRank & (1ul << targetSquare)) > 0)
                     {
-                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.bishop));
-                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.rook));
-                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.knight));
-                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.queen));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.bishop, PieceType.Pawn));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.rook, PieceType.Pawn));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.knight, PieceType.Pawn));
+                        moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PromotionPiece.queen, PieceType.Pawn));
                         continue;
                     }
-                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture));
+                    moves.Add(new Move(sourceSquare, targetSquare, MoveType.capture, PieceType.Pawn));
                 }
             }
 
@@ -223,7 +223,7 @@ namespace ChessUI.Engine
                 var candidateMoves = GetPoistionsFromBitboard(captureMoveMask);
                 foreach (var target in candidateMoves)
                 {
-                    moves.Add(new Move(position, target, MoveType.capture));
+                    moves.Add(new Move(position, target, MoveType.capture, PieceType.Knight));
                 }
                 if (generateOnlyCaptures) continue;
 
@@ -232,7 +232,7 @@ namespace ChessUI.Engine
                 candidateMoves = GetPoistionsFromBitboard(nonCaptureMoveMask);
                 foreach (var target in candidateMoves)
                 {
-                    moves.Add(new Move(position, target));
+                    moves.Add(new Move(position, target, PieceType.Knight));
                 }
             }
             return moves;
@@ -249,7 +249,7 @@ namespace ChessUI.Engine
             var moveTargets = GetPoistionsFromBitboard(captureMoves);
             foreach (var target in moveTargets)
             {
-                moves.Add(new(position, target, MoveType.capture));
+                moves.Add(new(position, target, MoveType.capture, PieceType.King));
             }
             if (generateOnlyCaptures) return moves;
 
@@ -257,16 +257,16 @@ namespace ChessUI.Engine
             moveTargets = GetPoistionsFromBitboard(nonCaptureMoves);
             foreach (var target in moveTargets)
             {
-                moves.Add(new(position, target));
+                moves.Add(new(position, target, PieceType.King));
             }
             if ((OpponentBitboards.ControlledPositions & FriendlyBitboards.Kings) > 0) return moves;
             if (CanCastleKingSide(isWhite))
             {
-                moves.Add(new Move(position, position + 2, MoveType.castle));
+                moves.Add(new Move(position, position + 2, MoveType.castle, PieceType.King));
             }
             if (CanCastleQueenSide(isWhite))
             {
-                moves.Add(new Move(position, position - 2, MoveType.castle));
+                moves.Add(new Move(position, position - 2, MoveType.castle, PieceType.King));
             }
             return moves;
         }

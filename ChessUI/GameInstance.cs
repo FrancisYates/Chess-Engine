@@ -56,12 +56,11 @@ namespace ChessUI
 
         private bool TryMakeBookMove()
         {
-            Move? bookMove = aiPlayer.MakeBookMove();
+            Move bookMove = aiPlayer.MakeBookMove();
             if (bookMove is null) return false; 
-            Move move_ = bookMove ?? new Move(0, 0);
-            Debug.WriteLine($"Making ai move {move_}");
-            (_, _) = MoveManager.MakeMove(move_, BoardManager.Board);
-            Render.UpdateBoard(_window.Buttons, BoardManager.Board, move_);
+            Debug.WriteLine($"Making ai move {bookMove}");
+            (_, _) = MoveManager.MakeMove(bookMove, BoardManager.Board);
+            Render.UpdateBoard(_window.Buttons, BoardManager.Board, bookMove);
 
             BoardManager.UpdateSideToMove();
             BoardManager.UpdateMoveCount();

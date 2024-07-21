@@ -63,7 +63,8 @@ namespace ChessUI
             }
             if (!validSelection && pieceSelected)
             {
-                Move move = new(selectedPosition, thisPosition);
+                PieceType pieceType = Piece.GetPieceType(BoardManager.Board[selectedPosition]);
+                Move move = new(selectedPosition, thisPosition, pieceType);
                 var legalMoves = MoveGeneration.GenerateStrictLegalMoves(BoardManager.WhiteToMove).Where(m => m.SourceSquare == selectedPosition);
                 Render.RemovePossibleMovesHighlight(Buttons, legalMoves);
                 if (!Player.IsMoveValid(ref move)) return;
