@@ -49,14 +49,15 @@ namespace ChessUI.Engine
                 node.evaluation = negativeInfinity;
                 foreach (Move move in possibleMoves)
                 {
-                    if (token.IsCancellationRequested)
-                    {
-                        Debug.WriteLine("Token Cancelled");
-                        break;
-                    }
-                    Node child = GenerateChild(move, node, currentSearchDepth, !maximising);
+                    if (token.IsCancellationRequested) break;
+
+                    (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
+                    Node child = GenerateMoveTree(currentSearchDepth + 1, maximising, token);
                     child.move = move;
                     node.AddChild(child);
+                    MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
+
+                    node.evaluation = maximising ? Math.Max(negativeInfinity, node.evaluation) : Math.Min(positiveInfinity, node.evaluation);
                 }
             }
             else
@@ -64,29 +65,16 @@ namespace ChessUI.Engine
                 node.evaluation = positiveInfinity;
                 foreach (Move move in possibleMoves)
                 {
-                    if (token.IsCancellationRequested)
-                    {
-                        Debug.WriteLine("Token Cancelled");
-                        break;
-                    }
-                    Node child = GenerateChild(move, node, currentSearchDepth, !maximising, token: token);
+                    if (token.IsCancellationRequested) break;
+
+                    (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
+                    Node child = GenerateMoveTree(currentSearchDepth + 1, maximising, token);
                     child.move = move;
                     node.AddChild(child);
+                    MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
                 }
             }
             return node;
-        }
-        private Node GenerateChild(Move move, Node parent, int currentDepth, bool maximising, CancellationToken token = default)
-        {
-            (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
-            Node child = GenerateMoveTree(currentDepth + 1, maximising, token);
-            child.move = move;
-            child.parent = parent;
-            MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
-
-            parent.evaluation = maximising ? Math.Max(negativeInfinity, parent.evaluation) : Math.Min(positiveInfinity, parent.evaluation);
-           
-            return child;
         }
         #region MiniMax
         public Move? MiniMaxSearch()
@@ -112,6 +100,11 @@ namespace ChessUI.Engine
                 return node;
             }
             IEnumerable<Move> possibleMoves = MoveGeneration.GenerateStrictLegalMoves(maximising);
+            if (possibleMoves.Count() == 0)
+            {
+                node.evaluation = (maximising ? negativeInfinity : positiveInfinity) / (currentSearchDepth + 1);
+                return node;
+            }
             possibleMoves = MoveEvaluation.MoveOrdering(possibleMoves);
 
             if (maximising)
@@ -119,15 +112,26 @@ namespace ChessUI.Engine
                 node.evaluation = negativeInfinity;
                 foreach (Move move in possibleMoves)
                 {
-                    if (token.IsCancellationRequested)
+                    if (token.IsCancellationRequested) break;
+
+                    (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
+                    if (Piece.IsType(target, PieceType.King))
                     {
-                        Debug.WriteLine("Token Cancelled");
-                        break;
+                        MoveManager.UndoMove(move, target, castle, BoardManager.Board);
+                        node.evaluation = negativeInfinity / currentSearchDepth + 1;
+                        return new()
+                        {
+                            evaluation = negativeInfinity / currentSearchDepth + 1,
+                            move = move,
+                        };
                     }
-                    if (node.evaluation >= beta) break;
-                    Node child = GenerateChild(move, node, currentSearchDepth, alpha, beta, maximising, token);
+                    Node child = GenerateMoveTree(currentSearchDepth + 1, alpha, beta, !maximising, token);
                     child.move = move;
                     node.AddChild(child);
+                    MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
+
+                    node.evaluation = Math.Max(child.evaluation, node.evaluation);
+                    if (node.evaluation >= beta) break;
                     alpha = Math.Max(alpha, node.evaluation);
                 }
             }
@@ -136,44 +140,32 @@ namespace ChessUI.Engine
                 node.evaluation = positiveInfinity;
                 foreach (Move move in possibleMoves)
                 {
-                    if (token.IsCancellationRequested)
-                    {
-                        Debug.WriteLine("Token Cancelled");
-                        break;
-                    }
-                    if (node.evaluation <= alpha) break;
-                    Node child = GenerateChild(move, node, currentSearchDepth, alpha, beta, maximising);
-                    child.move = move;
-                    node.AddChild(child);
-                    beta = Math.Min(beta, node.evaluation);
-                }
-            }
-            return node;
-        }
+                    if (token.IsCancellationRequested) break;
 
-        private Node GenerateChild(Move move, Node parent, int currentDepth, int alpha, int beta, bool maximising, CancellationToken token = default)
-        {
             (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
             if (Piece.IsType(target, PieceType.King))
             {
                 MoveManager.UndoMove(move, target, castle, BoardManager.Board);
-                parent.evaluation = maximising ? Math.Min(negativeInfinity, parent.evaluation) : Math.Max(positiveInfinity, parent.evaluation);
+                        node.evaluation = positiveInfinity / currentSearchDepth + 1;
                 return new()
                 {
-                    evaluation = maximising ? negativeInfinity : positiveInfinity,
+                            evaluation = positiveInfinity / currentSearchDepth + 1,
                     move = move,
-                    parent = parent,
                 };
             }
-            Node child = GenerateMoveTree(currentDepth + 1, alpha, beta, !maximising, token);
+                    Node child = GenerateMoveTree(currentSearchDepth + 1, alpha, beta, !maximising, token);
             child.move = move;
-            child.parent = parent;
+                    node.AddChild(child);
             MoveManager.UndoMove(child.move, target, castle, BoardManager.Board);
 
-            parent.evaluation = maximising ? Math.Max(child.evaluation, parent.evaluation) : Math.Min(child.evaluation, parent.evaluation);
-            
-            return child;
+                    node.evaluation = Math.Min(child.evaluation, node.evaluation);
+                    if (node.evaluation <= alpha) break;
+                    beta = Math.Min(beta, node.evaluation);
         }
+            }
+            return node;
+        }
+
         #endregion
 
         #region Itterative Deapening MiniMax
@@ -277,9 +269,8 @@ namespace ChessUI.Engine
                 child = GenerateMoveTree(currentDepth + 1, alpha, beta, !maximising, token);
             }
             child.move = move;
-            child.parent = parent;
             MoveManager.UndoMove(move, target, castle, BoardManager.Board);
-            parent.evaluation = maximising ? Math.Max(negativeInfinity, child.evaluation) : Math.Min(positiveInfinity, child.evaluation);
+            parent.evaluation = maximising ? Math.Max(parent.evaluation, child.evaluation) : Math.Min(parent.evaluation, child.evaluation);
 
             return child;
         }
@@ -292,7 +283,7 @@ namespace ChessUI.Engine
             int stand_pat = MoveEvaluation.EvaluateBoard(BoardManager.Board);
             if (stand_pat >= beta) return (beta, exploredMoves);
 
-            int maxDelta = 900; // queen value
+            int maxDelta = PieceValue.Queen;
 
             if (stand_pat < alpha - maxDelta) return (alpha, exploredMoves);
             if (alpha < stand_pat) alpha = stand_pat;
@@ -307,7 +298,6 @@ namespace ChessUI.Engine
             {
                 (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
                 (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, token);
-                score = -score;
                 exploredMoves += additionalMoves;
                 MoveManager.UndoMove(move, target, castle, BoardManager.Board);
 

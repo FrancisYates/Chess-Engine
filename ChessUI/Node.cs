@@ -10,23 +10,20 @@ namespace ChessUI
     {
         public bool isRoot;
         public int evaluation;
-        //public int key;
         public Move move;
-        public Node parent;
         public List<Node> children;
 
         public Node()
         {
             isRoot = true;
-            children = new List<Node>();
+            children = new();
         }
 
-        public Node(Move move, Node parent)
+        public Node(Move move)
         {
             isRoot = false;
             this.move = move;
-            this.parent = parent;
-            children = new List<Node>();
+            children = new();
         }
 
         public void AddChild(Node node)
