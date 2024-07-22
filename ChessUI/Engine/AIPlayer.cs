@@ -145,11 +145,11 @@ namespace ChessUI.Engine
 
             foreach (Move move in captureMoves)
             {
-                (int target, CastlingRights castle) = MoveManager.MakeMove(move, BoardManager.Board);
+                MoveChanges changes = MoveManager.MakeMove(move, BoardManager.Board, maximising);
                 (int score, int additionalMoves) = QuiescenceSearch(-beta, -alpha, !maximising, currentDepth + 1, maxDepth, token);
                 score = -score;
                 exploredMoves += additionalMoves;
-                MoveManager.UndoMove(move, target, castle, BoardManager.Board);
+                MoveManager.UndoMove(move, changes, maximising);
 
                 if (score >= beta) return (beta, exploredMoves);
                 if (score > alpha) alpha = score;
@@ -177,14 +177,13 @@ namespace ChessUI.Engine
             int movesAtLevel = 0;
             foreach (Move move in possibleMoves)
             {
-                (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
-
+                MoveChanges changes = MoveManager.MakeMove(move, BoardManager.Board, isWhite);
 
                 (int furtherMoves, Dictionary<Move, int> xxx) = FindMovesToSearchDepth(currentSearchDepth + 1, maxSearchDepth, !isWhite);
-
+                
                 positionsAftermove.Add(move, furtherMoves);
                 movesAtLevel += furtherMoves;
-                MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
+                MoveManager.UndoMove(move, changes, isWhite);
             }
 
             return (movesAtLevel, positionsAftermove);
@@ -198,23 +197,23 @@ namespace ChessUI.Engine
             List<Move> possibleMoves = MoveGeneration.GenerateStrictLegalMoves(isWhite);
             if (currentSearchDepth == maxSearchDepth) {
                 foreach (var move in possibleMoves) {
-                    (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
+                    MoveChanges changes = MoveManager.MakeMove(move, BoardManager.Board, isWhite);
                     string fen = BoardManager.GetCurrentFen();
                     positions.Add(fen);
-                MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
+                MoveManager.UndoMove(move, changes, isWhite);
                 }
                 return positions;
             };
 
             foreach (Move move in possibleMoves)
             {
-                (int tempPiece, CastlingRights tempCastleRights) = MoveManager.MakeMove(move, BoardManager.Board);
+                MoveChanges changes = MoveManager.MakeMove(move, BoardManager.Board, isWhite);
                 string fen = BoardManager.GetCurrentFen();
                 positions.Add(fen);
 
                 List<string> futurePositions = FindReachablePositions(currentSearchDepth + 1, maxSearchDepth, !isWhite);
                 positions.AddRange(futurePositions);
-                MoveManager.UndoMove(move, tempPiece, tempCastleRights, BoardManager.Board);
+                MoveManager.UndoMove(move, changes, isWhite);
             }
 
             return positions;

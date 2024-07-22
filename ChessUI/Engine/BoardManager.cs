@@ -254,6 +254,7 @@ namespace ChessUI.Engine
 
             WhitePiecePositions = new();
             BlackPiecePositions = new();
+            EnPesantSquare = -1;
         }
 
         private static void SetupCastleRights(string castleRightsString)

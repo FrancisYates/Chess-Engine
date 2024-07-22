@@ -2,6 +2,7 @@
 {
     public enum PieceType
     {
+        None = 0,
         Pawn = 0b_0000_0001,
         Knight = 0b_0000_0010,
         King = 0b_0000_0011,

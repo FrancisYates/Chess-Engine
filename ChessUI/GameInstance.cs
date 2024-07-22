@@ -25,7 +25,7 @@ namespace ChessUI
 
         public void MakePlayerMove(Move move) {
             Debug.WriteLine($"Making player move {move}");
-            (_, _) = MoveManager.MakeMove(move, BoardManager.Board);
+            MoveChanges changes = MoveManager.MakeMove(move, BoardManager.Board, BoardManager.WhiteToMove);
 
             Render.UpdateBoard(_window.Buttons, BoardManager.Board, move);
             //Render.HighlightSquare(_window.Buttons, selectedPosition);
@@ -59,7 +59,7 @@ namespace ChessUI
             Move bookMove = aiPlayer.MakeBookMove();
             if (bookMove is null) return false; 
             Debug.WriteLine($"Making ai move {bookMove}");
-            (_, _) = MoveManager.MakeMove(bookMove, BoardManager.Board);
+            _ = MoveManager.MakeMove(bookMove, BoardManager.Board, BoardManager.WhiteToMove);
             Render.UpdateBoard(_window.Buttons, BoardManager.Board, bookMove);
 
             BoardManager.UpdateSideToMove();
@@ -78,7 +78,7 @@ namespace ChessUI
                 throw new NullReferenceException(nameof(move));
             }
             Debug.WriteLine($"Making ai move {move}");
-            (_, _) = MoveManager.MakeMove((Move)move, BoardManager.Board);
+            _ = MoveManager.MakeMove((Move)move, BoardManager.Board, BoardManager.WhiteToMove);
             Render.UpdateBoard(_window.Buttons, BoardManager.Board);
             Render.UpdateBoard(_window.Buttons, BoardManager.Board, (Move)move);
 

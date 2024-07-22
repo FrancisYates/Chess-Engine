@@ -32,6 +32,11 @@ namespace ChessUI
 
         public static PieceType GetPieceType(int piece) => (PieceType)(piece & 7);
 
+        public static int GetPositionRepresentation(PieceType type, bool isWhite)
+        {
+            return type == PieceType.None ? 0 : (int)type | (isWhite ? 8 : 0);
+        }
+
         public static bool IsAtFinalRank(bool isWhite, int targetSquare)
         {
             int finalRank = isWhite ? 7 : 0;

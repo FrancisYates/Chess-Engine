@@ -107,7 +107,8 @@ namespace ChessUI.Views
             AIPlayer ai = new(isWhite: BoardManager.WhiteToMove)
             {
                 MoveSelectionType = selected?.Type ?? MoveSelectionType.Minimax,
-                MaxSearchDepth = int.Parse(EvaluationDepth.Text)
+                MaxSearchDepth = int.Parse(EvaluationDepth.Text),
+                ThinkTimeMs = 1000
             };
             ai.MakeMove();
             Debug.WriteLine(MoveEvaluation.EvaluateBoard([]));

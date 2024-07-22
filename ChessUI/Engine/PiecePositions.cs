@@ -64,7 +64,8 @@ namespace ChessUI.Engine
         public void Add(PieceType type, int position)
         {
             switch (type) {
-
+                case PieceType.None:
+                    return;
                 case PieceType.Pawn:
                     Pawns.Add(position);
                     break;
